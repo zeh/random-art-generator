@@ -7,3 +7,9 @@ A command-line application to progressively generate a new image based on an exi
 ```shell
 cargo run -- [--input input.jpg] --target target.jpg --output output.jpg
 ```
+
+## Create release binary
+
+```shell
+cargo build --release
+```
