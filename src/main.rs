@@ -37,4 +37,8 @@ fn main() {
     };
 
     println!("Using target image of {:?} with dimensions of {:?}.", target_file, target_image.dimensions());
+
+    let gen = generator::create(target_image);
+    gen.process();
+    gen.save();
 }
