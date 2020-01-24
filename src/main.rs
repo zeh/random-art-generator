@@ -12,6 +12,9 @@ struct Opt {
     #[structopt(short, long, parse(from_os_str))]
     target: PathBuf,
 
+    /*
+    TODO: these are disabled for now, until they are actually implemented
+
     /// The output image filename
     #[structopt(short, long, parse(from_os_str))]
     output: PathBuf,
@@ -19,6 +22,7 @@ struct Opt {
     /// The input image filename, if any
     #[structopt(short, long, default_value = "", parse(from_os_str))]
     input: PathBuf,
+    */
 }
 
 fn main() {
