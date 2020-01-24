@@ -1,6 +1,8 @@
 use std::path::PathBuf;
 use structopt::StructOpt;
 
+use image::GenericImageView;
+
 mod generator;
 
 /// Progressively generate an image based on a target
@@ -23,5 +25,12 @@ fn main() {
 	let options = Opt::from_args();
 	println!("Done.");
 
-	generator::test();
+    let target_file = options.target.as_path();
+    let target_result = image::open(target_file);
+    let target_image = match target_result {
+        Ok(content) => { content },
+        Err(_) => { panic!("Cannot open file {:?}, exiting", target_file); }
+    };
+
+    println!("Using target image of {:?} with dimensions of {:?}.", target_file, target_image.dimensions());
 }
