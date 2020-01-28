@@ -8,12 +8,8 @@ mod generator;
 /// Progressively generate an image based on a target
 #[derive(Debug, StructOpt)]
 struct Opt {
-    /// Number of candidates per iteration
-    #[structopt(long, default_value = "10")]
-    candidates: u32,
-
     /// Number of iterations to run
-    #[structopt(long, default_value = "1")]
+    #[structopt(long, default_value = "10")]
     iterations: u32,
 
     /// The target image
@@ -63,7 +59,7 @@ fn main() {
     println!("Using output image of {:?}.", output_file);
 
     // Process everything
-    gen.process(options.candidates, options.iterations);
+    gen.process(options.iterations);
     gen.finalize().save(output_file)
         .expect("Cannot write to output file {:?}, exiting");
 }

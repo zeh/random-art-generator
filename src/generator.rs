@@ -25,47 +25,37 @@ impl Generator {
 		self.current = current_image.to_rgb();
 	}
 
-	pub fn process(&mut self, candidates: u32, iterations: u32) {
+	pub fn process(&mut self, iterations: u32) {
 		let painter = RectPainter {};
 
 		let mut improved_iterations = 0;
 		let mut discarded_iterations = 0;
 
+		let mut new_candidate;
+		let mut new_diff;
+		let mut curr_diff = Generator::diff(&self.current, &self.target);
+
+		println!("Starting iterations with a diff of {}.", curr_diff);
+
 		for i in 0..iterations {
-			println!("Iteration {}", i + 1);
+			new_candidate = painter.paint(&self.current);
+			new_diff = Generator::diff(&new_candidate, &self.target);
 
-			let start_diff = Generator::diff(&self.current, &self.target);
-			println!("  Starting diff is {}", start_diff);
+			print!("Iteration {}/{} : diff is {};", i + 1, iterations, new_diff);
 
-			let mut best_candidate = painter.paint(&self.current);
-			let mut best_diff = Generator::diff(&best_candidate, &self.target);
-			println!("  Candidate {} diff is {}", 1, best_diff);
-			println!("  Best new candidate!");
-
-			for c in 1..candidates {
-				let new_candidate = painter.paint(&self.current);
-				let new_diff = Generator::diff(&new_candidate, &self.target);
-				println!("  Candidate {} diff is {}", c + 1, new_diff);
-
-				if new_diff < best_diff {
-					println!("  Best new candidate!");
-					best_candidate = new_candidate;
-					best_diff = new_diff;
-				}
-			}
-
-			if best_diff < start_diff {
+			if new_diff < curr_diff {
 				improved_iterations = improved_iterations + 1;
-				println!("    Used new data.");
-				self.current = best_candidate;
+				println!(" used.");
+				self.current = new_candidate;
+				curr_diff = new_diff;
 			} else {
 				discarded_iterations = discarded_iterations + 1;
-				println!("    Discarded new data; none of the candidates look good.");
+				println!(" discarded.");
 			}
 		}
 
 		let final_diff = Generator::diff(&self.current, &self.target);
-		println!("All iterations finished. Used {} iterations, and discarded {}. The final diff is {}.", improved_iterations, discarded_iterations, final_diff);
+		println!("Finished. Used {} iterations, and discarded {}. The final diff is {}.", improved_iterations, discarded_iterations, final_diff);
 	}
 
 	pub fn finalize(self) -> RgbImage {

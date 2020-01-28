@@ -5,7 +5,7 @@ A command-line application to progressively generate a new image based on an exi
 ## Run
 
 ```shell
-cargo run -- [--input input.jpg] --target target.jpg [--output output.png] [--iterations 1] [--candidates 10]
+cargo run -- [--input input.jpg] --target target.jpg [--output output.png] [--iterations 10]
 ```
 
 ## Create release binary
