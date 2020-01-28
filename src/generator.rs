@@ -100,8 +100,10 @@ impl Painter for RectPainter {
 		//let rng = rand::thread_rng().gen_range(1, 101);
 		let w = canvas.dimensions().0 as f32;
 		let h = canvas.dimensions().1 as f32;
-		let rect_w = (random::<f32>() * w).round() as u32;
-		let rect_h = (random::<f32>() * h).round() as u32;
+		let random_w = random::<f32>();
+		let random_h = random::<f32>();
+		let rect_w = (random_w * random_w * random_w * w).round() as u32;
+		let rect_h = (random_h * random_h * random_h * h).round() as u32;
 		let rect_x = (random::<f32>() * (w - rect_w as f32)).round() as u32;
 		let rect_y = (random::<f32>() * (h - rect_h as f32)).round() as u32;
 		// let pixel = image::RGB(255, 255, 255);
