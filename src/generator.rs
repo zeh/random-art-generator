@@ -40,12 +40,15 @@ impl Generator {
 
 		let mut time_start;
 		let mut time_elapsed;
+		let mut time_elapsed_paint;
 		let mut time_elapsed_total: u128 = 0;
 
 		for i in 0..iterations {
 			time_start = Instant::now();
 
 			new_candidate = painter.paint(&self.current);
+			time_elapsed_paint = time_start.elapsed().as_millis();
+
 			new_diff = Generator::diff(&new_candidate, &self.target);
 
 			print!("Iteration {}/{} : diff is {:>5.2}%;", i + 1, iterations, new_diff * 100.0);
@@ -61,7 +64,7 @@ impl Generator {
 			}
 
 			time_elapsed = time_start.elapsed().as_millis();
-			println!(" ({}ms)", time_elapsed);
+			println!(" ({}ms paint, {}ms total)", time_elapsed_paint, time_elapsed);
 
 			time_elapsed_total = time_elapsed_total + time_elapsed;
 		}
