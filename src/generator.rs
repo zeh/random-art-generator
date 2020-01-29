@@ -1,5 +1,6 @@
 use image::{DynamicImage, GenericImageView, ImageBuffer, Pixel, RgbImage};
 use rand::{random};
+use std::time::{Instant};
 
 const LUMA_R: f64 = 0.2126;
 const LUMA_G: f64 = 0.7152;
@@ -37,7 +38,13 @@ impl Generator {
 
 		println!("Starting iterations with a diff of {:.2}%.", curr_diff * 100.0);
 
+		let mut time_start;
+		let mut time_elapsed;
+		let mut time_elapsed_total: u128 = 0;
+
 		for i in 0..iterations {
+			time_start = Instant::now();
+
 			new_candidate = painter.paint(&self.current);
 			new_diff = Generator::diff(&new_candidate, &self.target);
 
@@ -45,17 +52,24 @@ impl Generator {
 
 			if new_diff < curr_diff {
 				improved_iterations = improved_iterations + 1;
-				println!(" used.");
+				print!(" used.");
 				self.current = new_candidate;
 				curr_diff = new_diff;
 			} else {
 				discarded_iterations = discarded_iterations + 1;
-				println!(" discarded.");
+				print!(" discarded.");
 			}
+
+			time_elapsed = time_start.elapsed().as_millis();
+			println!(" ({}ms)", time_elapsed);
+
+			time_elapsed_total = time_elapsed_total + time_elapsed;
 		}
 
 		let final_diff = Generator::diff(&self.current, &self.target);
-		println!("Finished. Used {} iterations, and discarded {}. The final diff is {:.2}%.", improved_iterations, discarded_iterations, final_diff * 100.0);
+		println!("Finished in {}ms ({}ms avg per iteration).", time_elapsed_total, time_elapsed_total / iterations as u128);
+		println!("Used {} iterations, and discarded {}.", improved_iterations, discarded_iterations);
+		println!("The final diff from target is {:.2}%.", final_diff * 100.0);
 	}
 
 	pub fn finalize(self) -> RgbImage {
