@@ -35,13 +35,13 @@ impl Generator {
 		let mut new_diff;
 		let mut curr_diff = Generator::diff(&self.current, &self.target);
 
-		println!("Starting iterations with a diff of {}.", curr_diff);
+		println!("Starting iterations with a diff of {:.2}%.", curr_diff * 100.0);
 
 		for i in 0..iterations {
 			new_candidate = painter.paint(&self.current);
 			new_diff = Generator::diff(&new_candidate, &self.target);
 
-			print!("Iteration {}/{} : diff is {};", i + 1, iterations, new_diff);
+			print!("Iteration {}/{} : diff is {:>5.2}%;", i + 1, iterations, new_diff * 100.0);
 
 			if new_diff < curr_diff {
 				improved_iterations = improved_iterations + 1;
@@ -55,7 +55,7 @@ impl Generator {
 		}
 
 		let final_diff = Generator::diff(&self.current, &self.target);
-		println!("Finished. Used {} iterations, and discarded {}. The final diff is {}.", improved_iterations, discarded_iterations, final_diff);
+		println!("Finished. Used {} iterations, and discarded {}. The final diff is {:.2}%.", improved_iterations, discarded_iterations, final_diff * 100.0);
 	}
 
 	pub fn finalize(self) -> RgbImage {
