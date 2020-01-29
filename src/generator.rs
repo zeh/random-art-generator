@@ -36,43 +36,51 @@ impl Generator {
 		let mut new_diff;
 		let mut curr_diff = Generator::diff(&self.current, &self.target);
 
-		println!("Starting iterations with a diff of {:.2}%.", curr_diff * 100.0);
+		println!("Starting iterations; initial difference from target is {:.2}%.", curr_diff * 100.0);
 
 		let mut time_start;
 		let mut time_elapsed;
 		let mut time_elapsed_paint;
 		let mut time_elapsed_total: u128 = 0;
 
+		let time_start_global = Instant::now();
+		let mut used;
+
 		for i in 0..iterations {
 			time_start = Instant::now();
+			used = false;
 
 			new_candidate = painter.paint(&self.current);
 			time_elapsed_paint = time_start.elapsed().as_millis();
 
 			new_diff = Generator::diff(&new_candidate, &self.target);
 
-			print!("Iteration {}/{} : diff is {:>5.2}%;", i + 1, iterations, new_diff * 100.0);
-
 			if new_diff < curr_diff {
-				improved_iterations = improved_iterations + 1;
-				print!(" used.");
+				improved_iterations += 1;
 				self.current = new_candidate;
 				curr_diff = new_diff;
+				used = true;
 			} else {
-				discarded_iterations = discarded_iterations + 1;
-				print!(" discarded.");
+				discarded_iterations += 1;
 			}
 
 			time_elapsed = time_start.elapsed().as_millis();
-			println!(" ({}ms paint, {}ms total)", time_elapsed_paint, time_elapsed);
 
-			time_elapsed_total = time_elapsed_total + time_elapsed;
+			if used {
+				print!("Iteration {}/{} is useful;", i + 1, iterations);
+				print!(" new difference is {:.2}%", new_diff * 100.0);
+				println!(" ({}ms paint, {}ms total)", time_elapsed_paint, time_elapsed);
+			}
+
+			time_elapsed_total += time_elapsed;
 		}
 
+		let time_elapsed_total_2 = time_start_global.elapsed().as_millis();
+
 		let final_diff = Generator::diff(&self.current, &self.target);
-		println!("Finished in {}ms ({}ms avg per iteration).", time_elapsed_total, time_elapsed_total / iterations as u128);
+		println!("Finished in {}ms ({}ms avg per iteration), user time {}ms.", time_elapsed_total, time_elapsed_total / iterations as u128, time_elapsed_total_2);
 		println!("Used {} iterations, and discarded {}.", improved_iterations, discarded_iterations);
-		println!("The final diff from target is {:.2}%.", final_diff * 100.0);
+		println!("The final difference from target is {:.2}%.", final_diff * 100.0);
 	}
 
 	pub fn finalize(self) -> RgbImage {
