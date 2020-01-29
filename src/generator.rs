@@ -90,7 +90,6 @@ impl Generator {
 	pub fn diff(a: &RgbImage, b: &RgbImage) -> f64 {
 		let w = a.dimensions().0;
 		let h = a.dimensions().1;
-		let num_pixels: f64 = (w * h) as f64;
 
 		let mut diff_sum_r: i64 = 0;
 		let mut diff_sum_g: i64 = 0;
@@ -98,13 +97,19 @@ impl Generator {
 
 		let mut p1;
 		let mut p2;
+		let mut num_pixels: f64 = 0.0;
 
-		for (x, y, pixel) in a.enumerate_pixels() {
-			p1 = pixel.channels();
-			p2 = b[(x, y)].channels();
-			diff_sum_r += (p1[0] as i64 - p2[0] as i64).abs();
-			diff_sum_g += (p1[1] as i64 - p2[1] as i64).abs();
-			diff_sum_b += (p1[2] as i64 - p2[2] as i64).abs();
+		let skip_step = 4;
+
+		for x in (0..w).step_by(skip_step) {
+			for y in (0..h).step_by(skip_step) {
+				num_pixels += 1.0;
+				p1 = a[(x, y)].channels();
+				p2 = b[(x, y)].channels();
+				diff_sum_r += (p1[0] as i64 - p2[0] as i64).abs();
+				diff_sum_g += (p1[1] as i64 - p2[1] as i64).abs();
+				diff_sum_b += (p1[2] as i64 - p2[2] as i64).abs();
+			}
 		}
 
 		let lr = LUMA_R / 255.0;
