@@ -91,9 +91,9 @@ impl Generator {
 		let w = a.dimensions().0;
 		let h = a.dimensions().1;
 
-		let mut diff_sum_r: i64 = 0;
-		let mut diff_sum_g: i64 = 0;
-		let mut diff_sum_b: i64 = 0;
+		let mut diff_sum_r: i32 = 0;
+		let mut diff_sum_g: i32 = 0;
+		let mut diff_sum_b: i32 = 0;
 
 		let mut p1;
 		let mut p2;
@@ -106,9 +106,9 @@ impl Generator {
 				num_pixels += 1.0;
 				p1 = a[(x, y)].channels();
 				p2 = b[(x, y)].channels();
-				diff_sum_r += (p1[0] as i64 - p2[0] as i64).abs();
-				diff_sum_g += (p1[1] as i64 - p2[1] as i64).abs();
-				diff_sum_b += (p1[2] as i64 - p2[2] as i64).abs();
+				diff_sum_r += (p1[0] as i32 - p2[0] as i32).abs();
+				diff_sum_g += (p1[1] as i32 - p2[1] as i32).abs();
+				diff_sum_b += (p1[2] as i32 - p2[2] as i32).abs();
 			}
 		}
 
