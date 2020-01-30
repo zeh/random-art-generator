@@ -90,26 +90,21 @@ impl Generator {
 	pub fn diff(a: &RgbImage, b: &RgbImage) -> f64 {
 		let w = a.dimensions().0;
 		let h = a.dimensions().1;
+		let num_pixels = w * h;
 
 		let mut diff_sum_r: i32 = 0;
 		let mut diff_sum_g: i32 = 0;
 		let mut diff_sum_b: i32 = 0;
 
-		let mut p1;
-		let mut p2;
-		let mut num_pixels: f64 = 0.0;
+		let samples_a = a.as_flat_samples().samples;
+		let samples_b = b.as_flat_samples().samples;
+		let mut pos: usize = 0;
 
-		let skip_step = 4;
-
-		for x in (0..w).step_by(skip_step) {
-			for y in (0..h).step_by(skip_step) {
-				num_pixels += 1.0;
-				p1 = a[(x, y)].channels();
-				p2 = b[(x, y)].channels();
-				diff_sum_r += (p1[0] as i32 - p2[0] as i32).abs();
-				diff_sum_g += (p1[1] as i32 - p2[1] as i32).abs();
-				diff_sum_b += (p1[2] as i32 - p2[2] as i32).abs();
-			}
+		for _ in 0..num_pixels {
+			diff_sum_r += (samples_a[pos + 0] as i32 - samples_b[pos + 0] as i32).abs();
+			diff_sum_g += (samples_a[pos + 1] as i32 - samples_b[pos + 1] as i32).abs();
+			diff_sum_b += (samples_a[pos + 2] as i32 - samples_b[pos + 2] as i32).abs();
+			pos += 3;
 		}
 
 		let lr = LUMA_R / 255.0;
@@ -117,7 +112,7 @@ impl Generator {
 		let lb = LUMA_B / 255.0;
 		let diff_sum = diff_sum_r as f64 * lr + diff_sum_g as f64 * lg + diff_sum_b as f64 * lb;
 
- 		diff_sum / num_pixels
+ 		diff_sum / (num_pixels as f64)
 	}
 }
 
