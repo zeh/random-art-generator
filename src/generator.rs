@@ -146,9 +146,9 @@ impl Painter for RectPainter {
 		let rect_y = random::<f32>() * (h - rect_h);
 
 		let x1 = rect_x as u32;
-		let x2 = (rect_x + rect_w) as u32 + 1;
+		let x2 = (rect_x + rect_w) as u32;
 		let y1 = rect_y as u32;
-		let y2 = (rect_y + rect_h) as u32 + 1;
+		let y2 = (rect_y + rect_h) as u32;
 
 		let r = random::<u8>();
 		let g = random::<u8>();
