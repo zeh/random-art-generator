@@ -8,6 +8,8 @@ const LUMA_R: f64 = 0.2126;
 const LUMA_G: f64 = 0.7152;
 const LUMA_B: f64 = 0.0722;
 
+type Callback = fn(generator: &Generator, success: bool);
+
 /// A definition for the image generation. This will contain all data needed for a generation process.
 pub struct Generator {
 	target: RgbImage,
@@ -28,7 +30,7 @@ impl Generator {
 		self.current = current_image.to_rgb();
 	}
 
-	pub fn process(&mut self, iterations: u32, painter: impl Painter) {
+	pub fn process(&mut self, iterations: u32, painter: impl Painter, cb: Option<Callback>) {
 		let mut improved_iterations = 0;
 		let mut discarded_iterations = 0;
 
@@ -73,6 +75,11 @@ impl Generator {
 			}
 
 			time_elapsed_total += time_elapsed;
+
+			match cb {
+				Some(cb) => (cb)(&self, used),
+				None => (),
+			}
 		}
 
 		let time_elapsed_total_2 = time_start_global.elapsed().as_millis();
