@@ -85,8 +85,8 @@ impl Generator {
 		println!("The final difference from target is {:.2}%.", final_diff * 100.0);
 	}
 
-	pub fn finalize(self) -> RgbImage {
-		return self.current;
+	pub fn get_current(&self) -> RgbImage {
+		return self.current.clone();
 	}
 
 	pub fn diff(a: &RgbImage, b: &RgbImage) -> f64 {
