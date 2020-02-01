@@ -1,4 +1,4 @@
-use image::{DynamicImage, GenericImageView, Pixel, RgbImage};
+use image::{DynamicImage, GenericImageView, RgbImage};
 use rand::{random};
 use std::time::{Instant};
 
