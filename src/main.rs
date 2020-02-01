@@ -3,6 +3,7 @@ use structopt::StructOpt;
 
 use image::GenericImageView;
 
+use generator::{Generator};
 use generator::painter::{Painter, RectPainter};
 
 mod generator;
@@ -27,8 +28,22 @@ struct Opt {
 	input: PathBuf,
 }
 
+fn get_options() -> Opt {
+	return Opt::from_args();
+}
+
+fn on_iteration(generator: &Generator, success: bool) {
+	if success {
+		// TODO: a bit repetitive, investigate how to add properties to callbacks
+		let options = get_options();
+		let output_file = options.output.as_path();
+		generator.get_current().save(output_file)
+			.expect("Cannot write to output file {:?}, exiting");
+	}
+}
+
 fn main() {
-	let options = Opt::from_args();
+	let options = get_options();
 
 	// Target
 	let target_file = options.target.as_path();
@@ -62,7 +77,7 @@ fn main() {
 
 	// Process everything
 	let painter = RectPainter::new();
-	gen.process(options.iterations, painter);
+	gen.process(options.iterations, painter, Some(on_iteration));
 	gen.get_current().save(output_file)
 		.expect("Cannot write to output file {:?}, exiting");
 }
