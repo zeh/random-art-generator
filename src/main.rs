@@ -3,6 +3,8 @@ use structopt::StructOpt;
 
 use image::GenericImageView;
 
+use generator::painter::{Painter, RectPainter};
+
 mod generator;
 
 /// Progressively generate an image based on a target
@@ -59,7 +61,8 @@ fn main() {
 	println!("Using output image of {:?}.", output_file);
 
 	// Process everything
-	gen.process(options.iterations);
+	let painter = RectPainter::new();
+	gen.process(options.iterations, painter);
 	gen.get_current().save(output_file)
 		.expect("Cannot write to output file {:?}, exiting");
 }

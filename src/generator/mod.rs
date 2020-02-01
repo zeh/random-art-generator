@@ -2,7 +2,7 @@ use image::{DynamicImage, GenericImageView, RgbImage};
 use std::time::{Instant};
 use painter::{Painter};
 
-mod painter;
+pub mod painter;
 
 const LUMA_R: f64 = 0.2126;
 const LUMA_G: f64 = 0.7152;
@@ -28,9 +28,7 @@ impl Generator {
 		self.current = current_image.to_rgb();
 	}
 
-	pub fn process(&mut self, iterations: u32) {
-		let painter = painter::RectPainter {};
-
+	pub fn process(&mut self, iterations: u32, painter: impl Painter) {
 		let mut improved_iterations = 0;
 		let mut discarded_iterations = 0;
 
