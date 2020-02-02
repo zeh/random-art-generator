@@ -107,14 +107,11 @@ impl Generator {
 		let samples_b = b.as_flat_samples().samples;
 
 		let skip_step = 1;
-		let mut pos: usize = 0;
-		let pos_step: usize = skip_step * 3;
 
-		for _ in (0..num_pixels).step_by(skip_step) {
-			diff_sum_r += (samples_a[pos + 0] as i32 - samples_b[pos + 0] as i32).abs();
-			diff_sum_g += (samples_a[pos + 1] as i32 - samples_b[pos + 1] as i32).abs();
-			diff_sum_b += (samples_a[pos + 2] as i32 - samples_b[pos + 2] as i32).abs();
-			pos += pos_step;
+		for (p_a, p_b) in samples_a.chunks_exact(3).zip(samples_b.chunks_exact(3)).step_by(skip_step) {
+			diff_sum_r += (p_a[0] as i32 - p_b[0] as i32).abs();
+			diff_sum_g += (p_a[1] as i32 - p_b[1] as i32).abs();
+			diff_sum_b += (p_a[2] as i32 - p_b[2] as i32).abs();
 		}
 
 		let lr = LUMA_R / 255.0;
