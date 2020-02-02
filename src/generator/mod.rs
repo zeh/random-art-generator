@@ -105,13 +105,16 @@ impl Generator {
 
 		let samples_a = a.as_flat_samples().samples;
 		let samples_b = b.as_flat_samples().samples;
-		let mut pos: usize = 0;
 
-		for _ in 0..num_pixels {
+		let skip_step = 1;
+		let mut pos: usize = 0;
+		let pos_step: usize = skip_step * 3;
+
+		for _ in (0..num_pixels).step_by(skip_step) {
 			diff_sum_r += (samples_a[pos + 0] as i32 - samples_b[pos + 0] as i32).abs();
 			diff_sum_g += (samples_a[pos + 1] as i32 - samples_b[pos + 1] as i32).abs();
 			diff_sum_b += (samples_a[pos + 2] as i32 - samples_b[pos + 2] as i32).abs();
-			pos += 3;
+			pos += pos_step;
 		}
 
 		let lr = LUMA_R / 255.0;
@@ -119,6 +122,6 @@ impl Generator {
 		let lb = LUMA_B / 255.0;
 		let diff_sum = diff_sum_r as f64 * lr + diff_sum_g as f64 * lg + diff_sum_b as f64 * lb;
 
- 		diff_sum / (num_pixels as f64)
+ 		diff_sum / (num_pixels as f64 / skip_step as f64)
 	}
 }
