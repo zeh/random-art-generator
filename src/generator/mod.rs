@@ -40,22 +40,27 @@ impl Generator {
 
 		println!("Starting iterations; initial difference from target is {:.2}%.", curr_diff * 100.0);
 
-		let mut time_start;
-		let mut time_elapsed;
-		let mut time_elapsed_paint;
-		let mut time_elapsed_total: u128 = 0;
-
-		let time_start_global = Instant::now();
 		let mut used;
 
+		let time_started = Instant::now();
+		let mut time_started_paint;
+		let mut time_elapsed_paint = 0;
+		let mut time_started_diff;
+		let mut time_elapsed_diff = 0;
+		let mut time_started_iteration;
+		let mut time_elapsed_iteration = 0;
+
 		for i in 0..iterations {
-			time_start = Instant::now();
+			time_started_iteration = Instant::now();
 			used = false;
 
+			time_started_paint = Instant::now();
 			new_candidate = painter.paint(&self.current);
-			time_elapsed_paint = time_start.elapsed().as_millis();
+			time_elapsed_paint += time_started_paint.elapsed().as_micros();
 
+			time_started_diff = Instant::now();
 			new_diff = Generator::diff(&new_candidate, &self.target);
+			time_elapsed_diff += time_started_diff.elapsed().as_micros();
 
 			if new_diff < curr_diff {
 				improved_iterations += 1;
@@ -66,26 +71,26 @@ impl Generator {
 				discarded_iterations += 1;
 			}
 
-			time_elapsed = time_start.elapsed().as_millis();
-
-			if used {
-				print!("Iteration {}/{} is useful;", i + 1, iterations);
-				print!(" new difference is {:.2}%", new_diff * 100.0);
-				println!(" ({}ms paint, {}ms total)", time_elapsed_paint, time_elapsed);
-			}
-
-			time_elapsed_total += time_elapsed;
-
 			match cb {
 				Some(cb) => (cb)(&self, used),
 				None => (),
 			}
+
+			time_elapsed_iteration += time_started_iteration.elapsed().as_micros();
+
+			if used {
+				print!("Iteration {}/{} is useful;", i + 1, iterations);
+				println!(" new difference is {:.2}%", new_diff * 100.0);
+				//println!(" ({}ms paint, {}ms diff)", time_elapsed_paint as f64, time_elapsed_diff);
+			}
 		}
 
-		let time_elapsed_total_2 = time_start_global.elapsed().as_millis();
+		let time_elapsed = time_started.elapsed().as_secs_f32();
+		let itss = iterations as f64 * 1000.0;
 
 		let final_diff = Generator::diff(&self.current, &self.target);
-		println!("Finished in {}ms ({}ms avg per iteration), user time {}ms.", time_elapsed_total, time_elapsed_total / iterations as u128, time_elapsed_total_2);
+		println!("Finished in {:.3}s ({:.3}ms avg per iteration).", time_elapsed, time_elapsed_iteration as f64 / itss);
+		println!("Iterations took an average of {:.3}ms for painting, and {:.3}ms for diffing.", time_elapsed_paint as f64 / itss, time_elapsed_diff as f64 / itss);
 		println!("Used {} iterations, and discarded {}.", improved_iterations, discarded_iterations);
 		println!("The final difference from target is {:.2}%.", final_diff * 100.0);
 	}
