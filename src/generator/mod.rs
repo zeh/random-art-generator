@@ -1,6 +1,6 @@
-use image::{DynamicImage, GenericImageView, RgbImage};
-use std::time::{Instant};
+use image::{DynamicImage, GenericImageView, Pixel, RgbImage};
 use painter::{Painter};
+use std::time::{Instant};
 
 pub mod painter;
 
@@ -17,11 +17,20 @@ pub struct Generator {
 }
 
 impl Generator {
-	pub fn from(target_image: DynamicImage) -> Generator {
+	pub fn from_image(target_image: DynamicImage) -> Generator {
 		let target = target_image.to_rgb();
 		let current = RgbImage::new(target_image.dimensions().0, target_image.dimensions().1);
 		Generator {
 			target: target,
+			current: current,
+		}
+	}
+
+	pub fn from_image_and_matrix(target_image: DynamicImage, matrix: [f64; 12]) -> Generator {
+		let target = target_image.to_rgb();
+		let current = RgbImage::new(target_image.dimensions().0, target_image.dimensions().1);
+		Generator {
+			target: Generator::color_transform(&target, matrix),
 			current: current,
 		}
 	}
@@ -125,5 +134,20 @@ impl Generator {
 		let diff_sum = diff_sum_r as f64 * lr + diff_sum_g as f64 * lg + diff_sum_b as f64 * lb;
 
  		diff_sum / (num_pixels as f64 / skip_step as f64)
+	}
+
+	pub fn color_transform(image: &RgbImage, matrix: [f64; 12]) -> RgbImage {
+		let mut transformed_image = image.clone();
+		for (_x, _y, pixel) in transformed_image.enumerate_pixels_mut() {
+			let channels = pixel.channels();
+			let o_r = channels[0] as f64;
+			let o_g = channels[1] as f64;
+			let o_b = channels[2] as f64;
+			let n_r = ((o_r * matrix[0] + o_g * matrix[1] + o_b * matrix[ 2] + matrix[ 3]).round()).max(0.0).min(255.0) as u8;
+			let n_g = ((o_r * matrix[4] + o_g * matrix[5] + o_b * matrix[ 6] + matrix[ 7]).round()).max(0.0).min(255.0) as u8;
+			let n_b = ((o_r * matrix[8] + o_g * matrix[9] + o_b * matrix[10] + matrix[11]).round()).max(0.0).min(255.0) as u8;
+			*pixel = image::Rgb([n_r, n_g, n_b]);
+		}
+		transformed_image
 	}
 }
