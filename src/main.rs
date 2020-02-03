@@ -26,6 +26,10 @@ struct Opt {
 	/// The input image filename, if any
 	#[structopt(short, long, default_value = "", parse(from_os_str))]
 	input: PathBuf,
+
+	/// A 3x4 color matrix (as a comma-separated number list) to be applied to the target image in the format "r_from_r,r_from_g,r_from_b,r_offset,g_from_r,g_from_b,...". Identity is "1,0,0,0,0,1,0,0,0,0,1,0"
+	#[structopt(long)]
+	target_color_matrix: Option<String>,
 }
 
 fn get_options() -> Opt {
@@ -52,8 +56,33 @@ fn main() {
 
 	println!("Using target image of {:?} with dimensions of {:?}.", target_file, target_image.dimensions());
 
-	// Start generating
-	let mut gen = generator::Generator::from(target_image);
+	// Create Generator
+	let mut gen = match options.target_color_matrix {
+		Some(m) => {
+			// Target has a color matrix, parse it first
+			let matrix_vec = m
+				.split(',')
+				.collect::<Vec<&str>>()
+				.iter()
+				.map(|&e| e.parse::<f64>()
+				.expect("Cannot convert matrix to numbers"))
+				.collect::<Vec<f64>>();
+			assert_eq!(matrix_vec.len(), 12, "Matrix length must be 12");
+
+			// Convert matrix vector to array
+			let mut matrix_arr = [0f64; 12];
+			for (place, element) in matrix_arr.iter_mut().zip(matrix_vec.iter()) {
+				*place = *element;
+			}
+
+			// Finally, generate it with the matrix
+			generator::Generator::from_image_and_matrix(target_image, matrix_arr)
+		},
+		None => {
+			// No color matrix needed, generate with the image
+			generator::Generator::from_image(target_image)
+		},
+	};
 
 	// Set input
 	match options.input.to_str() {
