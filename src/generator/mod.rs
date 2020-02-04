@@ -1,4 +1,4 @@
-use image::{DynamicImage, GenericImageView, Pixel, RgbImage};
+use image::{DynamicImage, GenericImageView, Pixel, Rgb, RgbImage};
 use painter::{Painter};
 use std::time::{Instant};
 
@@ -35,8 +35,13 @@ impl Generator {
 		}
 	}
 
-	pub fn prepopulate(&mut self, current_image: DynamicImage) {
+	pub fn prepopulate_with_image(&mut self, current_image: DynamicImage) {
 		self.current = current_image.to_rgb();
+	}
+
+	pub fn prepopulate_with_color(&mut self, r: u8, g: u8, b: u8) {
+		let dimensions = self.current.dimensions();
+		self.current = RgbImage::from_pixel(dimensions.0, dimensions.1, Rgb([r, g, b]))
 	}
 
 	pub fn process(&mut self, iterations: u32, painter: impl Painter, cb: Option<Callback>) {

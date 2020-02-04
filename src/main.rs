@@ -94,7 +94,7 @@ fn main() {
 
 				println!("Using input image of {:?} with dimensions of {:?}.", input_file, input_image.dimensions());
 
-				gen.prepopulate(input_image);
+				gen.prepopulate_with_image(input_image);
 			}
 		},
 		None => {},
