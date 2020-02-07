@@ -1,6 +1,7 @@
 use std::path::PathBuf;
 use structopt::StructOpt;
 
+use color_processing::Color;
 use image::GenericImageView;
 
 use generator::{Generator};
@@ -31,9 +32,9 @@ struct Opt {
 	#[structopt(short, long, parse(from_os_str))]
 	input: Option<PathBuf>,
 
-	/// The starting background color, if any
-	#[structopt(long, default_value = "#000000")]
-	background_color: String,
+	/// The starting background color, if any, in hex rrggbb format
+	#[structopt(long, default_value = "000000", parse(from_str = parse_color))]
+	background_color: (u8, u8, u8),
 
 	/// A 3x4 color matrix to be applied to the target image, as a comma-separated number list
 	///
@@ -58,6 +59,16 @@ fn on_attempt(generator: &Generator, success: bool) {
 		generator.get_current().save(output_file)
 			.expect("Cannot write to output file {:?}, exiting");
 	}
+}
+
+fn parse_color(src: &str) -> (u8, u8, u8) {
+	let color = Color::new_string(src)
+		.expect("Cannot parse color string {}");
+	let rgb = color.get_rgba();
+	let r = (rgb.0 * 255.0).round() as u8;
+	let g = (rgb.1 * 255.0).round() as u8;
+	let b = (rgb.2 * 255.0).round() as u8;
+	(r, g, b)
 }
 
 fn main() {
@@ -110,7 +121,8 @@ fn main() {
 			gen.prepopulate_with_image(input_image);
 		},
 		None => {
-			gen.prepopulate_with_color(0, 0, 0);
+			let color = options.background_color;
+			gen.prepopulate_with_color(color.0, color.1, color.2);
 		},
 	}
 
