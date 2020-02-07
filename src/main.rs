@@ -31,6 +31,10 @@ struct Opt {
 	#[structopt(short, long, parse(from_os_str))]
 	input: Option<PathBuf>,
 
+	/// The starting background color, if any
+	#[structopt(long, default_value = "#000000")]
+	background_color: String,
+
 	/// A 3x4 color matrix to be applied to the target image, as a comma-separated number list
 	///
 	/// This is in the format "r_from_r,r_from_g,r_from_b,r_offset,g_from_r,g_from_b,...". For example:
