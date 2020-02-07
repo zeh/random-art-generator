@@ -1,8 +1,13 @@
+<div align="center"><img width="500" height="250" src="docs/logo.png" alt="Random Art Generator">
+
 # Random Art Generator
+</div>
 
-This is a command-line application that generates images based on an existing target image.
+Random Art Generator is a command-line application to produce generative art.
 
-It works by employing a painter algorithm that creates new images at random (based on a set of parameters), keeping images that have higher similarity to the target and discarding ones that aren't. This process allows the creation of new images that progressively converge into the target image.
+When passed a _target_ image, it will start painting on a blank canvas, essentially creating new images at random. Resulting images that are _mathematically closer_ to the target image are kept, and used as a new canvas; results that aren't get discarded. This repeats until the desired number of attempts or generations is achieved.
+
+Technically known as [hill climbing](https://en.wikipedia.org/wiki/Hill_climbing), this process allows the creation of new images that progressively converge into the target image, with a style all its own.
 
 This application is written in [Rust](https://www.rust-lang.org/). Currently, only the source code is provided, as no downloadable and executable binaries are created. This will likely change in the future, as both macOS/Windows/Linux applications and Webasm targets are planned.
 
