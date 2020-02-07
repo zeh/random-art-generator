@@ -24,8 +24,8 @@ struct Opt {
 	output: PathBuf,
 
 	/// The input image filename, if any
-	#[structopt(short, long, default_value = "", parse(from_os_str))]
-	input: PathBuf,
+	#[structopt(short, long, parse(from_os_str))]
+	input: Option<PathBuf>,
 
 	/// A 3x4 color matrix (as a comma-separated number list) to be applied to the target image in the format "r_from_r,r_from_g,r_from_b,r_offset,g_from_r,g_from_b,...". Identity is "1,0,0,0,0,1,0,0,0,0,1,0"
 	#[structopt(long)]
@@ -85,17 +85,15 @@ fn main() {
 	};
 
 	// Set input
-	match options.input.to_str() {
-		Some(input_str) => {
-			if input_str.len() > 0 {
-				let input_file = options.input.as_path();
-				let input_image = image::open(input_file)
-					.expect("Cannot open input file {:?}, exiting");
+	match options.input {
+		Some(input) => {
+			let input_file = input.as_path();
+			let input_image = image::open(input_file)
+				.expect("Cannot open input file {:?}, exiting");
 
-				println!("Using input image of {:?} with dimensions of {:?}.", input_file, input_image.dimensions());
+			println!("Using input image of {:?} with dimensions of {:?}.", input_file, input_image.dimensions());
 
-				gen.prepopulate_with_image(input_image);
-			}
+			gen.prepopulate_with_image(input_image);
 		},
 		None => {
 			gen.prepopulate_with_color(0, 0, 0);
