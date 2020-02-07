@@ -33,7 +33,7 @@ struct Opt {
 	input: Option<PathBuf>,
 
 	/// The starting background color, if any, in hex rrggbb format
-	#[structopt(long, default_value = "000000", parse(from_str = parse_color))]
+	#[structopt(long, default_value = "000000", parse(try_from_str = parse_color))]
 	background_color: (u8, u8, u8),
 
 	/// A 3x4 color matrix to be applied to the target image, as a comma-separated number list
@@ -61,14 +61,19 @@ fn on_attempt(generator: &Generator, success: bool) {
 	}
 }
 
-fn parse_color(src: &str) -> (u8, u8, u8) {
-	let color = Color::new_string(src)
-		.expect("Cannot parse color string {}");
-	let rgb = color.get_rgba();
-	let r = (rgb.0 * 255.0).round() as u8;
-	let g = (rgb.1 * 255.0).round() as u8;
-	let b = (rgb.2 * 255.0).round() as u8;
-	(r, g, b)
+fn parse_color(src: &str) -> Result<(u8, u8, u8), &str> {
+	match Color::new_string(src) {
+		Some(color) => {
+			let rgb = color.get_rgba();
+			let r = (rgb.0 * 255.0).round() as u8;
+			let g = (rgb.1 * 255.0).round() as u8;
+			let b = (rgb.2 * 255.0).round() as u8;
+			Ok((r, g, b))
+		},
+		None => {
+			Err("Cannot parse color string")
+		}
+	}
 }
 
 fn main() {
