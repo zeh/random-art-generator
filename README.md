@@ -1,6 +1,8 @@
 <div align="center"><img width="500" height="250" src="docs/logo.png" alt="Random Art Generator">
 
 # Random Art Generator
+
+![GitHub](https://img.shields.io/github/license/zeh/art-generator)
 </div>
 
 Random Art Generator is a command-line application to produce generative art.
@@ -34,3 +36,7 @@ A self-compiled release binary can be created with Cargo as well:
 ```shell
 cargo build --release
 ```
+
+## License
+
+[MIT](LICENSE).
