@@ -2,9 +2,11 @@
 name = "art-generator"
 version = "0.1.0"
 authors = ["Zeh Fernando <zeh@zehfernando.com>"]
+homepage = "https://github.com/zeh/art-generator"
+repository = "https://github.com/zeh/art-generator"
+readme = "README.md"
+license = "MIT"
 edition = "2018"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 color_processing = "0.4.1"
