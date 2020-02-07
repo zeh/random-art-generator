@@ -43,8 +43,8 @@ struct Opt {
 	/// * Grayscale is "0.33,0.33,0.33,0,0.59,0.59,0.59,0,0.11,0.11,0.11,0" (untested)
 	/// * Sepia is "0.393,0.769,0.686,0,0.349,0.686,0.168,0,0.272,0.534,0.131,0" (untested)
 	/// * Polaroid is "1.438,0.122,-0.016,-8,-0.062,1.378,-0.016,-13,-0.062,-0.122,1.483,-5" (untested)
-	#[structopt(long)]
-	target_color_matrix: Option<String>,
+	#[structopt(long, parse(try_from_str = parse_color_matrix))]
+	target_color_matrix: Option<[f64; 12]>,
 }
 
 fn get_options() -> Opt {
@@ -76,6 +76,26 @@ fn parse_color(src: &str) -> Result<(u8, u8, u8), &str> {
 	}
 }
 
+fn parse_color_matrix(src: &str) -> Result<[f64; 12], &str> {
+	let matrix_vec = src
+		.split(',')
+		.collect::<Vec<&str>>()
+		.iter()
+		.map(|&e| e.parse::<f64>()
+			.expect("Cannot convert matrix element to float")) // TODO: this should return an Err() instead
+		.collect::<Vec<f64>>();
+	if matrix_vec.len() == 12 {
+		// Convert matrix vector to array
+		let mut matrix_arr = [0f64; 12];
+		for (place, element) in matrix_arr.iter_mut().zip(matrix_vec.iter()) {
+			*place = *element;
+		}
+		Ok(matrix_arr)
+	} else {
+		Err("Matrix length must be 12")
+	}
+}
+
 fn main() {
 	let options = get_options();
 
@@ -88,25 +108,9 @@ fn main() {
 
 	// Create Generator
 	let mut gen = match options.target_color_matrix {
-		Some(m) => {
+		Some(color_matrix) => {
 			// Target has a color matrix, parse it first
-			let matrix_vec = m
-				.split(',')
-				.collect::<Vec<&str>>()
-				.iter()
-				.map(|&e| e.parse::<f64>()
-				.expect("Cannot convert matrix to numbers"))
-				.collect::<Vec<f64>>();
-			assert_eq!(matrix_vec.len(), 12, "Matrix length must be 12");
-
-			// Convert matrix vector to array
-			let mut matrix_arr = [0f64; 12];
-			for (place, element) in matrix_arr.iter_mut().zip(matrix_vec.iter()) {
-				*place = *element;
-			}
-
-			// Finally, generate it with the matrix
-			generator::Generator::from_image_and_matrix(target_image, matrix_arr)
+			generator::Generator::from_image_and_matrix(target_image, color_matrix)
 		},
 		None => {
 			// No color matrix needed, generate with the image
