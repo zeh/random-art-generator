@@ -97,7 +97,9 @@ fn main() {
 				gen.prepopulate_with_image(input_image);
 			}
 		},
-		None => {},
+		None => {
+			gen.prepopulate_with_color(0, 0, 0);
+		},
 	}
 
 	// Set output
