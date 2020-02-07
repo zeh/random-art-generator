@@ -11,9 +11,13 @@ mod generator;
 /// Progressively generate an image based on a target
 #[derive(Debug, StructOpt)]
 struct Opt {
-	/// Number of iterations to run
-	#[structopt(long, default_value = "10")]
-	iterations: u32,
+	/// Minimum number of iterations (successful or nor) to run (0 = no minimum)
+	#[structopt(short, long, default_value = "0", required_if("generations", "0"))]
+	attempts: u32,
+
+	/// Minimum number of generations (successful attempts) required (0 = no minimum)
+	#[structopt(short, long, default_value = "0", required_if("attempts", "0"))]
+	generations: u32,
 
 	/// The target image
 	#[structopt(short, long, parse(from_os_str))]
@@ -36,7 +40,7 @@ fn get_options() -> Opt {
 	return Opt::from_args();
 }
 
-fn on_iteration(generator: &Generator, success: bool) {
+fn on_attempt(generator: &Generator, success: bool) {
 	if success {
 		// TODO: a bit repetitive, investigate how to add properties to callbacks
 		let options = get_options();
@@ -106,7 +110,7 @@ fn main() {
 
 	// Process everything
 	let painter = RectPainter::new();
-	gen.process(options.iterations, painter, Some(on_iteration));
+	gen.process(options.attempts, options.generations, painter, Some(on_attempt));
 	gen.get_current().save(output_file)
 		.expect("Cannot write to output file {:?}, exiting");
 }
