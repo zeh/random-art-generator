@@ -1,4 +1,4 @@
-use image::{Pixel, RgbImage};
+use image::{Pixel, Rgb, RgbImage};
 use rand::{Rng, rngs, thread_rng};
 
 fn get_random(rng: &mut rngs::ThreadRng, min: f64, max: f64) -> f64 {
@@ -74,7 +74,7 @@ impl Painter for RectPainter {
 		let r = rng.gen_range(0u8, 255u8);
 		let g = rng.gen_range(0u8, 255u8);
 		let b = rng.gen_range(0u8, 255u8);
-		let pixel = image::Rgb([r, g, b]);
+		let pixel = Rgb([r, g, b]);
 		let alpha: f64 = get_random(&mut rng, self.options.min_alpha, self.options.max_alpha);
 		let alpha_n: f64 = 1.0 - alpha;
 
@@ -92,7 +92,7 @@ impl Painter for RectPainter {
 					let nr: u8 = (r as f64 * alpha + old_pixel[0] as f64 * alpha_n).round() as u8;
 					let ng: u8 = (g as f64 * alpha + old_pixel[1] as f64 * alpha_n).round() as u8;
 					let nb: u8 = (b as f64 * alpha + old_pixel[2] as f64 * alpha_n).round() as u8;
-					new_pixel = image::Rgb([nr, ng, nb]);
+					new_pixel = Rgb([nr, ng, nb]);
 				}
 				painted_canvas.put_pixel(x, y, new_pixel);
 			}
