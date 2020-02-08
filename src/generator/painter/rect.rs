@@ -1,7 +1,7 @@
 use image::{Pixel, Rgb, RgbImage};
 use rand::{Rng, thread_rng};
 
-use crate::generator::utils::{get_random_range};
+use crate::generator::utils::{blend_pixel, get_random_range};
 use crate::generator::painter::{Painter};
 
 pub struct RectPainter {
@@ -65,26 +65,21 @@ impl Painter for RectPainter {
 		let r = rng.gen_range(0u8, 255u8);
 		let g = rng.gen_range(0u8, 255u8);
 		let b = rng.gen_range(0u8, 255u8);
-		let pixel = Rgb([r, g, b]);
+		let top_pixel = Rgb([r, g, b]);
+		let top_pixel_channels = top_pixel.channels();
 		let alpha: f64 = get_random_range(&mut rng, self.options.min_alpha, self.options.max_alpha);
-		let alpha_n: f64 = 1.0 - alpha;
 
 		// Finally, paint
 		let mut painted_canvas = canvas.clone();
 		for x in x1..x2 {
 			for y in y1..y2 {
-				let new_pixel;
-				if alpha == 1.0f64 {
-					// No need to blend
-					new_pixel = pixel;
-				} else {
-					// Blend pixels
-					let old_pixel = painted_canvas.get_pixel(x, y).channels();
-					let nr: u8 = (r as f64 * alpha + old_pixel[0] as f64 * alpha_n).round() as u8;
-					let ng: u8 = (g as f64 * alpha + old_pixel[1] as f64 * alpha_n).round() as u8;
-					let nb: u8 = (b as f64 * alpha + old_pixel[2] as f64 * alpha_n).round() as u8;
-					new_pixel = Rgb([nr, ng, nb]);
-				}
+				let new_pixel = Rgb(
+					blend_pixel(
+						painted_canvas.get_pixel(x, y).channels(),
+						top_pixel_channels,
+						alpha
+					)
+				);
 				painted_canvas.put_pixel(x, y, new_pixel);
 			}
 		}
