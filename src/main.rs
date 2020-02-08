@@ -5,7 +5,8 @@ use color_processing::Color;
 use image::GenericImageView;
 
 use generator::{Generator};
-use generator::painter::{Painter, RectPainter};
+use generator::painter::{Painter};
+use generator::painter::rect::{RectPainter};
 
 mod generator;
 
