@@ -24,3 +24,10 @@ pub fn blend_pixel(bottom: &[u8], top: &[u8], alpha: f64) -> [u8; 3] {
 	let nb: u8 = (top[2] as f64 * alpha + bottom[2] as f64 * alpha_n).round() as u8;
 	[nr, ng, nb]
 }
+
+#[inline(always)]
+pub fn distance(x1: f64, y1: f64, x2: f64, y2: f64) -> f64 {
+	let x = x1 - x2;
+	let y = y1 - y2;
+	(x * x + y * y).sqrt()
+}
