@@ -1,12 +1,7 @@
 use image::{Pixel, Rgb, RgbImage};
-use rand::{Rng, rngs, thread_rng};
+use rand::{Rng, thread_rng};
 
-fn get_random(rng: &mut rngs::ThreadRng, min: f64, max: f64) -> f64 {
-	if min == max {
-		return min;
-	};
-	rng.gen_range(min, max)
-}
+use crate::generator::utils::{get_random_range};
 
 pub trait Painter {
 	fn new() -> Self;
@@ -53,16 +48,16 @@ impl Painter for RectPainter {
 		let image_h = canvas.dimensions().1 as f64;
 
 		// Find dimensions in the 0-1 range
-		let random_w: f64 = get_random(&mut rng, 0.0f64, 1.0f64).powf(self.options.width_distribution);
-		let random_h: f64 = get_random(&mut rng, 0.0f64, 1.0f64).powf(self.options.height_distribution);
+		let random_w: f64 = get_random_range(&mut rng, 0.0f64, 1.0f64).powf(self.options.width_distribution);
+		let random_h: f64 = get_random_range(&mut rng, 0.0f64, 1.0f64).powf(self.options.height_distribution);
 
 		// Lerp dimensions into pixels
 		let rect_w: f64 = (self.options.min_width + random_w * (self.options.max_width - self.options.min_width)) * image_w;
 		let rect_h: f64 = (self.options.min_height + random_h * (self.options.max_height - self.options.min_height)) * image_h;
 
 		// Distribute along the axis too
-		let rect_x: f64 = get_random(&mut rng, 0.0f64, 1.0f64) * (image_w - rect_w);
-		let rect_y: f64 = get_random(&mut rng, 0.0f64, 1.0f64) * (image_h - rect_h);
+		let rect_x: f64 = get_random_range(&mut rng, 0.0f64, 1.0f64) * (image_w - rect_w);
+		let rect_y: f64 = get_random_range(&mut rng, 0.0f64, 1.0f64) * (image_h - rect_h);
 
 		// Found final, round positions
 		let x1 = rect_x.round().max(0.0).min(image_w) as u32;
@@ -75,7 +70,7 @@ impl Painter for RectPainter {
 		let g = rng.gen_range(0u8, 255u8);
 		let b = rng.gen_range(0u8, 255u8);
 		let pixel = Rgb([r, g, b]);
-		let alpha: f64 = get_random(&mut rng, self.options.min_alpha, self.options.max_alpha);
+		let alpha: f64 = get_random_range(&mut rng, self.options.min_alpha, self.options.max_alpha);
 		let alpha_n: f64 = 1.0 - alpha;
 
 		// Finally, paint

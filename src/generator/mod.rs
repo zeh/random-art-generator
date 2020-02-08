@@ -3,6 +3,7 @@ use painter::{Painter};
 use std::time::{Instant};
 
 pub mod painter;
+pub mod utils;
 
 const LUMA_R: f64 = 0.2126;
 const LUMA_G: f64 = 0.7152;
