@@ -1,4 +1,4 @@
-use image::{FilterType, imageops, Pixel, RgbImage};
+use image::{imageops, Pixel, RgbImage};
 
 const LUMA_R: f64 = 0.2126;
 const LUMA_G: f64 = 0.7152;
@@ -67,5 +67,5 @@ pub fn color_transform(image: &RgbImage, matrix: [f64; 12]) -> RgbImage {
 pub fn scale_image(image: &RgbImage, scale: f64) -> RgbImage {
 	let w = (image.dimensions().0 as f64 * scale).round() as u32;
 	let h = (image.dimensions().1 as f64 * scale).round() as u32;
-	imageops::resize(image, w, h, FilterType::CatmullRom)
+	imageops::resize(image, w, h, imageops::FilterType::CatmullRom)
 }
