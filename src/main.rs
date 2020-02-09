@@ -13,6 +13,10 @@ mod generator;
 /// Progressively generate an image based on a target
 #[derive(Debug, StructOpt)]
 struct Opt {
+	/// The target image
+	#[structopt(parse(from_os_str))]
+	target: PathBuf,
+
 	/// Minimum number of iterations (successful or nor) to run (0 = no minimum)
 	#[structopt(short, long, default_value = "0", required_if("generations", "0"))]
 	attempts: u32,
@@ -20,10 +24,6 @@ struct Opt {
 	/// Minimum number of generations (successful attempts) required (0 = no minimum)
 	#[structopt(short, long, default_value = "0", required_if("attempts", "0"))]
 	generations: u32,
-
-	/// The target image
-	#[structopt(short, long, parse(from_os_str))]
-	target: PathBuf,
 
 	/// The output image filename
 	#[structopt(short, long, default_value = "output.png", parse(from_os_str))]
