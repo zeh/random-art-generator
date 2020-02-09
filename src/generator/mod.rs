@@ -1,8 +1,8 @@
-use image::{DynamicImage, GenericImageView, Rgb, RgbImage};
+use image::{DynamicImage, Rgb, RgbImage};
 use painter::{Painter};
 use std::time::{Instant};
 
-use crate::generator::utils::image::{color_transform, diff};
+use crate::generator::utils::image::{color_transform, diff, scale_image};
 
 pub mod painter;
 pub mod utils;
@@ -16,18 +16,24 @@ pub struct Generator {
 }
 
 impl Generator {
-	pub fn from_image(target_image: DynamicImage) -> Generator {
-		let target = target_image.to_rgb();
-		let current = RgbImage::new(target_image.dimensions().0, target_image.dimensions().1);
+	pub fn from_image(target_image: DynamicImage, scale: f64) -> Generator {
+		let mut target = target_image.to_rgb();
+		if scale != 1.0f64 {
+			target = scale_image(&target, scale);
+		}
+		let current = RgbImage::new(target.dimensions().0, target.dimensions().1);
 		Generator {
 			target: target,
 			current: current,
 		}
 	}
 
-	pub fn from_image_and_matrix(target_image: DynamicImage, matrix: [f64; 12]) -> Generator {
-		let target = target_image.to_rgb();
-		let current = RgbImage::new(target_image.dimensions().0, target_image.dimensions().1);
+	pub fn from_image_and_matrix(target_image: DynamicImage, scale: f64, matrix: [f64; 12]) -> Generator {
+		let mut target = target_image.to_rgb();
+		if scale != 1.0f64 {
+			target = scale_image(&target, scale);
+		}
+		let current = RgbImage::new(target.dimensions().0, target.dimensions().1);
 		Generator {
 			target: color_transform(&target, matrix),
 			current: current,

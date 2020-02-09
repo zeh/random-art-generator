@@ -46,6 +46,9 @@ struct Opt {
 	/// * Polaroid is "1.438,0.122,-0.016,-8,-0.062,1.378,-0.016,-13,-0.062,-0.122,1.483,-5" (untested)
 	#[structopt(long, parse(try_from_str = parse_color_matrix))]
 	target_color_matrix: Option<[f64; 12]>,
+
+	#[structopt(short, long, default_value = "1")]
+	scale: f64,
 }
 
 fn get_options() -> Opt {
@@ -111,11 +114,11 @@ fn main() {
 	let mut gen = match options.target_color_matrix {
 		Some(color_matrix) => {
 			// Target has a color matrix, parse it first
-			generator::Generator::from_image_and_matrix(target_image, color_matrix)
+			generator::Generator::from_image_and_matrix(target_image, options.scale, color_matrix)
 		},
 		None => {
 			// No color matrix needed, generate with the image
-			generator::Generator::from_image(target_image)
+			generator::Generator::from_image(target_image, options.scale)
 		},
 	};
 
