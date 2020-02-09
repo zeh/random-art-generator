@@ -1,7 +1,8 @@
 use image::{Pixel, Rgb, RgbImage};
 use rand::{Rng, thread_rng};
 
-use crate::generator::utils::{blend_pixel, get_random_range};
+use crate::generator::utils::image::{blend_pixel};
+use crate::generator::utils::random::{get_random_range};
 use crate::generator::painter::{Painter};
 
 pub struct RectPainter {

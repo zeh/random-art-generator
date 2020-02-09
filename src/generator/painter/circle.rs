@@ -1,8 +1,10 @@
 use image::{Pixel, Rgb, RgbImage};
 use rand::{Rng, thread_rng};
 
-use crate::generator::utils::{blend_pixel, distance, get_random_range};
 use crate::generator::painter::{Painter};
+use crate::generator::utils::geom::{distance};
+use crate::generator::utils::image::{blend_pixel};
+use crate::generator::utils::random::{get_random_range};
 
 pub struct CirclePainter {
 	options: Options,
