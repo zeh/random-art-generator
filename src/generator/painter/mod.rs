@@ -9,21 +9,17 @@ pub enum PainterType {
 }
 
 pub trait Painter {
-	fn new() -> Self;
 	fn paint(&self, canvas: &RgbImage) -> RgbImage;
 }
 
-pub fn create_painter(painter_type: PainterType) -> impl Painter {
-	// if painter_type == PainterType::Rect {
-	// 	return rect::RectPainter::new();
-	// } else {
-	// 	return rect::RectPainter::new();
-	// }
-	let painter = match painter_type {
-		PainterType::Circle => circle::CirclePainter::new(),
-		PainterType::Rect => rect::RectPainter::new(),
-		_ => rect::RectPainter::new(),
+pub fn create_painter(painter_type: PainterType) -> Box<dyn Painter> {
+	// let painter = rect::RectPainter::new();
+	// let p = Box::Painter::new(painter);
+	// return p;
+	let painter: Box<dyn Painter> = match painter_type {
+		PainterType::Circle => Box::new(circle::CirclePainter::new()),
+		PainterType::Rect => Box::new(rect::RectPainter::new()),
+		_ => Box::new(rect::RectPainter::new()),
 	};
 	painter
-	// p
 }

@@ -5,8 +5,7 @@ use color_processing::Color;
 use image::GenericImageView;
 
 use generator::{Generator};
-use generator::painter::{Painter};
-use generator::painter::rect::{RectPainter};
+use generator::painter::{create_painter, Painter, PainterType};
 
 mod generator;
 
@@ -144,7 +143,7 @@ fn main() {
 	println!("Using output image of {:?}.", output_file);
 
 	// Process everything
-	let painter = RectPainter::new();
+	let painter: Box<dyn Painter> = create_painter(PainterType::Rect);
 	gen.process(options.attempts, options.generations, painter, Some(on_attempt));
 	gen.get_current().save(output_file)
 		.expect("Cannot write to output file {:?}, exiting");
