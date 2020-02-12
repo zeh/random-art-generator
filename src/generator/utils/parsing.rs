@@ -34,3 +34,29 @@ pub fn parse_color_matrix(src: &str) -> Result<[f64; 12], &str> {
 		Err("Matrix length must be 12")
 	}
 }
+
+// Parses "1.0", "0.9-1.0" into (1.0, 1.0), (0.9, 1.0)
+pub fn parse_float_pair(src: &str) -> Result<(f64, f64), &str> {
+	match src.find('-') {
+		Some(_) => {
+			// A pair
+			let arr = src
+				.split('-')
+				.collect::<Vec<&str>>()
+				.iter()
+				.map(|&e| e.parse::<f64>()
+					.expect("Cannot convert matrix element to float")) // TODO: this should return an Err() instead
+				.collect::<Vec<f64>>();
+			if arr.len() == 2 {
+				Ok((arr[0], arr[1]))
+			} else {
+				Err("Float range length must be 2")
+			}
+		},
+		None => {
+			// A single number
+			let num = src.parse::<f64>().unwrap();
+			Ok((num, num))
+		}
+	}
+}

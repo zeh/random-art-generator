@@ -6,7 +6,7 @@ use image::GenericImageView;
 use generator::{Generator};
 use generator::painter::circle::{CirclePainter};
 use generator::painter::rect::{RectPainter};
-use generator::utils::parsing::{parse_color, parse_color_matrix};
+use generator::utils::parsing::{parse_color, parse_color_matrix, parse_float_pair};
 
 mod generator;
 
@@ -53,6 +53,10 @@ struct Opt {
 	/// Painter to be used ("rects", "circles")
     #[structopt(short, long, possible_values = &["rects", "circles"], default_value = "rects")]
 	painter: String,
+
+	// The alphas to be used at random. Examples: "1.0", "0.1", "0.1-0.2", "0.1-0.2 0.3 0.5 0.9-1.0"
+	#[structopt(long, default_value = "1", parse(try_from_str = parse_float_pair))]
+	painter_alpha: Vec<(f64, f64)>,
 }
 
 fn get_options() -> Opt {
@@ -116,11 +120,13 @@ fn main() {
 	// TODO: use actual enums here and use a single object from trait (can't seen to make it work)
 	match &options.painter[..] {
 		"circles" => {
-			let painter = CirclePainter::new();
+			let mut painter = CirclePainter::new();
+			painter.options.alpha = options.painter_alpha;
 			gen.process(options.attempts, options.generations, painter, Some(on_attempt));
 		},
 		"rects" => {
-			let painter = RectPainter::new();
+			let mut painter = RectPainter::new();
+			painter.options.alpha = options.painter_alpha;
 			gen.process(options.attempts, options.generations, painter, Some(on_attempt));
 		},
 		// Should never happen since StructOpt checks for
