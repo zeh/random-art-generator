@@ -4,17 +4,16 @@ use rand::{Rng, thread_rng};
 use crate::generator::painter::{Painter};
 use crate::generator::utils::geom::{distance};
 use crate::generator::utils::image::{blend_pixel};
-use crate::generator::utils::random::{get_random_range};
+use crate::generator::utils::random::{get_random_range, get_random_ranges};
 
 pub struct CirclePainter {
-	options: Options,
+	pub options: Options,
 }
 
-struct Options {
+pub struct Options {
+	pub alpha: Vec<(f64, f64)>,
 	min_radius: f64,
 	max_radius: f64,
-	min_alpha: f64,
-	max_alpha: f64,
 	radius_distribution: f64,
 	anti_alias: bool,
 }
@@ -22,10 +21,9 @@ struct Options {
 impl CirclePainter {
 	pub fn new() -> CirclePainter {
 		let options = Options {
+			alpha: vec![(1.0, 1.0)],
 			min_radius: 0.0,
 			max_radius: 0.5,
-			min_alpha: 0.9,
-			max_alpha: 1.0,
 			radius_distribution: 3.0, // Cubic
 			anti_alias: true,
 		};
@@ -67,7 +65,7 @@ impl Painter for CirclePainter {
 		let b = rng.gen_range(0u8, 255u8);
 		let top_pixel = Rgb([r, g, b]);
 		let top_pixel_channels = top_pixel.channels();
-		let alpha: f64 = get_random_range(&mut rng, self.options.min_alpha, self.options.max_alpha);
+		let alpha = get_random_ranges(&mut rng, &self.options.alpha);
 
 		// Finally, paint
 		let mut painted_canvas = canvas.clone();
