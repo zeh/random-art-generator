@@ -20,8 +20,8 @@ struct Options {
 	height_distribution: f64,
 }
 
-impl Painter for RectPainter {
-	fn new() -> RectPainter {
+impl RectPainter {
+	pub fn new() -> RectPainter {
 		let options = Options {
 			min_width: 0.0,
 			max_width: 1.0,
@@ -37,7 +37,9 @@ impl Painter for RectPainter {
 			options,
 		}
 	}
+}
 
+impl Painter for RectPainter {
 	fn paint(&self, canvas: &RgbImage) -> RgbImage {
 		let mut rng = thread_rng();
 
