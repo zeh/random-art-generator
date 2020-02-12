@@ -6,6 +6,7 @@ use image::GenericImageView;
 
 use generator::{Generator};
 use generator::painter::{Painter};
+use generator::painter::circle::{CirclePainter};
 use generator::painter::rect::{RectPainter};
 
 mod generator;
@@ -49,6 +50,10 @@ struct Opt {
 
 	#[structopt(short, long, default_value = "1")]
 	scale: f64,
+
+	/// Painter to be used ("rect", "circle")
+    #[structopt(short, long, default_value = "rect")]
+    painter: String,
 }
 
 fn get_options() -> Opt {
@@ -144,8 +149,11 @@ fn main() {
 	println!("Using output image of {:?}.", output_file);
 
 	// Process everything
-	let painter = RectPainter::new();
-	gen.process(options.attempts, options.generations, painter, Some(on_attempt));
+	let painter: Box<dyn Painter> = Box::new(RectPainter::new());
+	if options.painter == "circle" {
+		painter = Box::new(CirclePainter::new());
+	}
+	gen.process(options.attempts, options.generations, *painter, Some(on_attempt));
 	gen.get_current().save(output_file)
 		.expect("Cannot write to output file {:?}, exiting");
 }

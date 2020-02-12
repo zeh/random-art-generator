@@ -19,8 +19,8 @@ struct Options {
 	anti_alias: bool,
 }
 
-impl Painter for CirclePainter {
-	fn new() -> CirclePainter {
+impl CirclePainter {
+	pub fn new() -> CirclePainter {
 		let options = Options {
 			min_radius: 0.0,
 			max_radius: 0.5,
@@ -34,7 +34,9 @@ impl Painter for CirclePainter {
 			options,
 		}
 	}
+}
 
+impl Painter for CirclePainter {
 	fn paint(&self, canvas: &RgbImage) -> RgbImage {
 		let mut rng = thread_rng();
 
