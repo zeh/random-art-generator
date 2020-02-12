@@ -51,7 +51,7 @@ struct Opt {
 	scale: f64,
 
 	/// Painter to be used ("rects", "circles")
-    #[structopt(short, long, default_value = "rects")]
+    #[structopt(short, long, possible_values = &["rects", "circles"], default_value = "rects")]
 	painter: String,
 }
 
@@ -123,10 +123,8 @@ fn main() {
 			let painter = RectPainter::new();
 			gen.process(options.attempts, options.generations, painter, Some(on_attempt));
 		},
-		_ => {
-			eprintln!("Error: painter is invalid");
-            std::process::exit(1);
-		}
+		// Should never happen since StructOpt checks for
+		_ => ()
 	}
 	gen.get_current().save(output_file)
 		.expect("Cannot write to output file {:?}, exiting");
