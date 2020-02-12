@@ -1,12 +1,12 @@
 use std::path::PathBuf;
 use structopt::StructOpt;
 
-use color_processing::Color;
 use image::GenericImageView;
 
 use generator::{Generator};
 use generator::painter::circle::{CirclePainter};
 use generator::painter::rect::{RectPainter};
+use generator::utils::parsing::{parse_color, parse_color_matrix};
 
 mod generator;
 
@@ -52,7 +52,7 @@ struct Opt {
 
 	/// Painter to be used ("rects", "circles")
     #[structopt(short, long, default_value = "rects")]
-    painter: String,
+	painter: String,
 }
 
 fn get_options() -> Opt {
@@ -66,41 +66,6 @@ fn on_attempt(generator: &Generator, success: bool) {
 		let output_file = options.output.as_path();
 		generator.get_current().save(output_file)
 			.expect("Cannot write to output file {:?}, exiting");
-	}
-}
-
-fn parse_color(src: &str) -> Result<(u8, u8, u8), &str> {
-	match Color::new_string(src) {
-		Some(color) => {
-			let rgb = color.get_rgba();
-			let r = (rgb.0 * 255.0).round() as u8;
-			let g = (rgb.1 * 255.0).round() as u8;
-			let b = (rgb.2 * 255.0).round() as u8;
-			Ok((r, g, b))
-		},
-		None => {
-			Err("Cannot parse color string")
-		}
-	}
-}
-
-fn parse_color_matrix(src: &str) -> Result<[f64; 12], &str> {
-	let matrix_vec = src
-		.split(',')
-		.collect::<Vec<&str>>()
-		.iter()
-		.map(|&e| e.parse::<f64>()
-			.expect("Cannot convert matrix element to float")) // TODO: this should return an Err() instead
-		.collect::<Vec<f64>>();
-	if matrix_vec.len() == 12 {
-		// Convert matrix vector to array
-		let mut matrix_arr = [0f64; 12];
-		for (place, element) in matrix_arr.iter_mut().zip(matrix_vec.iter()) {
-			*place = *element;
-		}
-		Ok(matrix_arr)
-	} else {
-		Err("Matrix length must be 12")
 	}
 }
 
