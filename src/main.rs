@@ -5,7 +5,7 @@ use color_processing::Color;
 use image::GenericImageView;
 
 use generator::{Generator};
-use generator::painter::{Painter};
+use generator::painter::circle::{CirclePainter};
 use generator::painter::rect::{RectPainter};
 
 mod generator;
@@ -49,6 +49,10 @@ struct Opt {
 
 	#[structopt(short, long, default_value = "1")]
 	scale: f64,
+
+	/// Painter to be used ("rects", "circles")
+    #[structopt(short, long, default_value = "rects")]
+    painter: String,
 }
 
 fn get_options() -> Opt {
@@ -144,8 +148,21 @@ fn main() {
 	println!("Using output image of {:?}.", output_file);
 
 	// Process everything
-	let painter = RectPainter::new();
-	gen.process(options.attempts, options.generations, painter, Some(on_attempt));
+	// TODO: use actual enums here and use a single object from trait (can't seen to make it work)
+	match &options.painter[..] {
+		"circles" => {
+			let painter = CirclePainter::new();
+			gen.process(options.attempts, options.generations, painter, Some(on_attempt));
+		},
+		"rects" => {
+			let painter = RectPainter::new();
+			gen.process(options.attempts, options.generations, painter, Some(on_attempt));
+		},
+		_ => {
+			eprintln!("Error: painter is invalid");
+            std::process::exit(1);
+		}
+	}
 	gen.get_current().save(output_file)
 		.expect("Cannot write to output file {:?}, exiting");
 }
