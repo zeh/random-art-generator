@@ -160,8 +160,7 @@ fn main() {
 			painter.options.height_bias = options.painter_height_bias;
 			gen.process(options.attempts, options.generations, painter, Some(on_attempt));
 		},
-		// Should never happen since StructOpt checks for
-		_ => ()
+		_ => unreachable!()
 	}
 	gen.get_current().save(output_file)
 		.expect("Cannot write to output file {:?}, exiting");
