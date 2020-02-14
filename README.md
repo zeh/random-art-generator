@@ -29,6 +29,12 @@ Circles painter example with specific parameters:
 cargo run -- target.jpg --generations 10 --painter circles [--painter-alpha 0.1-0.2 1.0] [--painter-radius 0.0-0.5] [--painter-radius-bias -3]
 ```
 
+Rects painter example with specific parameters:
+
+```shell
+cargo run -- target.jpg --generations 10 --painter rects [--painter-alpha 0.1-0.2 1.0] [--painter-width 0.0-0.5] [--painter-width-bias -3] [--painter-height 0.0-0.5] [--painter-height-bias -3]
+```
+
 Command line switches are still being added. For a full list of the currently available switches and a brief explanation, run:
 
 ```shell
