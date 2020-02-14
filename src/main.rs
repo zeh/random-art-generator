@@ -54,9 +54,17 @@ struct Opt {
     #[structopt(short, long, possible_values = &["rects", "circles"], default_value = "rects")]
 	painter: String,
 
-	// The alphas to be used at random. Examples: "1.0", "0.1", "0.1-0.2", "0.1-0.2 0.3 0.5 0.9-1.0"
+	/// The alphas to be used at random. Examples: "1.0", "0.1", "0.1-0.2", "0.1-0.2 0.3 0.5 0.9-1.0"
 	#[structopt(long, default_value = "1", parse(try_from_str = parse_float_pair))]
 	painter_alpha: Vec<(f64, f64)>,
+
+	/// Radius when applicable (0.0 - 1.0)
+	#[structopt(long, default_value = "0.0-0.5", parse(try_from_str = parse_float_pair))]
+	painter_radius: Vec<(f64, f64)>,
+
+	/// Bias for radius (0.0 = normal, -1.0 = quad bias towards small, 1.0 = quad bias towards large)
+	#[structopt(long, default_value = "0.0", allow_hyphen_values = true)]
+	painter_radius_bias: f64,
 }
 
 fn get_options() -> Opt {
@@ -118,10 +126,13 @@ fn main() {
 
 	// Process everything
 	// TODO: use actual enums here and use a single object from trait (can't seen to make it work)
+	// TODO: error out on passed painter options that are unused?
 	match &options.painter[..] {
 		"circles" => {
 			let mut painter = CirclePainter::new();
 			painter.options.alpha = options.painter_alpha;
+			painter.options.radius = options.painter_radius;
+			painter.options.radius_bias = options.painter_radius_bias;
 			gen.process(options.attempts, options.generations, painter, Some(on_attempt));
 		},
 		"rects" => {
