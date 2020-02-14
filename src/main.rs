@@ -58,13 +58,29 @@ struct Opt {
 	#[structopt(long, default_value = "1", parse(try_from_str = parse_float_pair))]
 	painter_alpha: Vec<(f64, f64)>,
 
-	/// Radius when applicable (0.0 - 1.0)
+	/// Radius where applicable (0.0 - 1.0)
 	#[structopt(long, default_value = "0.0-0.5", parse(try_from_str = parse_float_pair))]
 	painter_radius: Vec<(f64, f64)>,
 
 	/// Bias for radius (0.0 = normal, -1.0 = quad bias towards small, 1.0 = quad bias towards large)
 	#[structopt(long, default_value = "0.0", allow_hyphen_values = true)]
 	painter_radius_bias: f64,
+
+	/// Width where applicable (0.0 - 1.0)
+	#[structopt(long, default_value = "0.0-1.0", parse(try_from_str = parse_float_pair))]
+	painter_width: Vec<(f64, f64)>,
+
+	/// Bias for width (0.0 = normal, -1.0 = quad bias towards small, 1.0 = quad bias towards large)
+	#[structopt(long, default_value = "0.0", allow_hyphen_values = true)]
+	painter_width_bias: f64,
+
+	/// Height where applicable (0.0 - 1.0)
+	#[structopt(long, default_value = "0.0-1.0", parse(try_from_str = parse_float_pair))]
+	painter_height: Vec<(f64, f64)>,
+
+	/// Bias for height (0.0 = normal, -1.0 = quad bias towards small, 1.0 = quad bias towards large)
+	#[structopt(long, default_value = "0.0", allow_hyphen_values = true)]
+	painter_height_bias: f64,
 }
 
 fn get_options() -> Opt {
@@ -138,6 +154,10 @@ fn main() {
 		"rects" => {
 			let mut painter = RectPainter::new();
 			painter.options.alpha = options.painter_alpha;
+			painter.options.width = options.painter_width;
+			painter.options.width_bias = options.painter_width_bias;
+			painter.options.height = options.painter_height;
+			painter.options.height_bias = options.painter_height_bias;
 			gen.process(options.attempts, options.generations, painter, Some(on_attempt));
 		},
 		// Should never happen since StructOpt checks for
