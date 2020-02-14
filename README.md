@@ -17,8 +17,16 @@ This application is written in [Rust](https://www.rust-lang.org/). Currently, on
 
 Since the application is provided as source code, it need to be compiled and ran by [Cargo](https://doc.rust-lang.org/cargo/getting-started/installation.html).
 
+Basic example with general parameters:
+
 ```shell
 cargo run -- target.jpg [--input input.jpg] [--output output.png] --attempts 10 --generations 10 [--background-color ff0022] [--scale 2.0] [--painter rect|circle] [--painter-alpha 0.1-0.2 1.0]
+```
+
+Circle painter example with specific parameters:
+
+```shell
+cargo run -- target.jpg --generations 10 --painter circle [--painter-alpha 0.1-0.2 1.0] [--painter-radius 0.0-0.5] [--painter-radius-bias -3]
 ```
 
 Command line switches are still being added. For a full list of the currently available switches and a brief explanation, run:
