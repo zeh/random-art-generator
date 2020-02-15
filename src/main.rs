@@ -81,6 +81,10 @@ struct Opt {
 	/// Bias for height (0.0 = normal, -1.0 = quad bias towards small, 1.0 = quad bias towards large)
 	#[structopt(long, default_value = "0.0", allow_hyphen_values = true)]
 	painter_height_bias: f64,
+
+	/// Disables anti-alias where possible
+	#[structopt(long)]
+	painter_disable_anti_alias: bool,
 }
 
 fn get_options() -> Opt {
@@ -149,6 +153,7 @@ fn main() {
 			painter.options.alpha = options.painter_alpha;
 			painter.options.radius = options.painter_radius;
 			painter.options.radius_bias = options.painter_radius_bias;
+			painter.options.anti_alias = !options.painter_disable_anti_alias;
 			gen.process(options.attempts, options.generations, painter, Some(on_attempt));
 		},
 		"rects" => {
