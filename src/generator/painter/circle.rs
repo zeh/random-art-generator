@@ -14,7 +14,7 @@ pub struct Options {
 	pub alpha: Vec<(f64, f64)>,
 	pub radius: Vec<(f64, f64)>,
 	pub radius_bias: f64, // 0 = normal; -1 = quad bias towards small, 1 = quad bias towards big, etc
-	anti_alias: bool,
+	pub anti_alias: bool,
 }
 
 impl CirclePainter {
