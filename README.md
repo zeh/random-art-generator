@@ -43,6 +43,15 @@ cargo run -- --help
 
 Or check [the struct source code](https://github.com/zeh/art-generator/blob/master/src/main.rs#L15).
 
+## Testing
+
+Non-exhaustive unit tests also exist.
+
+```shell
+cargo test
+```
+
+
 ## Create release binary
 
 A self-compiled release binary can be created with Cargo as well:
