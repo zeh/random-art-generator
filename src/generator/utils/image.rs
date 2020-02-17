@@ -46,7 +46,7 @@ pub fn diff(a: &RgbImage, b: &RgbImage) -> f64 {
 	let lb = LUMA_B / 255.0;
 	let diff_sum = diff_sum_r as f64 * lr + diff_sum_g as f64 * lg + diff_sum_b as f64 * lb;
 
-	 diff_sum / (num_pixels as f64 / skip_step as f64)
+	diff_sum / (num_pixels as f64 / skip_step as f64)
 }
 
 pub fn color_transform(image: &RgbImage, matrix: [f64; 12]) -> RgbImage {
@@ -56,9 +56,15 @@ pub fn color_transform(image: &RgbImage, matrix: [f64; 12]) -> RgbImage {
 		let o_r = channels[0] as f64;
 		let o_g = channels[1] as f64;
 		let o_b = channels[2] as f64;
-		let n_r = ((o_r * matrix[0] + o_g * matrix[1] + o_b * matrix[ 2] + matrix[ 3]).round()).max(0.0).min(255.0) as u8;
-		let n_g = ((o_r * matrix[4] + o_g * matrix[5] + o_b * matrix[ 6] + matrix[ 7]).round()).max(0.0).min(255.0) as u8;
-		let n_b = ((o_r * matrix[8] + o_g * matrix[9] + o_b * matrix[10] + matrix[11]).round()).max(0.0).min(255.0) as u8;
+		let n_r = ((o_r * matrix[0] + o_g * matrix[1] + o_b * matrix[2] + matrix[3]).round())
+			.max(0.0)
+			.min(255.0) as u8;
+		let n_g = ((o_r * matrix[4] + o_g * matrix[5] + o_b * matrix[6] + matrix[7]).round())
+			.max(0.0)
+			.min(255.0) as u8;
+		let n_b = ((o_r * matrix[8] + o_g * matrix[9] + o_b * matrix[10] + matrix[11]).round())
+			.max(0.0)
+			.min(255.0) as u8;
 		*pixel = image::Rgb([n_r, n_g, n_b]);
 	}
 	transformed_image
