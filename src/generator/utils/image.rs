@@ -1,4 +1,7 @@
-use image::{imageops, Pixel, Rgb, RgbImage};
+use image::{imageops, Pixel, RgbImage};
+
+#[cfg(test)]
+use image::{Rgb};
 
 const LUMA_R: f64 = 0.2126;
 const LUMA_G: f64 = 0.7152;
