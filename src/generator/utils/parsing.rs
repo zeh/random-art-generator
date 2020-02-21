@@ -79,6 +79,37 @@ pub fn parse_size(src: &str) -> Result<SizeUnit, &str> {
 	}
 }
 
+// Parses "100%", "90%-100%", "10-20", "2" into pairs of SizeUnits
+pub fn parse_size_pair(src: &str) -> Result<(SizeUnit, SizeUnit), &str> {
+	match src.find('-') {
+		Some(_) => {
+			// A pair
+			let mut arr = src
+				.split('-')
+				.collect::<Vec<&str>>()
+				.iter()
+				.map(|&e| {
+					parse_size(e)
+						.expect("Cannot size element to unit")
+				}) // TODO: this should return an Err() instead
+				.collect::<Vec<SizeUnit>>();
+			if arr.len() == 2 {
+				Ok((arr.remove(0), arr.remove(0)))
+			} else {
+				Err("Float range length must be 2")
+			}
+		}
+		None => {
+			// A single unit value
+			let size = parse_size(src);
+			match size {
+				Ok(value) => Ok((value.clone(), value)),
+				Err(error) => Err(error)
+			}
+		}
+	}
+}
+
 #[cfg(test)]
 mod tests {
 	use super::*;
@@ -136,5 +167,39 @@ mod tests {
 		assert_eq!(parse_size("0.1"), Ok(SizeUnit::Pixels(0)));
 		assert_eq!(parse_size("190.01"), Ok(SizeUnit::Pixels(190)));
 		assert_eq!(parse_size("333190.01"), Ok(SizeUnit::Pixels(333190)));
+	}
+
+	#[test]
+	fn test_parse_size_pair() {
+		// Singles, fraction
+		assert_eq!(parse_size_pair("0%"), Ok((SizeUnit::Fraction(0.0), SizeUnit::Fraction(0.0))));
+		assert_eq!(parse_size_pair("0.0%"), Ok((SizeUnit::Fraction(0.0), SizeUnit::Fraction(0.0))));
+		assert_eq!(parse_size_pair("2.5%"), Ok((SizeUnit::Fraction(0.025), SizeUnit::Fraction(0.025))));
+		assert_eq!(parse_size_pair("50%"), Ok((SizeUnit::Fraction(0.5), SizeUnit::Fraction(0.5))));
+		assert_eq!(parse_size_pair("100%"), Ok((SizeUnit::Fraction(1.0), SizeUnit::Fraction(1.0))));
+
+		// Singles, pixels
+		assert_eq!(parse_size_pair("0"), Ok((SizeUnit::Pixels(0), SizeUnit::Pixels(0))));
+		assert_eq!(parse_size_pair("0.0"), Ok((SizeUnit::Pixels(0), SizeUnit::Pixels(0))));
+		assert_eq!(parse_size_pair("2.5"), Ok((SizeUnit::Pixels(3), SizeUnit::Pixels(3))));
+		assert_eq!(parse_size_pair("100"), Ok((SizeUnit::Pixels(100), SizeUnit::Pixels(100))));
+
+		// Pairs, fraction
+		assert_eq!(parse_size_pair("0%-100%"), Ok((SizeUnit::Fraction(0.0), SizeUnit::Fraction(1.0))));
+		assert_eq!(parse_size_pair("0.0%-100%"), Ok((SizeUnit::Fraction(0.0), SizeUnit::Fraction(1.0))));
+		assert_eq!(parse_size_pair("0%-100.0%"), Ok((SizeUnit::Fraction(0.0), SizeUnit::Fraction(1.0))));
+		assert_eq!(parse_size_pair("50%-60%"), Ok((SizeUnit::Fraction(0.5), SizeUnit::Fraction(0.6))));
+		assert_eq!(parse_size_pair("100%-100%"), Ok((SizeUnit::Fraction(1.0), SizeUnit::Fraction(1.0))));
+		assert_eq!(parse_size_pair("100%-200%"), Ok((SizeUnit::Fraction(1.0), SizeUnit::Fraction(2.0))));
+		assert_eq!(parse_size_pair("100%-120%"), Ok((SizeUnit::Fraction(1.0), SizeUnit::Fraction(1.2))));
+
+		// Pairs, pixels
+		assert_eq!(parse_size_pair("0-100"), Ok((SizeUnit::Pixels(0), SizeUnit::Pixels(100))));
+		assert_eq!(parse_size_pair("0.0-100"), Ok((SizeUnit::Pixels(0), SizeUnit::Pixels(100))));
+		assert_eq!(parse_size_pair("0-100.0"), Ok((SizeUnit::Pixels(0), SizeUnit::Pixels(100))));
+		assert_eq!(parse_size_pair("50.1-60"), Ok((SizeUnit::Pixels(50), SizeUnit::Pixels(60))));
+		assert_eq!(parse_size_pair("100-100"), Ok((SizeUnit::Pixels(100), SizeUnit::Pixels(100))));
+		assert_eq!(parse_size_pair("100-20000"), Ok((SizeUnit::Pixels(100), SizeUnit::Pixels(20000))));
+		assert_eq!(parse_size_pair("100-120"), Ok((SizeUnit::Pixels(100), SizeUnit::Pixels(120))));
 	}
 }
