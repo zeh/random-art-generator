@@ -1,5 +1,7 @@
 use color_processing::Color;
 
+use crate::generator::utils::units::{SizeUnit};
+
 pub fn parse_color(src: &str) -> Result<(u8, u8, u8), &str> {
 	match Color::new_string(src) {
 		Some(color) => {
@@ -63,6 +65,20 @@ pub fn parse_float_pair(src: &str) -> Result<(f64, f64), &str> {
 	}
 }
 
+pub fn parse_size(src: &str) -> Result<SizeUnit, &str> {
+	if src.ends_with("%") {
+		match src[..src.len()-1].parse::<f64>() {
+			Ok(value) => Ok(SizeUnit::Fraction(value / 100.0f64)),
+			_ => Err("Could not parse fracyion value")
+		}
+	} else {
+		match src.parse::<f64>() {
+			Ok(value) => Ok(SizeUnit::Pixels(value.round() as i32)),
+			_ => Err("Could not parse pixel value")
+		}
+	}
+}
+
 #[cfg(test)]
 mod tests {
 	use super::*;
@@ -105,5 +121,20 @@ mod tests {
 		assert_eq!(parse_float_pair("1-1"), Ok((1.0f64, 1.0f64)));
 		assert_eq!(parse_float_pair("1.0-2.0"), Ok((1.0f64, 2.0f64)));
 		assert_eq!(parse_float_pair("1-1.2"), Ok((1.0f64, 1.2f64)));
+	}
+
+	#[test]
+	fn test_parse_size() {
+		// Fraction
+		assert_eq!(parse_size("0%"), Ok(SizeUnit::Fraction(0.0)));
+		assert_eq!(parse_size("10%"), Ok(SizeUnit::Fraction(0.1)));
+		assert_eq!(parse_size("100%"), Ok(SizeUnit::Fraction(1.0)));
+		assert_eq!(parse_size("2000%"), Ok(SizeUnit::Fraction(20.0)));
+
+		// Pixels
+		assert_eq!(parse_size("0"), Ok(SizeUnit::Pixels(0)));
+		assert_eq!(parse_size("0.1"), Ok(SizeUnit::Pixels(0)));
+		assert_eq!(parse_size("190.01"), Ok(SizeUnit::Pixels(190)));
+		assert_eq!(parse_size("333190.01"), Ok(SizeUnit::Pixels(333190)));
 	}
 }
