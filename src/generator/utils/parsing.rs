@@ -42,7 +42,7 @@ pub fn parse_float_pair(src: &str) -> Result<(f64, f64), &str> {
 	match src.find('-') {
 		Some(_) => {
 			// A pair
-			let arr = src
+			let mut arr = src
 				.split('-')
 				.collect::<Vec<&str>>()
 				.iter()
@@ -52,7 +52,7 @@ pub fn parse_float_pair(src: &str) -> Result<(f64, f64), &str> {
 				}) // TODO: this should return an Err() instead
 				.collect::<Vec<f64>>();
 			if arr.len() == 2 {
-				Ok((arr[0], arr[1]))
+				Ok((arr.remove(0), arr.remove(0)))
 			} else {
 				Err("Float range length must be 2")
 			}
