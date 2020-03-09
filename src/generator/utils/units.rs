@@ -1,4 +1,4 @@
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum SizeUnit {
 	Fraction(f64),
 	Pixels(i32),
