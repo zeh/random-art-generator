@@ -69,7 +69,7 @@ pub fn parse_size(src: &str) -> Result<SizeUnit, &str> {
 	if src.ends_with("%") {
 		match src[..src.len()-1].parse::<f64>() {
 			Ok(value) => Ok(SizeUnit::Fraction(value / 100.0f64)),
-			_ => Err("Could not parse fracyion value")
+			_ => Err("Could not parse fraction value")
 		}
 	} else {
 		match src.parse::<f64>() {
