@@ -1,6 +1,8 @@
 use rand::{rngs, Rng};
 use std::f64::consts::PI;
 
+use crate::generator::utils::units::SizeUnit;
+
 #[inline(always)]
 pub fn get_random_range(rng: &mut rngs::ThreadRng, min: f64, max: f64) -> f64 {
 	if min == max {
@@ -23,6 +25,18 @@ pub fn get_random_range_bias(rng: &mut rngs::ThreadRng, min: f64, max: f64, bias
 	min + r * (max - min)
 }
 
+pub fn get_random_size_range_bias(
+	rng: &mut rngs::ThreadRng,
+	min: &SizeUnit,
+	max: &SizeUnit,
+	bias: f64,
+	pixel_size: u32,
+) -> f64 {
+	let min_pixels = min.to_pixels(pixel_size);
+	let max_pixels = max.to_pixels(pixel_size);
+	return get_random_range_bias(rng, min_pixels as f64, max_pixels as f64, bias);
+}
+
 #[inline(always)]
 pub fn get_random_int(rng: &mut rngs::ThreadRng, min: u32, max: u32) -> u32 {
 	if min == max {
@@ -39,6 +53,16 @@ pub fn get_random_ranges(rng: &mut rngs::ThreadRng, ranges: &Vec<(f64, f64)>) ->
 pub fn get_random_ranges_bias(rng: &mut rngs::ThreadRng, ranges: &Vec<(f64, f64)>, bias: f64) -> f64 {
 	let range: (f64, f64) = ranges[get_random_int(rng, 0, ranges.len() as u32) as usize];
 	get_random_range_bias(rng, range.0, range.1, bias)
+}
+
+pub fn get_random_size_ranges_bias(
+	rng: &mut rngs::ThreadRng,
+	ranges: &Vec<(SizeUnit, SizeUnit)>,
+	bias: f64,
+	pixel_size: u32,
+) -> f64 {
+	let range: &(SizeUnit, SizeUnit) = &ranges[get_random_int(rng, 0, ranges.len() as u32) as usize];
+	get_random_size_range_bias(rng, &range.0, &range.1, bias, pixel_size)
 }
 
 pub fn get_random_noise_sequence(rng: &mut rngs::ThreadRng, min: f64, max: f64) -> [f64; 256] {
