@@ -4,11 +4,9 @@ on:
   push:
     branches:
       - '*'
-    tags:
-      - '!refs/tags/*'
   pull_request:
     branches:
-      - master
+      - dev
 
 jobs:
   build:
