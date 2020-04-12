@@ -1,13 +1,13 @@
 #[derive(Clone, Debug, PartialEq)]
 pub enum SizeUnit {
 	Fraction(f64),
-	Pixels(i32),
+	Pixels(i64),
 }
 
 impl SizeUnit {
-	fn to_pixels(&self, total_size: u32) -> i32 {
+	pub fn to_pixels(&self, total_size: u32) -> i64 {
 		match self {
-			Self::Fraction(value) => (*value * total_size as f64).round() as i32,
+			Self::Fraction(value) => (*value * total_size as f64).round() as i64,
 			Self::Pixels(value) => *value,
 		}
 	}

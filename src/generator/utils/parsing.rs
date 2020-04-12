@@ -67,7 +67,7 @@ pub fn parse_size(src: &str) -> Result<SizeUnit, &str> {
 		}
 	} else {
 		match src.parse::<f64>() {
-			Ok(value) => Ok(SizeUnit::Pixels(value.round() as i32)),
+			Ok(value) => Ok(SizeUnit::Pixels(value.round() as i64)),
 			_ => Err("Could not parse pixel value"),
 		}
 	}
