@@ -12,49 +12,72 @@ jobs:
     strategy:
       matrix:
         os: [macOS-latest, windows-latest, ubuntu-latest]
+        rust: [stable]
         include:
           - os: macOS-latest
-            archive: tar
-            output: rag-macOS-beta-${{ github.ref }}-${{ github.sha }}-x86_64-apple-darwin.tar.gz
+            archive: tar.gz
+            os_name: macOS
+            target: x86_64-apple-darwin
             content_type: application/gzip
           - os: windows-latest
             archive: zip
-            output: rag-windows-beta-${{ github.ref }}-${{ github.sha }}-x86_64-pc-windows-msvc.zip
+            os_name: windows
+            target: x86_64-pc-windows-msvc
             content_type: application/zip
           - os: ubuntu-latest
-            archive: tar
-            output: rag-linux-beta-${{ github.ref }}-${{ github.sha }}-x86_64-unknown-linux-gnu.tar.gz
+            archive: tar.gz
+            os_name: linux
+            target: x86_64-unknown-linux-gnu
             content_type: application/gzip
 
     steps:
       - name: Checkout
         uses: actions/checkout@v1
 
-      - name: Install toolchain
+      - name: Install Rust toolchain
         uses: actions-rs/toolchain@v1
         with:
-          toolchain: stable
+          toolchain: ${{ matrix.rust }}
+          override: true
 
       - name: Unit tests
-        run: cargo test --verbose
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: --release
 
-      - name: Build
-        run: cargo build --verbose
+      - name: Build executable
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          toolchain: ${{ matrix.rust }}
+          args: --release --target ${{ matrix.target }}
+
+      - name: Get current time
+        uses: 1466587594/get-current-time@v1
+        id: current-time
+        with:
+          format: YYYY-MM-DD
+          utcOffset: "-05:00"
+
+      - name: Set output filename
+        id: output-name
+        run: echo "::set-output name=filename::rag-${{ matrix.os_name }}-beta-${{ steps.current-time.outputs.formattedTime }}-${{ github.sha }}-${{ matrix.target }}.${{ matrix.archive }}"
 
       - name: Build ZIP
         id: build_zip
         if: matrix.archive == 'zip'
         run: |
-          cp target/release/random-art-generator.exe .
-          7z a ${{ matrix.output }} random-art-generator.exe
+          cp target/${{ matrix.target }}/release/random-art-generator.exe rag.exe
+          7z a ${{ steps.output-name.outputs.filename }} rag.exe
       - name: Build TAR
         id: build_tar
-        if: matrix.archive == 'tar'
+        if: matrix.archive == 'tar.gz'
         run: |
-          cp target/release/random-art-generator .
-          tar czvf ${{ matrix.output }} random-art-generator
-      - name: Upload
+          cp target/${{ matrix.target }}/release/random-art-generator rag
+          tar czvf ${{ steps.output-name.outputs.filename }} rag
+      - name: Upload artifact
         uses: actions/upload-artifact@master
         with:
-          name: ${{ matrix.output }}
-          path: ${{ matrix.output }}
+          name: ${{ steps.output-name.outputs.filename }}
+          path: ${{ steps.output-name.outputs.filename }}

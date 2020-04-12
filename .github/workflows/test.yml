@@ -8,15 +8,36 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        rust: [stable]
+
     steps:
       - name: Checkout
         uses: actions/checkout@v1
 
+      - name: Install Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ matrix.rust }}
+          override: true
+
       - name: Unit tests
-        run: cargo test --verbose
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: --release
 
       - name: Format check
-        run: cargo fmt -- --check
+        uses: actions-rs/cargo@v1
+        with:
+          command: fmt
+          toolchain: ${{ matrix.rust }}
+          args: -- --check
 
-      - name: Build
-        run: cargo build --verbose
+      - name: Build executable
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          toolchain: ${{ matrix.rust }}
+          args: --release --target ${{ matrix.target }}
