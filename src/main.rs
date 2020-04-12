@@ -5,7 +5,8 @@ use image::GenericImageView;
 
 use generator::painter::circle::CirclePainter;
 use generator::painter::rect::RectPainter;
-use generator::utils::parsing::{parse_color, parse_color_matrix, parse_float_pair};
+use generator::utils::parsing::{parse_color, parse_color_matrix, parse_float_pair, parse_size_pair};
+use generator::utils::units::SizeUnit;
 use generator::Generator;
 
 mod generator;
@@ -59,24 +60,24 @@ struct Opt {
 	painter_alpha: Vec<(f64, f64)>,
 
 	/// Radius where applicable (0.0 - 1.0)
-	#[structopt(long, default_value = "0.0-0.5", parse(try_from_str = parse_float_pair))]
-	painter_radius: Vec<(f64, f64)>,
+	#[structopt(long, default_value = "0%-50%", parse(try_from_str = parse_size_pair))]
+	painter_radius: Vec<(SizeUnit, SizeUnit)>,
 
 	/// Bias for radius (0.0 = normal, -1.0 = quad bias towards small, 1.0 = quad bias towards large)
 	#[structopt(long, default_value = "0.0", allow_hyphen_values = true)]
 	painter_radius_bias: f64,
 
 	/// Width where applicable (0.0 - 1.0)
-	#[structopt(long, default_value = "0.0-1.0", parse(try_from_str = parse_float_pair))]
-	painter_width: Vec<(f64, f64)>,
+	#[structopt(long, default_value = "0%-100%", parse(try_from_str = parse_size_pair))]
+	painter_width: Vec<(SizeUnit, SizeUnit)>,
 
 	/// Bias for width (0.0 = normal, -1.0 = quad bias towards small, 1.0 = quad bias towards large)
 	#[structopt(long, default_value = "0.0", allow_hyphen_values = true)]
 	painter_width_bias: f64,
 
 	/// Height where applicable (0.0 - 1.0)
-	#[structopt(long, default_value = "0.0-1.0", parse(try_from_str = parse_float_pair))]
-	painter_height: Vec<(f64, f64)>,
+	#[structopt(long, default_value = "0%-100%", parse(try_from_str = parse_size_pair))]
+	painter_height: Vec<(SizeUnit, SizeUnit)>,
 
 	/// Bias for height (0.0 = normal, -1.0 = quad bias towards small, 1.0 = quad bias towards large)
 	#[structopt(long, default_value = "0.0", allow_hyphen_values = true)]

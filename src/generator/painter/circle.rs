@@ -4,7 +4,8 @@ use rand::{thread_rng, Rng};
 use crate::generator::painter::Painter;
 use crate::generator::utils::geom::distance;
 use crate::generator::utils::image::blend_pixel;
-use crate::generator::utils::random::{get_random_range, get_random_ranges, get_random_ranges_bias};
+use crate::generator::utils::random::{get_random_range, get_random_ranges, get_random_size_ranges_bias};
+use crate::generator::utils::units::SizeUnit;
 
 pub struct CirclePainter {
 	pub options: Options,
@@ -12,7 +13,7 @@ pub struct CirclePainter {
 
 pub struct Options {
 	pub alpha: Vec<(f64, f64)>,
-	pub radius: Vec<(f64, f64)>,
+	pub radius: Vec<(SizeUnit, SizeUnit)>,
 	pub radius_bias: f64, // 0 = normal; -1 = quad bias towards small, 1 = quad bias towards big, etc
 	pub anti_alias: bool,
 }
@@ -21,7 +22,7 @@ impl CirclePainter {
 	pub fn new() -> CirclePainter {
 		let options = Options {
 			alpha: vec![(1.0, 1.0)],
-			radius: vec![(0.0, 0.5)],
+			radius: vec![(SizeUnit::Fraction(0.0), SizeUnit::Fraction(0.5))],
 			radius_bias: 0.0f64,
 			anti_alias: true,
 		};
@@ -36,12 +37,14 @@ impl Painter for CirclePainter {
 	fn paint(&self, canvas: &RgbImage) -> RgbImage {
 		let mut rng = thread_rng();
 
-		let image_w = canvas.dimensions().0 as f64;
-		let image_h = canvas.dimensions().1 as f64;
+		let image_w_i = canvas.dimensions().0;
+		let image_h_i = canvas.dimensions().1;
+		let image_w = image_w_i as f64;
+		let image_h = image_h_i as f64;
 
 		// Find random radius
 		let radius: f64 =
-			get_random_ranges_bias(&mut rng, &self.options.radius, self.options.radius_bias) * image_w;
+			get_random_size_ranges_bias(&mut rng, &self.options.radius, self.options.radius_bias, image_w_i);
 
 		// Distribute along the axis too
 		let circle_x: f64 = get_random_range(&mut rng, 0.0f64, 1.0f64) * (image_w - radius * 2.0f64);
