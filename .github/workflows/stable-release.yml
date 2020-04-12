@@ -1,4 +1,4 @@
-name: Release
+name: Stable release
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
 
 jobs:
   release:
-    name: Release for ${{ matrix.os }}
+    name: Stable (master) release for ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -15,15 +15,15 @@ jobs:
         include:
           - os: macOS-latest
             archive: tar
-            output: rag-macOS-${{ github.ref }}-${{ github.sha }}-x86_64-apple-darwin.tar.gz
+            output: rag-macOS-stable-${{ github.ref }}-${{ github.sha }}-x86_64-apple-darwin.tar.gz
             content_type: application/gzip
           - os: windows-latest
             archive: zip
-            output: rag-windows-${{ github.ref }}-${{ github.sha }}-x86_64-pc-windows-msvc.zip
+            output: rag-windows-stable-${{ github.ref }}-${{ github.sha }}-x86_64-pc-windows-msvc.zip
             content_type: application/zip
           - os: ubuntu-latest
             archive: tar
-            output: rag-linux-${{ github.ref }}-${{ github.sha }}-x86_64-unknown-linux-gnu.tar.gz
+            output: rag-linux-stable-${{ github.ref }}-${{ github.sha }}-x86_64-unknown-linux-gnu.tar.gz
             content_type: application/gzip
 
     steps:
@@ -35,11 +35,11 @@ jobs:
         with:
           toolchain: stable
 
-      - name: Build
-        run: cargo build --verbose --release
-
-      - name: Test
+      - name: Unit tests
         run: cargo test --verbose
+
+      - name: Build
+        run: cargo build --verbose
 
       - name: Build ZIP
         id: build_zip
@@ -58,3 +58,5 @@ jobs:
         with:
           name: ${{ matrix.output }}
           path: ${{ matrix.output }}
+
+# TODO: add to artifacts on GitHub's Tag/Release tab
