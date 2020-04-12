@@ -1,6 +1,6 @@
 use color_processing::Color;
 
-use crate::generator::utils::units::{SizeUnit};
+use crate::generator::utils::units::SizeUnit;
 
 pub fn parse_color(src: &str) -> Result<(u8, u8, u8), &str> {
 	match Color::new_string(src) {
@@ -20,10 +20,7 @@ pub fn parse_color_matrix(src: &str) -> Result<[f64; 12], &str> {
 		.split(',')
 		.collect::<Vec<&str>>()
 		.iter()
-		.map(|&e| {
-			e.parse::<f64>()
-				.expect("Cannot convert matrix element to float")
-		}) // TODO: this should return an Err() instead
+		.map(|&e| e.parse::<f64>().expect("Cannot convert matrix element to float")) // TODO: this should return an Err() instead
 		.collect::<Vec<f64>>();
 	if matrix_vec.len() == 12 {
 		// Convert matrix vector to array
@@ -46,10 +43,7 @@ pub fn parse_float_pair(src: &str) -> Result<(f64, f64), &str> {
 				.split('-')
 				.collect::<Vec<&str>>()
 				.iter()
-				.map(|&e| {
-					e.parse::<f64>()
-						.expect("Cannot convert matrix element to float")
-				}) // TODO: this should return an Err() instead
+				.map(|&e| e.parse::<f64>().expect("Cannot convert matrix element to float")) // TODO: this should return an Err() instead
 				.collect::<Vec<f64>>();
 			if arr.len() == 2 {
 				Ok((arr.remove(0), arr.remove(0)))
@@ -67,14 +61,14 @@ pub fn parse_float_pair(src: &str) -> Result<(f64, f64), &str> {
 
 pub fn parse_size(src: &str) -> Result<SizeUnit, &str> {
 	if src.ends_with("%") {
-		match src[..src.len()-1].parse::<f64>() {
+		match src[..src.len() - 1].parse::<f64>() {
 			Ok(value) => Ok(SizeUnit::Fraction(value / 100.0f64)),
-			_ => Err("Could not parse fraction value")
+			_ => Err("Could not parse fraction value"),
 		}
 	} else {
 		match src.parse::<f64>() {
 			Ok(value) => Ok(SizeUnit::Pixels(value.round() as i32)),
-			_ => Err("Could not parse pixel value")
+			_ => Err("Could not parse pixel value"),
 		}
 	}
 }
@@ -88,10 +82,7 @@ pub fn parse_size_pair(src: &str) -> Result<(SizeUnit, SizeUnit), &str> {
 				.split('-')
 				.collect::<Vec<&str>>()
 				.iter()
-				.map(|&e| {
-					parse_size(e)
-						.expect("Cannot size element to unit")
-				}) // TODO: this should return an Err() instead
+				.map(|&e| parse_size(e).expect("Cannot size element to unit")) // TODO: this should return an Err() instead
 				.collect::<Vec<SizeUnit>>();
 			if arr.len() == 2 {
 				Ok((arr.remove(0), arr.remove(0)))
@@ -104,7 +95,7 @@ pub fn parse_size_pair(src: &str) -> Result<(SizeUnit, SizeUnit), &str> {
 			let size = parse_size(src);
 			match size {
 				Ok(value) => Ok((value.clone(), value)),
-				Err(error) => Err(error)
+				Err(error) => Err(error),
 			}
 		}
 	}

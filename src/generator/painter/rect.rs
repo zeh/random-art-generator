@@ -1,9 +1,9 @@
 use image::{Pixel, Rgb, RgbImage};
-use rand::{Rng, thread_rng};
+use rand::{thread_rng, Rng};
 
-use crate::generator::utils::image::{blend_pixel};
+use crate::generator::painter::Painter;
+use crate::generator::utils::image::blend_pixel;
 use crate::generator::utils::random::{get_random_range, get_random_ranges, get_random_ranges_bias};
-use crate::generator::painter::{Painter};
 
 pub struct RectPainter {
 	pub options: Options,
@@ -41,8 +41,10 @@ impl Painter for RectPainter {
 		let image_h = canvas.dimensions().1 as f64;
 
 		// Find random dimensions
-		let rect_w: f64 = get_random_ranges_bias(&mut rng, &self.options.width, self.options.width_bias) * image_w;
-		let rect_h: f64 = get_random_ranges_bias(&mut rng, &self.options.height, self.options.height_bias) * image_h;
+		let rect_w: f64 =
+			get_random_ranges_bias(&mut rng, &self.options.width, self.options.width_bias) * image_w;
+		let rect_h: f64 =
+			get_random_ranges_bias(&mut rng, &self.options.height, self.options.height_bias) * image_h;
 
 		// Distribute along the axis too
 		let rect_x: f64 = get_random_range(&mut rng, 0.0f64, 1.0f64) * (image_w - rect_w);
@@ -66,13 +68,8 @@ impl Painter for RectPainter {
 		let mut painted_canvas = canvas.clone();
 		for x in x1..x2 {
 			for y in y1..y2 {
-				let new_pixel = Rgb(
-					blend_pixel(
-						painted_canvas.get_pixel(x, y).channels(),
-						top_pixel_channels,
-						alpha
-					)
-				);
+				let new_pixel =
+					Rgb(blend_pixel(painted_canvas.get_pixel(x, y).channels(), top_pixel_channels, alpha));
 				painted_canvas.put_pixel(x, y, new_pixel);
 			}
 		}

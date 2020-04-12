@@ -1,5 +1,5 @@
-use rand::{Rng, rngs};
-use std::f64::consts::{PI};
+use rand::{rngs, Rng};
+use std::f64::consts::PI;
 
 #[inline(always)]
 pub fn get_random_range(rng: &mut rngs::ThreadRng, min: f64, max: f64) -> f64 {
@@ -51,7 +51,11 @@ pub fn get_random_noise_sequence(rng: &mut rngs::ThreadRng, min: f64, max: f64) 
 
 #[inline(always)]
 pub fn get_noise_value(noise: [f64; 256], position: f64) -> f64 {
-	let pp = if position < 0.0 { 1.0 - position.abs() } else { position };
+	let pp = if position < 0.0 {
+		1.0 - position.abs()
+	} else {
+		position
+	};
 	let pp = pp.fract() * 256.0f64;
 	let p1 = pp.floor() as usize;
 	let p2 = (p1 + 1) % 256;

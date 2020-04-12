@@ -5,14 +5,13 @@ pub enum SizeUnit {
 }
 
 impl SizeUnit {
-	fn to_pixels(&self, total_size: i32) -> i32 {
-        match self {
-            Self::Fraction(value) => (*value * total_size as f64).round() as i32,
-            Self::Pixels(value) => *value,
-        }
-    }
+	fn to_pixels(&self, total_size: u32) -> i32 {
+		match self {
+			Self::Fraction(value) => (*value * total_size as f64).round() as i32,
+			Self::Pixels(value) => *value,
+		}
+	}
 }
-
 
 #[cfg(test)]
 mod tests {

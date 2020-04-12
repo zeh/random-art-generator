@@ -3,10 +3,10 @@ use structopt::StructOpt;
 
 use image::GenericImageView;
 
-use generator::{Generator};
-use generator::painter::circle::{CirclePainter};
-use generator::painter::rect::{RectPainter};
+use generator::painter::circle::CirclePainter;
+use generator::painter::rect::RectPainter;
 use generator::utils::parsing::{parse_color, parse_color_matrix, parse_float_pair};
+use generator::Generator;
 
 mod generator;
 
@@ -51,7 +51,7 @@ struct Opt {
 	scale: f64,
 
 	/// Painter to be used ("rects", "circles")
-    #[structopt(short, long, possible_values = &["rects", "circles"], default_value = "rects")]
+	#[structopt(short, long, possible_values = &["rects", "circles"], default_value = "rects")]
 	painter: String,
 
 	/// The alphas to be used at random. Examples: "1.0", "0.1", "0.1-0.2", "0.1-0.2 0.3 0.5 0.9-1.0"
@@ -96,8 +96,7 @@ fn on_attempt(generator: &Generator, success: bool) {
 		// TODO: a bit repetitive, investigate how to add properties to callbacks
 		let options = get_options();
 		let output_file = options.output.as_path();
-		generator.get_current().save(output_file)
-			.expect("Cannot write to output file {:?}, exiting");
+		generator.get_current().save(output_file).expect("Cannot write to output file {:?}, exiting");
 	}
 }
 
@@ -106,8 +105,7 @@ fn main() {
 
 	// Target
 	let target_file = options.target.as_path();
-	let target_image = image::open(target_file)
-		.expect("Cannot open target file {:?}, exiting");
+	let target_image = image::open(target_file).expect("Cannot open target file {:?}, exiting");
 
 	println!("Using target image of {:?} with dimensions of {:?}.", target_file, target_image.dimensions());
 
@@ -116,28 +114,31 @@ fn main() {
 		Some(color_matrix) => {
 			// Target has a color matrix, parse it first
 			generator::Generator::from_image_and_matrix(target_image, options.scale, color_matrix)
-		},
+		}
 		None => {
 			// No color matrix needed, generate with the image
 			generator::Generator::from_image(target_image, options.scale)
-		},
+		}
 	};
 
 	// Set input
 	match options.input {
 		Some(input) => {
 			let input_file = input.as_path();
-			let input_image = image::open(input_file)
-				.expect("Cannot open input file {:?}, exiting");
+			let input_image = image::open(input_file).expect("Cannot open input file {:?}, exiting");
 
-			println!("Using input image of {:?} with dimensions of {:?}.", input_file, input_image.dimensions());
+			println!(
+				"Using input image of {:?} with dimensions of {:?}.",
+				input_file,
+				input_image.dimensions()
+			);
 
 			gen.prepopulate_with_image(input_image);
-		},
+		}
 		None => {
 			let color = options.background_color;
 			gen.prepopulate_with_color(color.0, color.1, color.2);
-		},
+		}
 	}
 
 	// Set output
@@ -155,7 +156,7 @@ fn main() {
 			painter.options.radius_bias = options.painter_radius_bias;
 			painter.options.anti_alias = !options.painter_disable_anti_alias;
 			gen.process(options.attempts, options.generations, painter, Some(on_attempt));
-		},
+		}
 		"rects" => {
 			let mut painter = RectPainter::new();
 			painter.options.alpha = options.painter_alpha;
@@ -164,9 +165,8 @@ fn main() {
 			painter.options.height = options.painter_height;
 			painter.options.height_bias = options.painter_height_bias;
 			gen.process(options.attempts, options.generations, painter, Some(on_attempt));
-		},
-		_ => unreachable!()
+		}
+		_ => unreachable!(),
 	}
-	gen.get_current().save(output_file)
-		.expect("Cannot write to output file {:?}, exiting");
+	gen.get_current().save(output_file).expect("Cannot write to output file {:?}, exiting");
 }
