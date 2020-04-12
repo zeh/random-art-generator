@@ -1,0 +1,60 @@
+name: Beta release
+
+on:
+  push:
+    branches:
+      - dev
+
+jobs:
+  release:
+    name: Beta (dev) release for ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [macOS-latest, windows-latest, ubuntu-latest]
+        include:
+          - os: macOS-latest
+            archive: tar
+            output: rag-macOS-beta-${{ github.ref }}-${{ github.sha }}-x86_64-apple-darwin.tar.gz
+            content_type: application/gzip
+          - os: windows-latest
+            archive: zip
+            output: rag-windows-beta-${{ github.ref }}-${{ github.sha }}-x86_64-pc-windows-msvc.zip
+            content_type: application/zip
+          - os: ubuntu-latest
+            archive: tar
+            output: rag-linux-beta-${{ github.ref }}-${{ github.sha }}-x86_64-unknown-linux-gnu.tar.gz
+            content_type: application/gzip
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v1
+
+      - name: Install toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+
+      - name: Unit tests
+        run: cargo test --verbose
+
+      - name: Build
+        run: cargo build --verbose
+
+      - name: Build ZIP
+        id: build_zip
+        if: matrix.archive == 'zip'
+        run: |
+          cp target/release/random-art-generator.exe .
+          7z a ${{ matrix.output }} random-art-generator.exe
+      - name: Build TAR
+        id: build_tar
+        if: matrix.archive == 'tar'
+        run: |
+          cp target/release/random-art-generator .
+          tar czvf ${{ matrix.output }} random-art-generator
+      - name: Upload
+        uses: actions/upload-artifact@master
+        with:
+          name: ${{ matrix.output }}
+          path: ${{ matrix.output }}
