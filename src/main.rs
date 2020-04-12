@@ -5,6 +5,7 @@ use image::GenericImageView;
 
 use generator::painter::circle::CirclePainter;
 use generator::painter::rect::RectPainter;
+use generator::painter::stroke::StrokePainter;
 use generator::utils::parsing::{parse_color, parse_color_matrix, parse_float_pair, parse_size_pair};
 use generator::utils::units::SizeUnit;
 use generator::Generator;
@@ -52,7 +53,7 @@ struct Opt {
 	scale: f64,
 
 	/// Painter to be used ("rects", "circles")
-	#[structopt(short, long, possible_values = &["rects", "circles"], default_value = "rects")]
+	#[structopt(short, long, possible_values = &["circles", "strokes", "rects"], default_value = "rects")]
 	painter: String,
 
 	/// The alphas to be used at random. Examples: "1.0", "0.1", "0.1-0.2", "0.1-0.2 0.3 0.5 0.9-1.0"
@@ -86,6 +87,22 @@ struct Opt {
 	/// Disables anti-alias where possible
 	#[structopt(long)]
 	painter_disable_anti_alias: bool,
+
+	/// List of size ranges; waviness when applicable
+	#[structopt(long, default_value = "0.5%", parse(try_from_str = parse_size_pair))]
+	painter_wave_height: Vec<(SizeUnit, SizeUnit)>,
+
+	/// Number; bias for waviness (0.0 = normal, -1.0 = quad bias towards small, 1.0 = quad bias towards large)
+	#[structopt(long, default_value = "0.0", allow_hyphen_values = true)]
+	painter_wave_height_bias: f64,
+
+	/// List of size ranges; waviness when applicable
+	#[structopt(long, default_value = "400%", parse(try_from_str = parse_size_pair))]
+	painter_wave_length: Vec<(SizeUnit, SizeUnit)>,
+
+	/// Number; bias for waviness (0.0 = normal, -1.0 = quad bias towards small, 1.0 = quad bias towards large)
+	#[structopt(long, default_value = "0.0", allow_hyphen_values = true)]
+	painter_wave_length_bias: f64,
 }
 
 fn get_options() -> Opt {
@@ -165,6 +182,20 @@ fn main() {
 			painter.options.width_bias = options.painter_width_bias;
 			painter.options.height = options.painter_height;
 			painter.options.height_bias = options.painter_height_bias;
+			gen.process(options.attempts, options.generations, painter, Some(on_attempt));
+		}
+		"strokes" => {
+			let mut painter = StrokePainter::new();
+			painter.options.alpha = options.painter_alpha;
+			painter.options.width = options.painter_width;
+			painter.options.width_bias = options.painter_width_bias;
+			painter.options.height = options.painter_height;
+			painter.options.height_bias = options.painter_height_bias;
+			painter.options.wave_height = options.painter_wave_height;
+			painter.options.wave_height_bias = options.painter_wave_height_bias;
+			painter.options.wave_length = options.painter_wave_length;
+			painter.options.wave_length_bias = options.painter_wave_length_bias;
+			painter.options.anti_alias = !options.painter_disable_anti_alias;
 			gen.process(options.attempts, options.generations, painter, Some(on_attempt));
 		}
 		_ => unreachable!(),
