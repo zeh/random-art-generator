@@ -1,7 +1,7 @@
-use image::{RgbImage};
+use image::RgbImage;
 
-pub mod rect;
 pub mod circle;
+pub mod rect;
 
 pub trait Painter {
 	fn paint(&self, canvas: &RgbImage) -> RgbImage;

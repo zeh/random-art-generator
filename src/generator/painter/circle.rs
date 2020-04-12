@@ -1,9 +1,9 @@
 use image::{Pixel, Rgb, RgbImage};
-use rand::{Rng, thread_rng};
+use rand::{thread_rng, Rng};
 
-use crate::generator::painter::{Painter};
-use crate::generator::utils::geom::{distance};
-use crate::generator::utils::image::{blend_pixel};
+use crate::generator::painter::Painter;
+use crate::generator::utils::geom::distance;
+use crate::generator::utils::image::blend_pixel;
 use crate::generator::utils::random::{get_random_range, get_random_ranges, get_random_ranges_bias};
 
 pub struct CirclePainter {
@@ -40,7 +40,8 @@ impl Painter for CirclePainter {
 		let image_h = canvas.dimensions().1 as f64;
 
 		// Find random radius
-		let radius: f64 = get_random_ranges_bias(&mut rng, &self.options.radius, self.options.radius_bias) * image_w;
+		let radius: f64 =
+			get_random_ranges_bias(&mut rng, &self.options.radius, self.options.radius_bias) * image_w;
 
 		// Distribute along the axis too
 		let circle_x: f64 = get_random_range(&mut rng, 0.0f64, 1.0f64) * (image_w - radius * 2.0f64);
@@ -75,16 +76,18 @@ impl Painter for CirclePainter {
 						if self.options.anti_alias {
 							abs
 						} else {
-							if abs >= 0.5f64 { 1.0f64 } else { 0.0f64 }
+							if abs >= 0.5f64 {
+								1.0f64
+							} else {
+								0.0f64
+							}
 						}
 					};
-					let new_pixel = Rgb(
-						blend_pixel(
-							painted_canvas.get_pixel(x, y).channels(),
-							top_pixel_channels,
-							new_alpha * alpha
-						)
-					);
+					let new_pixel = Rgb(blend_pixel(
+						painted_canvas.get_pixel(x, y).channels(),
+						top_pixel_channels,
+						new_alpha * alpha,
+					));
 					painted_canvas.put_pixel(x, y, new_pixel);
 				}
 			}

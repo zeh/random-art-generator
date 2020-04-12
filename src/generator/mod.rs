@@ -1,6 +1,6 @@
 use image::{DynamicImage, Rgb, RgbImage};
-use painter::{Painter};
-use std::time::{Instant};
+use painter::Painter;
+use std::time::Instant;
 
 use crate::generator::utils::image::{color_transform, diff, scale_image};
 
@@ -127,9 +127,22 @@ impl Generator {
 		let atts = total_att as f64 * 1000.0;
 
 		let final_diff = diff(&self.current, &self.target);
-		println!("Finished {} attempts in {:.3}s ({:.3}ms avg per attempt).", total_att, time_elapsed, time_elapsed_attempt as f64 / atts);
-		println!("Attempt took an average of {:.3}ms for painting, and {:.3}ms for diffing.", time_elapsed_paint as f64 / atts, time_elapsed_diff as f64 / atts);
-		println!("Produced {} generations, a {:.2}% success rate.", total_gen, total_gen as f64 / total_att as f64 * 100.0);
+		println!(
+			"Finished {} attempts in {:.3}s ({:.3}ms avg per attempt).",
+			total_att,
+			time_elapsed,
+			time_elapsed_attempt as f64 / atts
+		);
+		println!(
+			"Attempt took an average of {:.3}ms for painting, and {:.3}ms for diffing.",
+			time_elapsed_paint as f64 / atts,
+			time_elapsed_diff as f64 / atts
+		);
+		println!(
+			"Produced {} generations, a {:.2}% success rate.",
+			total_gen,
+			total_gen as f64 / total_att as f64 * 100.0
+		);
 		println!("The final difference from target is {:.2}%.", final_diff * 100.0);
 	}
 
