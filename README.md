@@ -2,7 +2,7 @@
 
 # Random Art Generator
 
-![GitHub](https://img.shields.io/github/license/zeh/art-generator)
+![GitHub](https://img.shields.io/github/license/zeh/random-art-generator)
 </div>
 
 Random Art Generator is a command-line application to produce generative art.
@@ -13,35 +13,49 @@ Technically known as [hill climbing](https://en.wikipedia.org/wiki/Hill_climbing
 
 This application is written in [Rust](https://www.rust-lang.org/). Currently, only the source code is provided, as no downloadable and executable binaries are created. This will likely change in the future, as both macOS/Windows/Linux applications and Webasm targets are planned.
 
-## Run
+## Downloading Random Art Generator
 
-Since the application is provided as source code, it need to be compiled and ran by [Cargo](https://doc.rust-lang.org/cargo/getting-started/installation.html).
+Check the [beta build actions](https://github.com/zeh/random-art-generator/actions?query=workflow%3A%22Beta+release%22+is%3Asuccess), click any of the builds, and download the executable file built for your system. Windows, Linux, and macOS builds are currently available, and each package contains a single command-line executable ("rag") that can be used.
+
+New beta builds are made on every merge to the `dev` branch. In the future, stable releases and changelogs should be available once the application reaches a more mature state.
+
+## Running Random Art Generator
 
 Basic example with general parameters:
 
 ```shell
-cargo run -- target.jpg [--input input.jpg] [--output output.png] --attempts 10 --generations 10 [--background-color ff0022] [--scale 2.0] [--painter rects|circles] [--painter-alpha 0.1-0.2 1.0]
+rag target.jpg [--input input.jpg] [--output output.png] --attempts 10 --generations 10 [--background-color ff0022] [--scale 2.0] [--painter rects|circles] [--painter-alpha 0.1-0.2 1.0]
 ```
 
 Circles painter example with specific parameters:
 
 ```shell
-cargo run -- target.jpg --generations 10 --painter circles [--painter-alpha 0.1-0.2 1.0] [--painter-radius 0.0-0.5] [--painter-radius-bias -3]
+rag target.jpg --generations 10 --painter circles [--painter-alpha 0.1-0.2 1.0] [--painter-radius 1-100] [--painter-radius-bias -3]
 ```
 
 Rects painter example with specific parameters:
 
 ```shell
-cargo run -- target.jpg --generations 10 --painter rects [--painter-alpha 0.1-0.2 1.0] [--painter-width 0.0-0.5] [--painter-width-bias -3] [--painter-height 0.0-0.5] [--painter-height-bias -3]
+rag target.jpg --generations 10 --painter rects [--painter-alpha 0.1-0.2 1.0] [--painter-width 1-100] [--painter-width-bias -3] [--painter-height 1-100] [--painter-height-bias -3]
 ```
 
 Command line switches are still being added. For a full list of the currently available switches and a brief explanation, run:
 
 ```shell
-cargo run -- --help
+rag --help
 ```
 
 Or check [the struct source code](https://github.com/zeh/art-generator/blob/master/src/main.rs#L15).
+
+More in-depth explanations will be available soon.
+
+## Running the latest code
+
+Check out the `dev` branch. Once Rust is installed, the code can be compiled and ran by [Cargo](https://doc.rust-lang.org/cargo/getting-started/installation.html) with `cargo run -- (other parameters)`. For example:
+
+```shell
+cargo run -- target.jpg [--input input.jpg] [--output output.png] --attempts 10 --generations 10 [--background-color ff0022] [--scale 2.0] [--painter rects|circles] [--painter-alpha 0.1-0.2 1.0]
+```
 
 ## Testing
 
@@ -50,7 +64,6 @@ Non-exhaustive unit tests also exist.
 ```shell
 cargo test
 ```
-
 
 ## Create release binary
 
