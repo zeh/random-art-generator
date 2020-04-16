@@ -49,12 +49,12 @@ impl Generator {
 		self.current = RgbImage::from_pixel(dimensions.0, dimensions.1, Rgb([r, g, b]))
 	}
 
-	pub fn process(&mut self, attempts: u32, generations: u32, painter: impl Painter, cb: Option<Callback>) {
+	pub fn process(&mut self, tries: u32, generations: u32, painter: impl Painter, cb: Option<Callback>) {
 		let mut new_candidate;
 		let mut new_diff;
 		let mut curr_diff = diff(&self.current, &self.target);
 
-		println!("Starting attempts; initial difference from target is {:.2}%.", curr_diff * 100.0);
+		println!("Starting iterations; initial difference from target is {:.2}%.", curr_diff * 100.0);
 
 		let mut used;
 
@@ -63,14 +63,14 @@ impl Generator {
 		let mut time_elapsed_paint = 0;
 		let mut time_started_diff;
 		let mut time_elapsed_diff = 0;
-		let mut time_started_attempt;
-		let mut time_elapsed_attempt = 0;
+		let mut time_started_iteration;
+		let mut time_elapsed_iteration = 0;
 
-		let mut total_att: u32 = 0;
+		let mut total_tries: u32 = 0;
 		let mut total_gen: u32 = 0;
 
 		loop {
-			time_started_attempt = Instant::now();
+			time_started_iteration = Instant::now();
 			used = false;
 
 			time_started_paint = Instant::now();
@@ -93,17 +93,17 @@ impl Generator {
 				None => (),
 			}
 
-			total_att += 1;
+			total_tries += 1;
 
-			time_elapsed_attempt += time_started_attempt.elapsed().as_micros();
+			time_elapsed_iteration += time_started_iteration.elapsed().as_micros();
 
 			// Only output log if the generation succeeded
 			if used {
-				// Attempts block
-				if attempts > 0 {
-					print!("Attempt {}/{} is useful; ", total_att + 1, attempts);
+				// Tries block
+				if tries > 0 {
+					print!("Try {}/{} is useful; ", total_tries + 1, tries);
 				} else {
-					print!("Attempt {} is useful; ", total_att + 1);
+					print!("Try {} is useful; ", total_tries + 1);
 				}
 
 				// Generations block
@@ -117,31 +117,31 @@ impl Generator {
 				println!("new difference is {:.2}%", new_diff * 100.0);
 			}
 
-			if (attempts > 0 && total_att == attempts) || (generations > 0 && total_gen == generations) {
-				// Requirements reached, can stop attempts
+			if (tries > 0 && total_tries == tries) || (generations > 0 && total_gen == generations) {
+				// Requirements reached, can stop iterations
 				break;
 			}
 		}
 
 		let time_elapsed = time_started.elapsed().as_secs_f32();
-		let atts = total_att as f64 * 1000.0;
+		let atts = total_tries as f64 * 1000.0;
 
 		let final_diff = diff(&self.current, &self.target);
 		println!(
-			"Finished {} attempts in {:.3}s ({:.3}ms avg per attempt).",
-			total_att,
+			"Finished {} tries in {:.3}s ({:.3}ms avg per try).",
+			total_tries,
 			time_elapsed,
-			time_elapsed_attempt as f64 / atts
+			time_elapsed_iteration as f64 / atts
 		);
 		println!(
-			"Attempt took an average of {:.3}ms for painting, and {:.3}ms for diffing.",
+			"Tries took an average of {:.3}ms for painting, and {:.3}ms for diffing.",
 			time_elapsed_paint as f64 / atts,
 			time_elapsed_diff as f64 / atts
 		);
 		println!(
 			"Produced {} generations, a {:.2}% success rate.",
 			total_gen,
-			total_gen as f64 / total_att as f64 * 100.0
+			total_gen as f64 / total_tries as f64 * 100.0
 		);
 		println!("The final difference from target is {:.2}%.", final_diff * 100.0);
 	}

@@ -19,9 +19,9 @@ struct Opt {
 	#[structopt(parse(from_os_str))]
 	target: PathBuf,
 
-	/// Minimum number of iterations (successful or nor) to run (0 = no minimum)
-	#[structopt(short, long, default_value = "0", required_if("generations", "0"))]
-	attempts: u32,
+	/// Maximum number of iterations (successful or nor) to run (0 = no maximum)
+	#[structopt(short = "t", long, default_value = "0", required_if("generations", "0"))]
+	max_tries: u32,
 
 	/// Minimum number of generations (successful attempts) required (0 = no minimum)
 	#[structopt(short, long, default_value = "0", required_if("attempts", "0"))]
@@ -109,7 +109,7 @@ fn get_options() -> Opt {
 	return Opt::from_args();
 }
 
-fn on_attempt(generator: &Generator, success: bool) {
+fn on_tried(generator: &Generator, success: bool) {
 	if success {
 		// TODO: a bit repetitive, investigate how to add properties to callbacks
 		let options = get_options();
@@ -173,7 +173,7 @@ fn main() {
 			painter.options.radius = options.painter_radius;
 			painter.options.radius_bias = options.painter_radius_bias;
 			painter.options.anti_alias = !options.painter_disable_anti_alias;
-			gen.process(options.attempts, options.generations, painter, Some(on_attempt));
+			gen.process(options.max_tries, options.generations, painter, Some(on_tried));
 		}
 		"rects" => {
 			let mut painter = RectPainter::new();
@@ -182,7 +182,7 @@ fn main() {
 			painter.options.width_bias = options.painter_width_bias;
 			painter.options.height = options.painter_height;
 			painter.options.height_bias = options.painter_height_bias;
-			gen.process(options.attempts, options.generations, painter, Some(on_attempt));
+			gen.process(options.max_tries, options.generations, painter, Some(on_tried));
 		}
 		"strokes" => {
 			let mut painter = StrokePainter::new();
@@ -196,7 +196,7 @@ fn main() {
 			painter.options.wave_length = options.painter_wave_length;
 			painter.options.wave_length_bias = options.painter_wave_length_bias;
 			painter.options.anti_alias = !options.painter_disable_anti_alias;
-			gen.process(options.attempts, options.generations, painter, Some(on_attempt));
+			gen.process(options.max_tries, options.generations, painter, Some(on_tried));
 		}
 		_ => unreachable!(),
 	}
