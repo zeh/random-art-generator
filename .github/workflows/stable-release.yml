@@ -63,7 +63,7 @@ jobs:
       # TODO: in the future, this should probably grab the Cargo.toml version
       - name: Get the tag name for version
         id: current-version
-        run: echo ::set-output name=version::${GITHUB_REF/refs\/tags\//}
+        run: echo ::set-output name=version::${GITHUB_REF#refs/tags/v}
 
       - name: Set output filename
         id: output-name
