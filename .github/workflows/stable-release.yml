@@ -3,7 +3,7 @@ name: Stable release
 on:
   push:
     tags:
-      - 'v\d+\.\d+\.\d+.*'
+      - 'v*'
 
 jobs:
   release:
