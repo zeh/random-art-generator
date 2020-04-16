@@ -19,27 +19,46 @@ struct Opt {
 	#[structopt(parse(from_os_str))]
 	target: PathBuf,
 
-	/// Maximum number of iterations (successful or nor) to run (0 = no maximum)
+	/// Integer; maximum number of iterations (successful or nor) to run (0 = no maximum)
 	#[structopt(short = "t", long, default_value = "0", required_if("generations", "0"))]
 	max_tries: u32,
 
-	/// Minimum number of generations (successful attempts) required (0 = no minimum)
-	#[structopt(short, long, default_value = "0", required_if("attempts", "0"))]
+	/// Integer; minimum number of generations (successful tries) required (0 = no minimum)
+	#[structopt(short, long, default_value = "0", required_if("max_tries", "0"))]
 	generations: u32,
 
-	/// The output image filename
+	/// String; the output image filename
 	#[structopt(short, long, default_value = "output.png", parse(from_os_str))]
 	output: PathBuf,
 
-	/// The input image filename, if any
+	/// String; the input image filename, if any
 	#[structopt(short, long, parse(from_os_str))]
 	input: Option<PathBuf>,
 
-	/// The starting background color, if any, in hex rrggbb format
+	/// The color to be used as the default background for the new image, as a string in the typical HTML color formats.
+	///
+	/// Some examples of valid parameters:
+	///
+	/// * `white`
+	/// * `'#ff0'`
+	/// * `'#4C4C4C'`
+	/// * `'rgb(76, 76, 76)'`
+	/// * `'cmyk(0%, 0%, 0%, 70%)'`
+	/// * `'hsl(0, 0%, 29.8%)'`
+	///
+	/// Notice that in some cases, the terminal might have trouble with parameters starting with the character `#` or containing spaces,
+	/// hence why quotes might be required for the value.
+	///
+	/// Additionally, to pass hexadecimal arguments, the following syntax also works:
+	///
+	/// * `ff0`
+	/// * `4C4C4C`
+	///
+	/// This argument is parsed by the [color_processing](https://docs.rs/color_processing) crate.
 	#[structopt(long, default_value = "000000", parse(try_from_str = parse_color))]
 	background_color: (u8, u8, u8),
 
-	/// A 3x4 color matrix to be applied to the target image, as a comma-separated number list
+	/// Comma-separated number array; a 3x4 color matrix to be applied to the target image
 	///
 	/// This is in the format "r_from_r,r_from_g,r_from_b,r_offset,g_from_r,g_from_b,...". For example:
 	/// * Identity is "1,0,0,0,0,1,0,0,0,0,1,0"
@@ -49,42 +68,43 @@ struct Opt {
 	#[structopt(long, parse(try_from_str = parse_color_matrix))]
 	target_color_matrix: Option<[f64; 12]>,
 
+	/// Number; the new size of the output image, as a scale of the target image
 	#[structopt(short, long, default_value = "1")]
 	scale: f64,
 
-	/// Painter to be used ("rects", "circles")
+	/// String; painter to be used ("circles", "strokes", "rects")
 	#[structopt(short, long, possible_values = &["circles", "strokes", "rects"], default_value = "rects")]
 	painter: String,
 
-	/// The alphas to be used at random. Examples: "1.0", "0.1", "0.1-0.2", "0.1-0.2 0.3 0.5 0.9-1.0"
+	/// List of number ranges; the alphas to be used at random. Examples: "1.0", "0.1", "0.1-0.2", "0.1-0.2 0.3 0.5 0.9-1.0"
 	#[structopt(long, default_value = "1", parse(try_from_str = parse_float_pair))]
 	painter_alpha: Vec<(f64, f64)>,
 
-	/// Radius where applicable (0.0 - 1.0)
+	/// List of size ranges; the radius when applicable
 	#[structopt(long, default_value = "0%-50%", parse(try_from_str = parse_size_pair))]
 	painter_radius: Vec<(SizeUnit, SizeUnit)>,
 
-	/// Bias for radius (0.0 = normal, -1.0 = quad bias towards small, 1.0 = quad bias towards large)
+	/// Number; bias for radius (0.0 = normal, -1.0 = quad bias towards small, 1.0 = quad bias towards large)
 	#[structopt(long, default_value = "0.0", allow_hyphen_values = true)]
 	painter_radius_bias: f64,
 
-	/// Width where applicable (0.0 - 1.0)
+	/// List of size ranges; width when applicable
 	#[structopt(long, default_value = "0%-100%", parse(try_from_str = parse_size_pair))]
 	painter_width: Vec<(SizeUnit, SizeUnit)>,
 
-	/// Bias for width (0.0 = normal, -1.0 = quad bias towards small, 1.0 = quad bias towards large)
+	/// Number; bias for width (0.0 = normal, -1.0 = quad bias towards small, 1.0 = quad bias towards large)
 	#[structopt(long, default_value = "0.0", allow_hyphen_values = true)]
 	painter_width_bias: f64,
 
-	/// Height where applicable (0.0 - 1.0)
+	/// List of size ranges; height when applicable
 	#[structopt(long, default_value = "0%-100%", parse(try_from_str = parse_size_pair))]
 	painter_height: Vec<(SizeUnit, SizeUnit)>,
 
-	/// Bias for height (0.0 = normal, -1.0 = quad bias towards small, 1.0 = quad bias towards large)
+	/// Number; bias for height (0.0 = normal, -1.0 = quad bias towards small, 1.0 = quad bias towards large)
 	#[structopt(long, default_value = "0.0", allow_hyphen_values = true)]
 	painter_height_bias: f64,
 
-	/// Disables anti-alias where possible
+	/// Flag; disables anti-alias where possible
 	#[structopt(long)]
 	painter_disable_anti_alias: bool,
 
