@@ -39,13 +39,7 @@ Rects painter example with specific parameters:
 rag target.jpg --generations 10 --painter rects [--painter-alpha 0.1-0.2 1.0] [--painter-width 1-100] [--painter-width-bias -3] [--painter-height 1-100] [--painter-height-bias -3]
 ```
 
-Command line switches are still being added. For a full list of the currently available switches and a brief explanation, run:
-
-```shell
-rag --help
-```
-
-Or check [the struct source code](https://github.com/zeh/art-generator/blob/master/src/main.rs#L15).
+Command line switches are still being added. See [arguments](docs/arguments.md) for current documentation.
 
 More in-depth explanations will be available soon.
 
