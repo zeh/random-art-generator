@@ -60,9 +60,14 @@ jobs:
           format: YYYY-MM-DD
           utcOffset: "-05:00"
 
+      # TODO: in the future, this should probably grab the Cargo.toml version
+      - name: Get the tag name for version
+        id: current-version
+        run: echo ::set-output name=version::${GITHUB_REF/refs\/tags\//}
+
       - name: Set output filename
         id: output-name
-        run: echo "::set-output name=filename::rag-${{ matrix.os_name }}-stable-${{ steps.current-time.outputs.formattedTime }}-${{ github.ref }}-${{ github.sha }}-${{ matrix.target }}.${{ matrix.archive }}"
+        run: echo "::set-output name=filename::rag-${{ matrix.os_name }}-stable-${{ steps.current-time.outputs.formattedTime }}-${{ steps.current-version.outputs.version }}-${{ github.sha }}-${{ matrix.target }}.${{ matrix.archive }}"
 
       - name: Build ZIP
         id: build_zip
