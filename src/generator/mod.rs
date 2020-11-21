@@ -1,8 +1,11 @@
-use image::{DynamicImage, Rgb, RgbImage};
-use painter::Painter;
+use std::sync::{mpsc, Arc};
+use std::thread;
 use std::time::Instant;
 
 use crate::generator::utils::image::{color_transform, diff, scale_image};
+
+use image::{DynamicImage, Rgb, RgbImage};
+use painter::Painter;
 
 pub mod painter;
 pub mod utils;
@@ -49,9 +52,14 @@ impl Generator {
 		self.current = RgbImage::from_pixel(dimensions.0, dimensions.1, Rgb([r, g, b]))
 	}
 
-	pub fn process(&mut self, tries: u32, generations: u32, painter: impl Painter, cb: Option<Callback>) {
-		let mut new_candidate;
-		let mut new_diff;
+	pub fn process(
+		&mut self,
+		tries: u32,
+		generations: u32,
+		candidates: usize,
+		painter: impl Painter + Send + Sync + 'static,
+		cb: Option<Callback>,
+	) {
 		let mut curr_diff = diff(&self.current, &self.target);
 
 		println!("Starting iterations; initial difference from target is {:.2}%.", curr_diff * 100.0);
@@ -59,9 +67,7 @@ impl Generator {
 		let mut used;
 
 		let time_started = Instant::now();
-		let mut time_started_paint;
 		let mut time_elapsed_paint = 0;
-		let mut time_started_diff;
 		let mut time_elapsed_diff = 0;
 		let mut time_started_iteration;
 		let mut time_elapsed_iteration = 0;
@@ -69,23 +75,67 @@ impl Generator {
 		let mut total_tries: u32 = 0;
 		let mut total_gen: u32 = 0;
 
+		let arc_painter = Arc::new(painter);
+		let arc_target = Arc::new(self.target.clone());
+
 		loop {
 			time_started_iteration = Instant::now();
 			used = false;
 
-			time_started_paint = Instant::now();
-			new_candidate = painter.paint(&self.current);
-			time_elapsed_paint += time_started_paint.elapsed().as_micros();
+			if candidates == 1 {
+				// Simple path with no concurrency
+				let time_started_paint = Instant::now();
+				let new_candidate = arc_painter.paint(&self.current);
+				time_elapsed_paint += time_started_paint.elapsed().as_micros();
 
-			time_started_diff = Instant::now();
-			new_diff = diff(&new_candidate, &self.target);
-			time_elapsed_diff += time_started_diff.elapsed().as_micros();
+				let time_started_diff = Instant::now();
+				let new_diff = diff(&new_candidate, &self.target);
+				time_elapsed_diff += time_started_diff.elapsed().as_micros();
 
-			if new_diff < curr_diff {
+				if new_diff < curr_diff {
+					self.current = new_candidate;
+					curr_diff = new_diff;
+					used = true;
+				}
+			} else {
+				// Complex path with concurrency
+				// This can sometimes be slower because of all the image cloning done,
+				// and will use more memory, but on the aggregate reaches successfull
+				// generations in about 25% of the original time
+				let (tx, rx) = mpsc::channel();
+
+				for _candidate in 0..candidates {
+					let tx1 = mpsc::Sender::clone(&tx);
+					let thread_painter = Arc::clone(&arc_painter);
+					let thread_current = self.current.clone();
+					let thread_target = Arc::clone(&arc_target);
+
+					thread::spawn(move || {
+						let new_candidate = thread_painter.paint(&thread_current);
+						let new_diff = diff(&new_candidate, &thread_target);
+
+						// Only report candidates that are actually better than the current diff,
+						// to minimize the back-and-forth of data. To be fair, however, this doesn't
+						// seem to to do much in terms of performance.
+						if new_diff < curr_diff {
+							tx1.send((new_candidate, new_diff)).unwrap();
+						}
+					});
+				}
+
+				drop(tx);
+
+				for (new_candidate, new_diff) in rx {
+					if new_diff < curr_diff {
+						self.current = new_candidate;
+						curr_diff = new_diff;
+						used = true;
+					}
+				}
+			}
+
+			if used {
 				total_gen += 1;
-				self.current = new_candidate;
-				curr_diff = new_diff;
-				used = true;
 			}
 
 			if cb.is_some() {
@@ -113,7 +163,7 @@ impl Generator {
 				}
 
 				// Diff block
-				println!("new difference is {:.2}%", new_diff * 100.0);
+				println!("new difference is {:.2}%", curr_diff * 100.0);
 			}
 
 			if (tries > 0 && total_tries == tries) || (generations > 0 && total_gen == generations) {
@@ -127,16 +177,19 @@ impl Generator {
 
 		let final_diff = diff(&self.current, &self.target);
 		println!(
-			"Finished {} tries in {:.3}s ({:.3}ms avg per try).",
+			"Finished {} tries in {:.3}s ({:.3}ms avg per try), using {} candidate threads.",
 			total_tries,
 			time_elapsed,
-			time_elapsed_iteration as f64 / atts
+			time_elapsed_iteration as f64 / atts,
+			candidates
 		);
-		println!(
-			"Tries took an average of {:.3}ms for painting, and {:.3}ms for diffing.",
-			time_elapsed_paint as f64 / atts,
-			time_elapsed_diff as f64 / atts
-		);
+		if candidates == 1 {
+			println!(
+				"Tries took an average of {:.3}ms for painting, and {:.3}ms for diffing, using a single thread.",
+				time_elapsed_paint as f64 / atts,
+				time_elapsed_diff as f64 / atts
+			);
+		}
 		println!(
 			"Produced {} generations, a {:.2}% success rate.",
 			total_gen,

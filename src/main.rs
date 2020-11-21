@@ -1,4 +1,5 @@
 use std::path::PathBuf;
+use std::string::ToString;
 use structopt::StructOpt;
 
 use image::GenericImageView;
@@ -26,6 +27,10 @@ struct Opt {
 	/// Integer; minimum number of generations (successful tries) required (0 = no minimum)
 	#[structopt(short, long, default_value = "0", required_if("max_tries", "0"))]
 	generations: u32,
+
+	/// Integer; number of parallel candidates per try (0 = number of cores)
+	#[structopt(short, long, default_value = "0")]
+	candidates: usize,
 
 	/// String; the output image filename
 	#[structopt(short, long, default_value = "output.png", parse(from_os_str))]
@@ -183,6 +188,9 @@ fn main() {
 	let output_file = options.output.as_path();
 	println!("Using output image of {:?}.", output_file);
 
+	// Other options
+	let candidates = if options.candidates > 0 { options.candidates } else { num_cpus::get() };
+
 	// Process everything
 	// TODO: use actual enums here and use a single object from trait (can't seen to make it work)
 	// TODO: error out on passed painter options that are unused?
@@ -193,7 +201,7 @@ fn main() {
 			painter.options.radius = options.painter_radius;
 			painter.options.radius_bias = options.painter_radius_bias;
 			painter.options.anti_alias = !options.painter_disable_anti_alias;
-			gen.process(options.max_tries, options.generations, painter, Some(on_tried));
+			gen.process(options.max_tries, options.generations, candidates, painter, Some(on_tried));
 		}
 		"rects" => {
 			let mut painter = RectPainter::new();
@@ -202,7 +210,7 @@ fn main() {
 			painter.options.width_bias = options.painter_width_bias;
 			painter.options.height = options.painter_height;
 			painter.options.height_bias = options.painter_height_bias;
-			gen.process(options.max_tries, options.generations, painter, Some(on_tried));
+			gen.process(options.max_tries, options.generations, candidates, painter, Some(on_tried));
 		}
 		"strokes" => {
 			let mut painter = StrokePainter::new();
@@ -216,7 +224,7 @@ fn main() {
 			painter.options.wave_length = options.painter_wave_length;
 			painter.options.wave_length_bias = options.painter_wave_length_bias;
 			painter.options.anti_alias = !options.painter_disable_anti_alias;
-			gen.process(options.max_tries, options.generations, painter, Some(on_tried));
+			gen.process(options.max_tries, options.generations, candidates, painter, Some(on_tried));
 		}
 		_ => unreachable!(),
 	}
