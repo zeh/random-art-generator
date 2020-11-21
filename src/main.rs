@@ -62,7 +62,7 @@ struct Opt {
 	///
 	/// This is in the format "r_from_r,r_from_g,r_from_b,r_offset,g_from_r,g_from_b,...". For example:
 	/// * Identity is "1,0,0,0,0,1,0,0,0,0,1,0"
-	/// * Grayscale is "0.33,0.33,0.33,0,0.59,0.59,0.59,0,0.11,0.11,0.11,0" (untested)
+	/// * Grayscale is "0.33,0.59,0.11,0,0.33,0.59,0.11,0,0.33,0.59,0.11,0"
 	/// * Sepia is "0.393,0.769,0.686,0,0.349,0.686,0.168,0,0.272,0.534,0.131,0" (untested)
 	/// * Polaroid is "1.438,0.122,-0.016,-8,-0.062,1.378,-0.016,-13,-0.062,-0.122,1.483,-5" (untested)
 	#[structopt(long, parse(try_from_str = parse_color_matrix))]
