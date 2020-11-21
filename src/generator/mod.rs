@@ -88,9 +88,8 @@ impl Generator {
 				used = true;
 			}
 
-			match cb {
-				Some(cb) => (cb)(&self, used),
-				None => (),
+			if cb.is_some() {
+				(cb.unwrap())(&self, used);
 			}
 
 			total_tries += 1;
