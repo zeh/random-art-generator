@@ -11,5 +11,6 @@ edition = "2018"
 [dependencies]
 color_processing = "0.4.1"
 image = "0.23.0"
+num_cpus = "1.13.0"
 rand = "0.7.3"
 structopt = "0.3.9"
