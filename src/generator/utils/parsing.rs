@@ -1,3 +1,4 @@
+use std::convert::TryInto;
 use color_processing::Color;
 
 use crate::generator::utils::units::SizeUnit;
@@ -22,16 +23,9 @@ pub fn parse_color_matrix(src: &str) -> Result<[f64; 12], &str> {
 		.iter()
 		.map(|&e| e.parse::<f64>().expect("Cannot convert matrix element to float")) // TODO: this should return an Err() instead
 		.collect::<Vec<f64>>();
-	if matrix_vec.len() == 12 {
-		// Convert matrix vector to array
-		let mut matrix_arr = [0f64; 12];
-		for (place, element) in matrix_arr.iter_mut().zip(matrix_vec.iter()) {
-			*place = *element;
-		}
-		Ok(matrix_arr)
-	} else {
-		Err("Matrix length must be 12")
-	}
+	// Convert matrix vector to array
+	let matrix_arr: [f64; 12] = matrix_vec.try_into().expect("Matrix length must be 12");
+	Ok(matrix_arr)
 }
 
 // Parses "1.0", "0.9-1.0" into (1.0, 1.0), (0.9, 1.0)
@@ -115,7 +109,7 @@ mod tests {
 	}
 
 	#[test]
-	fn testparse_color_matrix() {
+	fn test_parse_color_matrix() {
 		assert_eq!(
 			parse_color_matrix("1,2,3,4,5,6,7,8,9,10,11,12"),
 			Ok([1., 2., 3., 4., 5., 6., 7., 8., 9., 10., 11., 12.])
