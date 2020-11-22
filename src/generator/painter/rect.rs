@@ -6,10 +6,12 @@ use crate::generator::utils::image::blend_pixel;
 use crate::generator::utils::random::{get_random_range, get_random_ranges, get_random_size_ranges_bias};
 use crate::generator::utils::units::SizeUnit;
 
+#[derive(Clone)]
 pub struct RectPainter {
 	pub options: Options,
 }
 
+#[derive(Clone)]
 pub struct Options {
 	pub alpha: Vec<(f64, f64)>,
 	pub width: Vec<(SizeUnit, SizeUnit)>,
