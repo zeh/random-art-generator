@@ -17,7 +17,7 @@ pub struct Generator {
 
 impl Generator {
 	pub fn from_image(target_image: DynamicImage, scale: f64) -> Generator {
-		let mut target = target_image.to_rgb();
+		let mut target = target_image.to_rgb8();
 		if scale != 1.0f64 {
 			target = scale_image(&target, scale);
 		}
@@ -29,7 +29,7 @@ impl Generator {
 	}
 
 	pub fn from_image_and_matrix(target_image: DynamicImage, scale: f64, matrix: [f64; 12]) -> Generator {
-		let mut target = target_image.to_rgb();
+		let mut target = target_image.to_rgb8();
 		if scale != 1.0f64 {
 			target = scale_image(&target, scale);
 		}
@@ -41,7 +41,7 @@ impl Generator {
 	}
 
 	pub fn prepopulate_with_image(&mut self, current_image: DynamicImage) {
-		self.current = current_image.to_rgb();
+		self.current = current_image.to_rgb8();
 	}
 
 	pub fn prepopulate_with_color(&mut self, r: u8, g: u8, b: u8) {
