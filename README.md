@@ -15,9 +15,9 @@ This application is written in [Rust](https://www.rust-lang.org/). Currently, on
 
 ## Downloading Random Art Generator
 
-Check the [beta build actions](https://github.com/zeh/random-art-generator/actions?query=workflow%3A%22Beta+release%22+is%3Asuccess), click any of the builds, and download the executable file built for your system. Windows, Linux, and macOS builds are currently available, and each package contains a single command-line executable ("rag") that can be used.
+Check the [releases](https://github.com/zeh/random-art-generator/releases) page to download the latest stable versions for macOS, Linux, and Windows. Each package contains a single command-line executable ("rag") that can be used.
 
-New beta builds are made on every merge to the `dev` branch. In the future, stable releases and changelogs should be available once the application reaches a more mature state.
+Alternatively, check the [beta build actions](https://github.com/zeh/random-art-generator/actions?query=workflow%3A%22Beta+release%22+is%3Asuccess), click any of the builds, and download the executable file built for your system. New beta builds are made on every merge to the `dev` branch.
 
 ## Running Random Art Generator
 
