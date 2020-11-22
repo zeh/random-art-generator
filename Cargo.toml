@@ -1,6 +1,6 @@
 [package]
 name = "random-art-generator"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["Zeh Fernando <zeh@zehfernando.com>"]
 homepage = "https://github.com/zeh/random-art-generator"
 repository = "https://github.com/zeh/random-art-generator"
