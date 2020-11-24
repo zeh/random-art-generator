@@ -1,12 +1,20 @@
+use img_parts::jpeg::{markers, Jpeg, JpegSegment};
+use img_parts::png::{Png, PngChunk};
+use img_parts::Bytes;
 use std::path::PathBuf;
 use std::string::ToString;
-use structopt::StructOpt;
+use std::{
+	env,
+	fs::{self, File},
+};
+use structopt::{clap::crate_version, StructOpt};
 
 use image::GenericImageView;
 
 use generator::painter::circle::CirclePainter;
 use generator::painter::rect::RectPainter;
 use generator::painter::stroke::StrokePainter;
+use generator::utils::files::FileFormat;
 use generator::utils::parsing::{parse_color, parse_color_matrix, parse_float_pair, parse_size_pair};
 use generator::utils::units::SizeUnit;
 use generator::Generator;
@@ -134,12 +142,80 @@ fn get_options() -> Opt {
 	return Opt::from_args();
 }
 
-fn on_tried(generator: &Generator, success: bool) {
-	if success {
-		// TODO: a bit repetitive, investigate how to add properties to callbacks
+fn on_processed(
+	generator: &Generator,
+	is_success: bool,
+	_is_final: bool,
+	num_tries: u32,
+	num_generations: u32,
+	diff: f64,
+	time_elapsed: f32,
+) {
+	if is_success {
+		// Write basic file
 		let options = get_options();
 		let output_file = options.output.as_path();
+
+		let file_format = FileFormat::from_filename(output_file.to_str().unwrap()).unwrap();
 		generator.get_current().save(output_file).expect("Cannot write to output file {:?}, exiting");
+
+		// Adds image metadata if possible.
+		// This is a bit suboptimal, as it reads the file already written
+		// and then re-writes it with the metadata. Need to investigate if
+		// we can keep it all in memory, and then only write once.
+
+		// New metadata
+		let mut meta_comments = vec![
+			format!(
+				"Produced {} generations after {} tries in {:.3}s ({:.3}ms avg per try); the final difference from target is {:.2}%.",
+				num_generations,
+				num_tries,
+				time_elapsed,
+				time_elapsed / (num_tries as f32) * 1000.0,
+				diff * 100.0
+			),
+			format!("Command line: {}", env::args().collect::<Vec<String>>().join(" ")),
+		];
+		let meta_software = format!("Random Art Generator v{}", crate_version!());
+
+		match file_format {
+			FileFormat::PNG => {
+				// Is PNG, add chunks
+				let input = fs::read(output_file).unwrap();
+				let mut png = Png::from_bytes(input.into()).unwrap();
+				let output = File::create(output_file).unwrap();
+
+				let comments_chunk = PngChunk::new(
+					['t' as u8, 'E' as u8, 'X' as u8, 't' as u8],
+					Bytes::from(format!("Comment\u{0}{}", meta_comments.join(" \r\n"))),
+				);
+				let software_chunk = PngChunk::new(
+					['t' as u8, 'E' as u8, 'X' as u8, 't' as u8],
+					Bytes::from(format!("Software\u{0}{}", meta_software)),
+				);
+
+				let chunks = png.chunks_mut().len();
+				png.chunks_mut().insert(chunks - 1, comments_chunk);
+				png.chunks_mut().insert(chunks - 1, software_chunk);
+
+				png.encoder().write_to(output).unwrap();
+			}
+			FileFormat::JPEG => {
+				// Is JPEG, add segments
+				let input = fs::read(output_file).unwrap();
+				let mut jpeg = Jpeg::from_bytes(input.into()).unwrap();
+				let output = File::create(output_file).unwrap();
+
+				meta_comments.insert(0, meta_software);
+				let comments_segment =
+					JpegSegment::new_with_contents(markers::COM, Bytes::from(meta_comments.join(" \r\n")));
+
+				let segments = jpeg.segments_mut().len();
+				jpeg.segments_mut().insert(segments - 1, comments_segment);
+
+				jpeg.encoder().write_to(output).unwrap();
+			}
+		}
 	}
 }
 
@@ -189,7 +265,11 @@ fn main() {
 	println!("Using output image of {:?}.", output_file);
 
 	// Other options
-	let candidates = if options.candidates > 0 { options.candidates } else { num_cpus::get() };
+	let candidates = if options.candidates > 0 {
+		options.candidates
+	} else {
+		num_cpus::get()
+	};
 
 	// Process everything
 	// TODO: use actual enums here and use a single object from trait (can't seen to make it work)
@@ -201,7 +281,7 @@ fn main() {
 			painter.options.radius = options.painter_radius;
 			painter.options.radius_bias = options.painter_radius_bias;
 			painter.options.anti_alias = !options.painter_disable_anti_alias;
-			gen.process(options.max_tries, options.generations, candidates, painter, Some(on_tried));
+			gen.process(options.max_tries, options.generations, candidates, painter, Some(on_processed));
 		}
 		"rects" => {
 			let mut painter = RectPainter::new();
@@ -210,7 +290,7 @@ fn main() {
 			painter.options.width_bias = options.painter_width_bias;
 			painter.options.height = options.painter_height;
 			painter.options.height_bias = options.painter_height_bias;
-			gen.process(options.max_tries, options.generations, candidates, painter, Some(on_tried));
+			gen.process(options.max_tries, options.generations, candidates, painter, Some(on_processed));
 		}
 		"strokes" => {
 			let mut painter = StrokePainter::new();
@@ -224,9 +304,8 @@ fn main() {
 			painter.options.wave_length = options.painter_wave_length;
 			painter.options.wave_length_bias = options.painter_wave_length_bias;
 			painter.options.anti_alias = !options.painter_disable_anti_alias;
-			gen.process(options.max_tries, options.generations, candidates, painter, Some(on_tried));
+			gen.process(options.max_tries, options.generations, candidates, painter, Some(on_processed));
 		}
 		_ => unreachable!(),
 	}
-	gen.get_current().save(output_file).expect("Cannot write to output file {:?}, exiting");
 }

@@ -10,7 +10,15 @@ use painter::Painter;
 pub mod painter;
 pub mod utils;
 
-type Callback = fn(generator: &Generator, success: bool);
+type ProcessCallback = fn(
+	generator: &Generator,
+	is_success: bool,
+	is_final: bool,
+	num_tries: u32,
+	num_generations: u32,
+	diff: f64,
+	time_elapsed: f32,
+);
 
 /// A definition for the image generation. This will contain all data needed for a generation process.
 pub struct Generator {
@@ -58,7 +66,7 @@ impl Generator {
 		generations: u32,
 		candidates: usize,
 		painter: impl Painter + Send + Sync + 'static,
-		cb: Option<Callback>,
+		cb: Option<ProcessCallback>,
 	) {
 		let mut curr_diff = diff(&self.current, &self.target);
 
@@ -138,11 +146,21 @@ impl Generator {
 				total_gen += 1;
 			}
 
-			if cb.is_some() {
-				(cb.unwrap())(&self, used);
-			}
-
 			total_tries += 1;
+
+			let finished = (tries > 0 && total_tries == tries) || (generations > 0 && total_gen == generations);
+
+			if cb.is_some() {
+				(cb.unwrap())(
+					&self,
+					used,
+					finished,
+					total_tries,
+					total_gen,
+					curr_diff,
+					time_started.elapsed().as_secs_f32(),
+				);
+			}
 
 			time_elapsed_iteration += time_started_iteration.elapsed().as_micros();
 
@@ -166,7 +184,7 @@ impl Generator {
 				println!("new difference is {:.2}%", curr_diff * 100.0);
 			}
 
-			if (tries > 0 && total_tries == tries) || (generations > 0 && total_gen == generations) {
+			if finished {
 				// Requirements reached, can stop iterations
 				break;
 			}
