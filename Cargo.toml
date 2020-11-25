@@ -9,6 +9,7 @@ license = "MIT"
 edition = "2018"
 
 [dependencies]
+bytes = "0.6.0"
 color_processing = "0.4.1"
 image = "0.23.12"
 img-parts = "0.2.3"

@@ -1,15 +1,15 @@
-use img_parts::jpeg::{markers, Jpeg, JpegSegment};
-use img_parts::png::{Png, PngChunk};
-use img_parts::Bytes;
 use std::path::PathBuf;
 use std::string::ToString;
-use std::{
-	env,
-	fs::{self, File},
+use std::{env, fs::File};
+
+use bytes::{BufMut, BytesMut};
+use image::{DynamicImage, GenericImageView};
+use img_parts::{
+	jpeg::{markers, Jpeg, JpegSegment},
+	png::{Png, PngChunk},
+	Bytes,
 };
 use structopt::{clap::crate_version, StructOpt};
-
-use image::GenericImageView;
 
 use generator::painter::circle::CirclePainter;
 use generator::painter::rect::RectPainter;
@@ -156,20 +156,27 @@ fn on_processed(
 	time_elapsed: f32,
 ) {
 	if is_success {
-		// Write basic file
+		// Create basic image file data
 		let options = get_options();
-		let output_file = options.output.as_path();
+		let output_path = options.output.as_path();
+		let file_format = FileFormat::from_filename(output_path.to_str().unwrap()).unwrap();
 
-		let file_format = FileFormat::from_filename(output_file.to_str().unwrap()).unwrap();
-		generator.get_current().save(output_file).expect("Cannot write to output file {:?}, exiting");
+		let image = DynamicImage::ImageRgb8(generator.get_current());
 
-		if !options.no_metadata {
+		if options.no_metadata {
+			// No metadata wanted, write the file directly
+			// We could also have used "image.save(output_path)"
+			let mut image_file = File::create(output_path).expect("create output file");
+			image.write_to(&mut image_file, file_format.get_native_format()).unwrap();
+		} else {
 			// Adds image metadata if possible.
-			// This is a bit suboptimal, as it reads the file already written
-			// and then re-writes it with the metadata. Need to investigate if
-			// we can keep it all in memory, and then only write once.
 
-			// New metadata
+			// Encode the image first
+			let mut image_writer = BytesMut::new().writer();
+			image.write_to(&mut image_writer, file_format.get_native_format()).unwrap();
+			let image_bytes = Bytes::from(image_writer.into_inner().freeze().to_vec());
+
+			// Define new metadata
 			let mut meta_comments = vec![
 				format!(
 					"Produced {} generations after {} tries in {:.3}s ({:.3}ms avg per try); the final difference from target is {:.2}%.",
@@ -186,39 +193,37 @@ fn on_processed(
 			match file_format {
 				FileFormat::PNG => {
 					// Is PNG, add chunks
-					let input = fs::read(output_file).unwrap();
-					let mut png = Png::from_bytes(input.into()).unwrap();
-					let output = File::create(output_file).unwrap();
+					let mut png = Png::from_bytes(image_bytes).unwrap();
+					let output_file = File::create(output_path).unwrap();
 
 					let comments_chunk = PngChunk::new(
-						['t' as u8, 'E' as u8, 'X' as u8, 't' as u8],
+						*b"tEXt",
 						Bytes::from(format!("Comment\u{0}{}", meta_comments.join(" \r\n"))),
 					);
-					let software_chunk = PngChunk::new(
-						['t' as u8, 'E' as u8, 'X' as u8, 't' as u8],
-						Bytes::from(format!("Software\u{0}{}", meta_software)),
-					);
+					let software_chunk =
+						PngChunk::new(*b"tEXt", Bytes::from(format!("Software\u{0}{}", meta_software)));
 
 					let chunks = png.chunks_mut().len();
 					png.chunks_mut().insert(chunks - 1, comments_chunk);
 					png.chunks_mut().insert(chunks - 1, software_chunk);
 
-					png.encoder().write_to(output).unwrap();
+					png.encoder().write_to(output_file).unwrap();
 				}
 				FileFormat::JPEG => {
 					// Is JPEG, add segments
-					let input = fs::read(output_file).unwrap();
-					let mut jpeg = Jpeg::from_bytes(input.into()).unwrap();
-					let output = File::create(output_file).unwrap();
+					let mut jpeg = Jpeg::from_bytes(image_bytes).unwrap();
+					let output_file = File::create(output_path).unwrap();
 
 					meta_comments.insert(0, meta_software);
-					let comments_segment =
-						JpegSegment::new_with_contents(markers::COM, Bytes::from(meta_comments.join(" \r\n")));
+					let comments_segment = JpegSegment::new_with_contents(
+						markers::COM,
+						Bytes::from(meta_comments.join(" \r\n")),
+					);
 
 					let segments = jpeg.segments_mut().len();
 					jpeg.segments_mut().insert(segments - 1, comments_segment);
 
-					jpeg.encoder().write_to(output).unwrap();
+					jpeg.encoder().write_to(output_file).unwrap();
 				}
 			}
 		}

@@ -1,3 +1,5 @@
+use image::ImageFormat;
+
 #[derive(Clone, Debug, PartialEq)]
 pub enum FileFormat {
 	PNG,
@@ -6,12 +8,18 @@ pub enum FileFormat {
 
 impl FileFormat {
 	pub fn from_filename(filename: &str) -> Result<FileFormat, &str> {
-		if filename.ends_with(".png") {
-			Ok(FileFormat::PNG)
-		} else if filename.ends_with(".jpg") || filename.ends_with(".jpeg") {
-			Ok(FileFormat::JPEG)
-		} else {
-			Err("Invalid file format; only PNG and JPEG are accepted")
+		let format = ImageFormat::from_path(&filename).unwrap();
+		match format {
+			ImageFormat::Png => Ok(FileFormat::PNG),
+			ImageFormat::Jpeg => Ok(FileFormat::JPEG),
+			_ => Err("Invalid file format; only PNG and JPEG are accepted"),
+		}
+	}
+
+	pub fn get_native_format(&self) -> ImageFormat {
+		match &self {
+			FileFormat::PNG => ImageFormat::Png,
+			FileFormat::JPEG => ImageFormat::Jpeg,
 		}
 	}
 }
