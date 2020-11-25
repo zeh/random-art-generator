@@ -40,6 +40,10 @@ struct Opt {
 	#[structopt(short, long, default_value = "0")]
 	candidates: usize,
 
+	/// Flag; disables writing meta-data (software name and version, generation statistics, and original command line arguments) to the output file
+	#[structopt(long)]
+	no_metadata: bool,
+
 	/// String; the output image filename
 	#[structopt(short, long, default_value = "output.png", parse(from_os_str))]
 	output: PathBuf,
@@ -159,61 +163,63 @@ fn on_processed(
 		let file_format = FileFormat::from_filename(output_file.to_str().unwrap()).unwrap();
 		generator.get_current().save(output_file).expect("Cannot write to output file {:?}, exiting");
 
-		// Adds image metadata if possible.
-		// This is a bit suboptimal, as it reads the file already written
-		// and then re-writes it with the metadata. Need to investigate if
-		// we can keep it all in memory, and then only write once.
+		if !options.no_metadata {
+			// Adds image metadata if possible.
+			// This is a bit suboptimal, as it reads the file already written
+			// and then re-writes it with the metadata. Need to investigate if
+			// we can keep it all in memory, and then only write once.
 
-		// New metadata
-		let mut meta_comments = vec![
-			format!(
-				"Produced {} generations after {} tries in {:.3}s ({:.3}ms avg per try); the final difference from target is {:.2}%.",
-				num_generations,
-				num_tries,
-				time_elapsed,
-				time_elapsed / (num_tries as f32) * 1000.0,
-				diff * 100.0
-			),
-			format!("Command line: {}", env::args().collect::<Vec<String>>().join(" ")),
-		];
-		let meta_software = format!("Random Art Generator v{}", crate_version!());
+			// New metadata
+			let mut meta_comments = vec![
+				format!(
+					"Produced {} generations after {} tries in {:.3}s ({:.3}ms avg per try); the final difference from target is {:.2}%.",
+					num_generations,
+					num_tries,
+					time_elapsed,
+					time_elapsed / (num_tries as f32) * 1000.0,
+					diff * 100.0
+				),
+				format!("Command line: {}", env::args().collect::<Vec<String>>().join(" ")),
+			];
+			let meta_software = format!("Random Art Generator v{}", crate_version!());
 
-		match file_format {
-			FileFormat::PNG => {
-				// Is PNG, add chunks
-				let input = fs::read(output_file).unwrap();
-				let mut png = Png::from_bytes(input.into()).unwrap();
-				let output = File::create(output_file).unwrap();
+			match file_format {
+				FileFormat::PNG => {
+					// Is PNG, add chunks
+					let input = fs::read(output_file).unwrap();
+					let mut png = Png::from_bytes(input.into()).unwrap();
+					let output = File::create(output_file).unwrap();
 
-				let comments_chunk = PngChunk::new(
-					['t' as u8, 'E' as u8, 'X' as u8, 't' as u8],
-					Bytes::from(format!("Comment\u{0}{}", meta_comments.join(" \r\n"))),
-				);
-				let software_chunk = PngChunk::new(
-					['t' as u8, 'E' as u8, 'X' as u8, 't' as u8],
-					Bytes::from(format!("Software\u{0}{}", meta_software)),
-				);
+					let comments_chunk = PngChunk::new(
+						['t' as u8, 'E' as u8, 'X' as u8, 't' as u8],
+						Bytes::from(format!("Comment\u{0}{}", meta_comments.join(" \r\n"))),
+					);
+					let software_chunk = PngChunk::new(
+						['t' as u8, 'E' as u8, 'X' as u8, 't' as u8],
+						Bytes::from(format!("Software\u{0}{}", meta_software)),
+					);
 
-				let chunks = png.chunks_mut().len();
-				png.chunks_mut().insert(chunks - 1, comments_chunk);
-				png.chunks_mut().insert(chunks - 1, software_chunk);
+					let chunks = png.chunks_mut().len();
+					png.chunks_mut().insert(chunks - 1, comments_chunk);
+					png.chunks_mut().insert(chunks - 1, software_chunk);
 
-				png.encoder().write_to(output).unwrap();
-			}
-			FileFormat::JPEG => {
-				// Is JPEG, add segments
-				let input = fs::read(output_file).unwrap();
-				let mut jpeg = Jpeg::from_bytes(input.into()).unwrap();
-				let output = File::create(output_file).unwrap();
+					png.encoder().write_to(output).unwrap();
+				}
+				FileFormat::JPEG => {
+					// Is JPEG, add segments
+					let input = fs::read(output_file).unwrap();
+					let mut jpeg = Jpeg::from_bytes(input.into()).unwrap();
+					let output = File::create(output_file).unwrap();
 
-				meta_comments.insert(0, meta_software);
-				let comments_segment =
-					JpegSegment::new_with_contents(markers::COM, Bytes::from(meta_comments.join(" \r\n")));
+					meta_comments.insert(0, meta_software);
+					let comments_segment =
+						JpegSegment::new_with_contents(markers::COM, Bytes::from(meta_comments.join(" \r\n")));
 
-				let segments = jpeg.segments_mut().len();
-				jpeg.segments_mut().insert(segments - 1, comments_segment);
+					let segments = jpeg.segments_mut().len();
+					jpeg.segments_mut().insert(segments - 1, comments_segment);
 
-				jpeg.encoder().write_to(output).unwrap();
+					jpeg.encoder().write_to(output).unwrap();
+				}
 			}
 		}
 	}
