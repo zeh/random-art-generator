@@ -32,6 +32,10 @@ struct Opt {
 	#[structopt(short, long, default_value = "0")]
 	candidates: usize,
 
+	/// Number; amount of color from the original target image to use as the newly painted color at the painted location (0.0 = completely random, 1.0 = use target color)
+	#[structopt(long, default_value = "0")]
+	color_seed: f64,
+
 	/// Flag; disables writing meta-data (software name and version, generation statistics, and original command line arguments) to the output file
 	#[structopt(long)]
 	no_metadata: bool,
@@ -243,6 +247,7 @@ fn main() {
 			painter.options.radius = options.painter_radius;
 			painter.options.radius_bias = options.painter_radius_bias;
 			painter.options.anti_alias = !options.painter_disable_anti_alias;
+			painter.options.color_seed = options.color_seed;
 			gen.process(options.max_tries, options.generations, candidates, painter, Some(on_processed));
 		}
 		"rects" => {
@@ -253,6 +258,7 @@ fn main() {
 			painter.options.width_bias = options.painter_width_bias;
 			painter.options.height = options.painter_height;
 			painter.options.height_bias = options.painter_height_bias;
+			painter.options.color_seed = options.color_seed;
 			gen.process(options.max_tries, options.generations, candidates, painter, Some(on_processed));
 		}
 		"strokes" => {
@@ -268,6 +274,7 @@ fn main() {
 			painter.options.wave_length = options.painter_wave_length;
 			painter.options.wave_length_bias = options.painter_wave_length_bias;
 			painter.options.anti_alias = !options.painter_disable_anti_alias;
+			painter.options.color_seed = options.color_seed;
 			gen.process(options.max_tries, options.generations, candidates, painter, Some(on_processed));
 		}
 		_ => unreachable!(),

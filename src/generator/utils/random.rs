@@ -99,3 +99,7 @@ pub fn get_noise_value(noise: [f64; 256], position: f64) -> f64 {
 
 	v1 + (v2 - v1) * f
 }
+
+pub fn get_random_color(rng: &mut rngs::ThreadRng) -> [u8; 3] {
+	[rng.gen_range(0u8, 255u8), rng.gen_range(0u8, 255u8), rng.gen_range(0u8, 255u8)]
+}

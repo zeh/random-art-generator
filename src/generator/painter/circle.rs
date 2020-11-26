@@ -1,13 +1,16 @@
 use image::{Pixel, Rgb, RgbImage};
-use rand::{thread_rng, Rng};
+use rand::thread_rng;
 
-use crate::generator::painter::Painter;
 use crate::generator::utils::geom::distance;
 use crate::generator::utils::image::blend_pixel;
 use crate::generator::utils::random::{
 	get_random_range, get_random_ranges_bias, get_random_size_ranges_bias,
 };
 use crate::generator::utils::units::SizeUnit;
+use crate::generator::{
+	painter::Painter,
+	utils::{image::get_pixel_interpolated, random::get_random_color},
+};
 
 #[derive(Clone)]
 pub struct CirclePainter {
@@ -21,6 +24,7 @@ pub struct Options {
 	pub radius: Vec<(SizeUnit, SizeUnit)>,
 	pub radius_bias: f64, // 0 = normal; -1 = quad bias towards small, 1 = quad bias towards big, etc
 	pub anti_alias: bool,
+	pub color_seed: f64,
 }
 
 impl CirclePainter {
@@ -31,6 +35,7 @@ impl CirclePainter {
 			radius: vec![(SizeUnit::Fraction(0.0), SizeUnit::Fraction(0.5))],
 			radius_bias: 0.0f64,
 			anti_alias: true,
+			color_seed: 0.0f64,
 		};
 
 		CirclePainter {
@@ -40,7 +45,7 @@ impl CirclePainter {
 }
 
 impl Painter for CirclePainter {
-	fn paint(&self, canvas: &RgbImage) -> RgbImage {
+	fn paint(&self, canvas: &RgbImage, seed_map: &RgbImage) -> RgbImage {
 		let mut rng = thread_rng();
 
 		let image_w_i = canvas.dimensions().0;
@@ -65,11 +70,9 @@ impl Painter for CirclePainter {
 		let y2 = (cy + radius).ceil().max(0.0).min(image_h) as u32;
 
 		// Determine color
-		let r = rng.gen_range(0u8, 255u8);
-		let g = rng.gen_range(0u8, 255u8);
-		let b = rng.gen_range(0u8, 255u8);
-		let top_pixel = Rgb([r, g, b]);
-		let top_pixel_channels = top_pixel.channels();
+		let random_color = get_random_color(&mut rng);
+		let seed_color = get_pixel_interpolated(seed_map, cx, cy);
+		let color = blend_pixel(&random_color, &seed_color, self.options.color_seed);
 		let alpha = get_random_ranges_bias(&mut rng, &self.options.alpha, self.options.alpha_bias);
 
 		// Finally, paint
@@ -94,7 +97,7 @@ impl Painter for CirclePainter {
 					};
 					let new_pixel = Rgb(blend_pixel(
 						painted_canvas.get_pixel(x, y).channels(),
-						top_pixel_channels,
+						&color,
 						new_alpha * alpha,
 					));
 					painted_canvas.put_pixel(x, y, new_pixel);

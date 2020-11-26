@@ -1,13 +1,16 @@
 use image::{Pixel, Rgb, RgbImage};
-use rand::{thread_rng, Rng};
+use rand::thread_rng;
 
-use crate::generator::painter::Painter;
 use crate::generator::utils::image::blend_pixel;
 use crate::generator::utils::random::{
 	get_noise_value, get_random_noise_sequence, get_random_range, get_random_ranges_bias,
 	get_random_size_ranges_bias,
 };
 use crate::generator::utils::units::SizeUnit;
+use crate::generator::{
+	painter::Painter,
+	utils::{image::get_pixel_interpolated, random::get_random_color},
+};
 
 #[derive(Clone)]
 pub struct StrokePainter {
@@ -27,6 +30,7 @@ pub struct Options {
 	pub wave_length: Vec<(SizeUnit, SizeUnit)>,
 	pub wave_length_bias: f64,
 	pub anti_alias: bool,
+	pub color_seed: f64,
 }
 
 impl StrokePainter {
@@ -43,6 +47,7 @@ impl StrokePainter {
 			wave_length: vec![(SizeUnit::Fraction(0.5), SizeUnit::Fraction(0.5))],
 			wave_length_bias: 0.0f64,
 			anti_alias: true,
+			color_seed: 0.0f64,
 		};
 
 		StrokePainter {
@@ -52,7 +57,7 @@ impl StrokePainter {
 }
 
 impl Painter for StrokePainter {
-	fn paint(&self, canvas: &RgbImage) -> RgbImage {
+	fn paint(&self, canvas: &RgbImage, seed_map: &RgbImage) -> RgbImage {
 		let mut rng = thread_rng();
 
 		let image_w_i = canvas.dimensions().0;
@@ -77,11 +82,10 @@ impl Painter for StrokePainter {
 		let y2 = (rect_y + rect_h).round().max(0.0).min(image_h) as u32;
 
 		// Determine color
-		let r = rng.gen_range(0u8, 255u8);
-		let g = rng.gen_range(0u8, 255u8);
-		let b = rng.gen_range(0u8, 255u8);
-		let top_pixel = Rgb([r, g, b]);
-		let top_pixel_channels = top_pixel.channels();
+		let random_color = get_random_color(&mut rng);
+		let seed_color =
+			get_pixel_interpolated(seed_map, (x1 + x2) as f64 / 2.0f64, (y1 + y2) as f64 / 2.0f64);
+		let color = blend_pixel(&random_color, &seed_color, self.options.color_seed);
 		let alpha = get_random_ranges_bias(&mut rng, &self.options.alpha, self.options.alpha_bias);
 
 		// Determine waviness
@@ -105,11 +109,8 @@ impl Painter for StrokePainter {
 			// Fast path, no waviness
 			for x in x1..x2 {
 				for y in y1..y2 {
-					let new_pixel = Rgb(blend_pixel(
-						painted_canvas.get_pixel(x, y).channels(),
-						top_pixel_channels,
-						alpha,
-					));
+					let new_pixel =
+						Rgb(blend_pixel(painted_canvas.get_pixel(x, y).channels(), &color, alpha));
 					painted_canvas.put_pixel(x, y, new_pixel);
 				}
 			}
@@ -186,7 +187,7 @@ impl Painter for StrokePainter {
 
 					let new_pixel = Rgb(blend_pixel(
 						painted_canvas.get_pixel(x, y).channels(),
-						top_pixel_channels,
+						&color,
 						if self.options.anti_alias {
 							alpha_x * alpha_y * alpha
 						} else {
@@ -195,7 +196,7 @@ impl Painter for StrokePainter {
 							} else {
 								0.0f64
 							}
-						}
+						},
 					));
 					painted_canvas.put_pixel(x, y, new_pixel);
 				}
