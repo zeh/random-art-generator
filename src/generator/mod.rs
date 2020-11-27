@@ -2,10 +2,11 @@ use std::sync::{mpsc, Arc};
 use std::thread;
 use std::time::Instant;
 
-use crate::generator::utils::image::{color_transform, diff, scale_image};
-
 use image::{DynamicImage, Rgb, RgbImage};
+
 use painter::Painter;
+use utils::image::{color_transform, diff, scale_image};
+use utils::terminal;
 
 pub mod painter;
 pub mod utils;
@@ -86,6 +87,8 @@ impl Generator {
 		let arc_painter = Arc::new(painter);
 		let arc_target = Arc::new(self.target.clone());
 
+		println!("First try..");
+
 		loop {
 			time_started_iteration = Instant::now();
 			used = false;
@@ -148,7 +151,8 @@ impl Generator {
 
 			total_tries += 1;
 
-			let finished = (tries > 0 && total_tries == tries) || (generations > 0 && total_gen == generations);
+			let finished =
+				(tries > 0 && total_tries == tries) || (generations > 0 && total_gen == generations);
 
 			if cb.is_some() {
 				(cb.unwrap())(
@@ -166,6 +170,9 @@ impl Generator {
 
 			// Only output log if the generation succeeded
 			if used {
+				terminal::cursor_up();
+				terminal::erase_line_to_end();
+
 				// Tries block
 				if tries > 0 {
 					print!("Try {}/{} is useful; ", total_tries, tries);
