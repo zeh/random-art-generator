@@ -1,3 +1,5 @@
+use std::convert::TryInto;
+
 use image::{imageops, Pixel, RgbImage};
 
 #[cfg(test)]
@@ -77,6 +79,37 @@ pub fn scale_image(image: &RgbImage, scale: f64) -> RgbImage {
 	let w = (image.dimensions().0 as f64 * scale).round() as u32;
 	let h = (image.dimensions().1 as f64 * scale).round() as u32;
 	imageops::resize(image, w, h, imageops::FilterType::CatmullRom)
+}
+
+pub fn get_pixel_interpolated(image: &RgbImage, x: f64, y: f64) -> [u8; 3] {
+	// Quick path if in a round pixel
+	let width: f64 = image.width() as f64;
+	let height: f64 = image.height() as f64;
+	let xx = f64::max(0.0f64, f64::min(width - 1.0, x));
+	let yy = f64::max(0.0f64, f64::min(height - 1.0, y));
+	let xf = xx.fract();
+	let yf = yy.fract();
+	if xf == 0f64 && yf == 0f64 {
+		return image
+			.get_pixel(xx as u32, yy as u32)
+			.channels()
+			.to_owned()
+			.try_into()
+			.expect("converting pixels to array");
+	}
+
+	// Otherwise, do bilinear interpolation
+	let x1 = xx.floor();
+	let x2 = xx.ceil();
+	let y1 = yy.floor();
+	let y2 = yy.ceil();
+	let color_tl = image.get_pixel(x1 as u32, y1 as u32).channels();
+	let color_tr = image.get_pixel(x2 as u32, y1 as u32).channels();
+	let color_bl = image.get_pixel(x1 as u32, y2 as u32).channels();
+	let color_br = image.get_pixel(x2 as u32, y2 as u32).channels();
+	let color_t = blend_pixel(color_tl, color_tr, xf);
+	let color_b = blend_pixel(color_bl, color_br, xf);
+	return blend_pixel(&color_t, &color_b, yf);
 }
 
 #[cfg(test)]
@@ -276,5 +309,45 @@ mod tests {
 		assert_eq!(scale_image(img, 2.0).dimensions(), (16, 16));
 		assert_eq!(scale_image(img, 0.5).dimensions(), (4, 4));
 		assert_eq!(scale_image(img, 1.01).dimensions(), (8, 8));
+	}
+
+	#[test]
+	fn test_get_pixel_interpolated() {
+		let img = &RgbImage::from_raw(
+			3,
+			3,
+			vec![
+				0u8, 0u8, 0u8, 255u8, 255u8, 255u8, 255u8, 0u8, 0u8, 255u8, 0u8, 0u8, 255u8, 255u8, 255u8,
+				255u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 255u8, 255u8, 255u8, 0u8, 128u8,
+			],
+		)
+		.unwrap();
+
+		// Fast path
+		assert_eq!(get_pixel_interpolated(img, 0f64, 0f64), [0u8, 0u8, 0u8]);
+		assert_eq!(get_pixel_interpolated(img, 1f64, 0f64), [255u8, 255u8, 255u8]);
+		assert_eq!(get_pixel_interpolated(img, 1f64, 2f64), [0u8, 255u8, 255u8]);
+
+		assert_eq!(get_pixel_interpolated(img, 8f64, 2f64), [255u8, 0u8, 128u8]);
+		assert_eq!(get_pixel_interpolated(img, 1f64, 8f64), [0u8, 255u8, 255u8]);
+		assert_eq!(get_pixel_interpolated(img, 8f64, 8f64), [255u8, 0u8, 128u8]);
+
+		// Linearly interpolated
+		assert_eq!(get_pixel_interpolated(img, 0.25f64, 0f64), [64u8, 64u8, 64u8]);
+		assert_eq!(get_pixel_interpolated(img, 0.5f64, 0f64), [128u8, 128u8, 128u8]);
+		assert_eq!(get_pixel_interpolated(img, 0f64, 0.25f64), [64u8, 0u8, 0u8]);
+		assert_eq!(get_pixel_interpolated(img, 0f64, 0.5f64), [128u8, 0u8, 0u8]);
+		assert_eq!(get_pixel_interpolated(img, 1.5f64, 1f64), [255u8, 128u8, 128u8]);
+		assert_eq!(get_pixel_interpolated(img, 2f64, 1.5f64), [255u8, 0u8, 64u8]);
+
+		assert_eq!(get_pixel_interpolated(img, 8f64, 1.5f64), [255u8, 0u8, 64u8]);
+		assert_eq!(get_pixel_interpolated(img, 1.5f64, 8f64), [128u8, 128u8, 192u8]);
+
+		// Bilinearly interpolated
+		assert_eq!(get_pixel_interpolated(img, 0.5f64, 0.5f64), [192u8, 128u8, 128u8]);
+		assert_eq!(get_pixel_interpolated(img, 1.5f64, 1.5f64), [192u8, 128u8, 160u8]);
+		assert_eq!(get_pixel_interpolated(img, 0.33f64, 1.78f64), [56u8, 84u8, 84u8]);
+
+		assert_eq!(get_pixel_interpolated(img, 9.1f64, 8.2f64), [255u8, 0u8, 128u8]);
 	}
 }
