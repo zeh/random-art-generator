@@ -168,9 +168,9 @@ impl Generator {
 			if used {
 				// Tries block
 				if tries > 0 {
-					print!("Try {}/{} is useful; ", total_tries + 1, tries);
+					print!("Try {}/{} is useful; ", total_tries, tries);
 				} else {
-					print!("Try {} is useful; ", total_tries + 1);
+					print!("Try {} is useful; ", total_tries);
 				}
 
 				// Generations block
