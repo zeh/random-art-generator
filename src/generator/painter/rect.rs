@@ -3,7 +3,9 @@ use rand::{thread_rng, Rng};
 
 use crate::generator::painter::Painter;
 use crate::generator::utils::image::blend_pixel;
-use crate::generator::utils::random::{get_random_range, get_random_ranges, get_random_size_ranges_bias};
+use crate::generator::utils::random::{
+	get_random_range, get_random_ranges_bias, get_random_size_ranges_bias,
+};
 use crate::generator::utils::units::SizeUnit;
 
 #[derive(Clone)]
@@ -14,6 +16,7 @@ pub struct RectPainter {
 #[derive(Clone)]
 pub struct Options {
 	pub alpha: Vec<(f64, f64)>,
+	pub alpha_bias: f64,
 	pub width: Vec<(SizeUnit, SizeUnit)>,
 	pub height: Vec<(SizeUnit, SizeUnit)>,
 	pub width_bias: f64, // 0 = normal; -1 = quad bias towards small, 1 = quad bias towards big, etc
@@ -24,6 +27,7 @@ impl RectPainter {
 	pub fn new() -> RectPainter {
 		let options = Options {
 			alpha: vec![(1.0, 1.0)],
+			alpha_bias: 0.0f64,
 			width: vec![(SizeUnit::Fraction(0.0), SizeUnit::Fraction(1.0))],
 			width_bias: 0.0f64,
 			height: vec![(SizeUnit::Fraction(0.0), SizeUnit::Fraction(1.0))],
@@ -67,7 +71,7 @@ impl Painter for RectPainter {
 		let b = rng.gen_range(0u8, 255u8);
 		let top_pixel = Rgb([r, g, b]);
 		let top_pixel_channels = top_pixel.channels();
-		let alpha = get_random_ranges(&mut rng, &self.options.alpha);
+		let alpha = get_random_ranges_bias(&mut rng, &self.options.alpha, self.options.alpha_bias);
 
 		// Finally, paint
 		let mut painted_canvas = canvas.clone();

@@ -89,6 +89,10 @@ struct Opt {
 	#[structopt(long, default_value = "1", parse(try_from_str = parse_float_pair))]
 	painter_alpha: Vec<(f64, f64)>,
 
+	/// Number; bias for alpha (0.0 = normal, -1.0 = quad bias towards transparency, 1.0 = quad bias towards opacity)
+	#[structopt(long, default_value = "0.0", allow_hyphen_values = true)]
+	painter_alpha_bias: f64,
+
 	/// List of size ranges; the radius when applicable
 	#[structopt(long, default_value = "0%-50%", parse(try_from_str = parse_size_pair))]
 	painter_radius: Vec<(SizeUnit, SizeUnit)>,
@@ -235,6 +239,7 @@ fn main() {
 		"circles" => {
 			let mut painter = CirclePainter::new();
 			painter.options.alpha = options.painter_alpha;
+			painter.options.alpha_bias = options.painter_alpha_bias;
 			painter.options.radius = options.painter_radius;
 			painter.options.radius_bias = options.painter_radius_bias;
 			painter.options.anti_alias = !options.painter_disable_anti_alias;
@@ -243,6 +248,7 @@ fn main() {
 		"rects" => {
 			let mut painter = RectPainter::new();
 			painter.options.alpha = options.painter_alpha;
+			painter.options.alpha_bias = options.painter_alpha_bias;
 			painter.options.width = options.painter_width;
 			painter.options.width_bias = options.painter_width_bias;
 			painter.options.height = options.painter_height;
@@ -252,6 +258,7 @@ fn main() {
 		"strokes" => {
 			let mut painter = StrokePainter::new();
 			painter.options.alpha = options.painter_alpha;
+			painter.options.alpha_bias = options.painter_alpha_bias;
 			painter.options.width = options.painter_width;
 			painter.options.width_bias = options.painter_width_bias;
 			painter.options.height = options.painter_height;

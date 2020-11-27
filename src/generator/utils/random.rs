@@ -51,8 +51,12 @@ pub fn get_random_ranges(rng: &mut rngs::ThreadRng, ranges: &Vec<(f64, f64)>) ->
 }
 
 pub fn get_random_ranges_bias(rng: &mut rngs::ThreadRng, ranges: &Vec<(f64, f64)>, bias: f64) -> f64 {
-	let range: (f64, f64) = ranges[get_random_int(rng, 0, ranges.len() as u32) as usize];
-	get_random_range_bias(rng, range.0, range.1, bias)
+	if bias == 0.0f64 {
+		get_random_ranges(rng, &ranges)
+	} else {
+		let range: (f64, f64) = ranges[get_random_int(rng, 0, ranges.len() as u32) as usize];
+		get_random_range_bias(rng, range.0, range.1, bias)
+	}
 }
 
 pub fn get_random_size_ranges_bias(
