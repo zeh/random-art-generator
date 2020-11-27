@@ -1,4 +1,5 @@
 use std::convert::TryInto;
+
 use color_processing::Color;
 
 use crate::generator::utils::units::SizeUnit;
@@ -16,40 +17,29 @@ pub fn parse_color(src: &str) -> Result<(u8, u8, u8), &str> {
 	}
 }
 
+pub fn parse_float(src: &str) -> Result<f64, &str> {
+	src.parse::<f64>().or(Err("Could not parse float value"))
+}
+
+pub fn parse_float_list(src: &str, divider: char) -> Result<Vec<f64>, &str> {
+	src.split(divider).collect::<Vec<&str>>().iter().map(|&e| parse_float(e)).collect()
+}
+
 pub fn parse_color_matrix(src: &str) -> Result<[f64; 12], &str> {
-	let matrix_vec = src
-		.split(',')
-		.collect::<Vec<&str>>()
-		.iter()
-		.map(|&e| e.parse::<f64>().expect("Cannot convert matrix element to float")) // TODO: this should return an Err() instead
-		.collect::<Vec<f64>>();
-	// Convert matrix vector to array
-	let matrix_arr: [f64; 12] = matrix_vec.try_into().expect("Matrix length must be 12");
-	Ok(matrix_arr)
+	let values = parse_float_list(&src, ',')?;
+	match values.len() {
+		12 => values.try_into().or(Err("Could not convert float list")) as Result<[f64; 12], &str>,
+		_ => Err("Matrix length must be 12"),
+	}
 }
 
 // Parses "1.0", "0.9-1.0" into (1.0, 1.0), (0.9, 1.0)
 pub fn parse_float_pair(src: &str) -> Result<(f64, f64), &str> {
-	match src.find('-') {
-		Some(_) => {
-			// A pair
-			let mut arr = src
-				.split('-')
-				.collect::<Vec<&str>>()
-				.iter()
-				.map(|&e| e.parse::<f64>().expect("Cannot convert matrix element to float")) // TODO: this should return an Err() instead
-				.collect::<Vec<f64>>();
-			if arr.len() == 2 {
-				Ok((arr.remove(0), arr.remove(0)))
-			} else {
-				Err("Float range length must be 2")
-			}
-		}
-		None => {
-			// A single number
-			let num = src.parse::<f64>().unwrap();
-			Ok((num, num))
-		}
+	let values = parse_float_list(&src, '-')?;
+	match values.len() {
+		1 => Ok((values[0], values[0])),
+		2 => Ok((values[0], values[1])),
+		_ => Err("Float range must be 1-2"),
 	}
 }
 
@@ -67,31 +57,17 @@ pub fn parse_size(src: &str) -> Result<SizeUnit, &str> {
 	}
 }
 
+pub fn parse_size_list(src: &str, divider: char) -> Result<Vec<SizeUnit>, &str> {
+	src.split(divider).collect::<Vec<&str>>().iter().map(|&e| parse_size(e)).collect()
+}
+
 // Parses "100%", "90%-100%", "10-20", "2" into pairs of SizeUnits
 pub fn parse_size_pair(src: &str) -> Result<(SizeUnit, SizeUnit), &str> {
-	match src.find('-') {
-		Some(_) => {
-			// A pair
-			let mut arr = src
-				.split('-')
-				.collect::<Vec<&str>>()
-				.iter()
-				.map(|&e| parse_size(e).expect("Cannot size element to unit")) // TODO: this should return an Err() instead
-				.collect::<Vec<SizeUnit>>();
-			if arr.len() == 2 {
-				Ok((arr.remove(0), arr.remove(0)))
-			} else {
-				Err("Float range length must be 2")
-			}
-		}
-		None => {
-			// A single unit value
-			let size = parse_size(src);
-			match size {
-				Ok(value) => Ok((value.clone(), value)),
-				Err(error) => Err(error),
-			}
-		}
+	let values = parse_size_list(&src, '-')?;
+	match values.len() {
+		1 => Ok((values[0].clone(), values[0].clone())),
+		2 => Ok((values[0].clone(), values[1].clone())),
+		_ => Err("Size range length must be 2"),
 	}
 }
 
@@ -106,6 +82,36 @@ mod tests {
 		assert_eq!(parse_color("ffffff"), Ok((255, 255, 255)));
 		assert_eq!(parse_color("#ffffff"), Ok((255, 255, 255)));
 		assert_eq!(parse_color("rgb(255, 255, 255)"), Ok((255, 255, 255)));
+
+		// Errors
+		assert!(parse_color("").is_err());
+		assert!(parse_color("foo").is_err());
+	}
+
+	#[test]
+	fn test_parse_float() {
+		assert_eq!(parse_float("0"), Ok(0.0f64));
+		assert_eq!(parse_float("0.0"), Ok(0.0f64));
+		assert_eq!(parse_float("0.5"), Ok(0.5f64));
+		assert_eq!(parse_float("1"), Ok(1.0f64));
+		assert_eq!(parse_float("13.244"), Ok(13.244f64));
+
+		// Errors
+		assert!(parse_float("").is_err());
+		assert!(parse_float("foo").is_err());
+	}
+
+	#[test]
+	fn test_parse_float_list() {
+		assert_eq!(parse_float_list("0", ','), Ok(vec![0.0f64]));
+		assert_eq!(parse_float_list("0,-2", ','), Ok(vec![0.0f64, -2.0f64]));
+		assert_eq!(parse_float_list("0.0,-647,245.2,1", ','), Ok(vec![0.0f64, -647.0f64, 245.2f64, 1.0f64]));
+		assert_eq!(parse_float_list("1-2-7.55", '-'), Ok(vec![1.0f64, 2.0f64, 7.55f64]));
+
+		// Errors
+		assert!(parse_float_list("", ',').is_err());
+		assert!(parse_float_list("foo", ',').is_err());
+		assert!(parse_float_list("1,2,foo", ',').is_err());
 	}
 
 	#[test]
@@ -115,9 +121,19 @@ mod tests {
 			Ok([1., 2., 3., 4., 5., 6., 7., 8., 9., 10., 11., 12.])
 		);
 		assert_eq!(
-			parse_color_matrix("1.1,2.2,3.3,4.4,5.5,6.6,7.7,8.8,9.9,10.0,11.1,12.2"),
-			Ok([1.1, 2.2, 3.3, 4.4, 5.5, 6.6, 7.7, 8.8, 9.9, 10., 11.1, 12.2])
+			parse_color_matrix("-1,2,3,4,5,6,-7,8,9,10,11,-12"),
+			Ok([-1., 2., 3., 4., 5., 6., -7., 8., 9., 10., 11., -12.])
 		);
+		assert_eq!(
+			parse_color_matrix("1.1,2.2,-3.3,4.4,5.5,6.6,7.7,8.8,9.9,10.0,-11.1,12.2"),
+			Ok([1.1, 2.2, -3.3, 4.4, 5.5, 6.6, 7.7, 8.8, 9.9, 10., -11.1, 12.2])
+		);
+
+		// Errors
+		assert!(parse_color_matrix("").is_err());
+		assert!(parse_color_matrix("foo").is_err());
+		assert!(parse_color_matrix("0.5,3,foo").is_err());
+		assert!(parse_color_matrix("1,2,3,4").is_err());
 	}
 
 	#[test]
@@ -137,6 +153,12 @@ mod tests {
 		assert_eq!(parse_float_pair("1-1"), Ok((1.0f64, 1.0f64)));
 		assert_eq!(parse_float_pair("1.0-2.0"), Ok((1.0f64, 2.0f64)));
 		assert_eq!(parse_float_pair("1-1.2"), Ok((1.0f64, 1.2f64)));
+
+		// Errors
+		assert!(parse_float_pair("").is_err());
+		assert!(parse_float_pair("foo").is_err());
+		assert!(parse_float_pair("1-foo").is_err());
+		assert!(parse_float_pair("1-2-3").is_err());
 	}
 
 	#[test]
@@ -146,12 +168,39 @@ mod tests {
 		assert_eq!(parse_size("10%"), Ok(SizeUnit::Fraction(0.1)));
 		assert_eq!(parse_size("100%"), Ok(SizeUnit::Fraction(1.0)));
 		assert_eq!(parse_size("2000%"), Ok(SizeUnit::Fraction(20.0)));
+		assert_eq!(parse_size("-150%"), Ok(SizeUnit::Fraction(-1.5)));
 
 		// Pixels
 		assert_eq!(parse_size("0"), Ok(SizeUnit::Pixels(0)));
 		assert_eq!(parse_size("0.1"), Ok(SizeUnit::Pixels(0)));
+		assert_eq!(parse_size("-0.2"), Ok(SizeUnit::Pixels(0)));
+		assert_eq!(parse_size("-9.1"), Ok(SizeUnit::Pixels(-9)));
 		assert_eq!(parse_size("190.01"), Ok(SizeUnit::Pixels(190)));
 		assert_eq!(parse_size("333190.01"), Ok(SizeUnit::Pixels(333190)));
+
+		// Errors
+		assert!(parse_size("").is_err());
+		assert!(parse_size("foo").is_err());
+	}
+
+	#[test]
+	fn test_parse_size_list() {
+		assert_eq!(parse_size_list("0%", ','), Ok(vec![SizeUnit::Fraction(0.0)]));
+		assert_eq!(parse_size_list("0%,2.5", ','), Ok(vec![SizeUnit::Fraction(0.0), SizeUnit::Pixels(3)]));
+		assert_eq!(
+			parse_size_list("10%-25.2-156.8%-140", '-'),
+			Ok(vec![
+				SizeUnit::Fraction(0.1),
+				SizeUnit::Pixels(25),
+				SizeUnit::Fraction(1.568),
+				SizeUnit::Pixels(140)
+			])
+		);
+
+		// Errors
+		assert!(parse_size_list("", ',').is_err());
+		assert!(parse_size_list("1,foo", ',').is_err());
+		assert!(parse_size_list("bar", ',').is_err());
 	}
 
 	#[test]
@@ -186,5 +235,10 @@ mod tests {
 		assert_eq!(parse_size_pair("100-100"), Ok((SizeUnit::Pixels(100), SizeUnit::Pixels(100))));
 		assert_eq!(parse_size_pair("100-20000"), Ok((SizeUnit::Pixels(100), SizeUnit::Pixels(20000))));
 		assert_eq!(parse_size_pair("100-120"), Ok((SizeUnit::Pixels(100), SizeUnit::Pixels(120))));
+
+		// Errors
+		assert!(parse_size_pair("").is_err());
+		assert!(parse_size_pair("foo").is_err());
+		assert!(parse_size_pair("0-100-20").is_err());
 	}
 }
