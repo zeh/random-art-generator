@@ -480,7 +480,7 @@ dependencies = [
 
 [[package]]
 name = "random-art-generator"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "bytes 0.6.0",
  "color_processing",
