@@ -2,7 +2,7 @@ use std::convert::TryInto;
 
 use color_processing::Color;
 
-use crate::generator::utils::units::SizeUnit;
+use crate::generator::utils::units::{Margins, SizeUnit};
 
 pub fn parse_color(src: &str) -> Result<(u8, u8, u8), &str> {
 	match Color::new_string(src) {
@@ -68,6 +68,37 @@ pub fn parse_size_pair(src: &str) -> Result<(SizeUnit, SizeUnit), &str> {
 		1 => Ok((values[0].clone(), values[0].clone())),
 		2 => Ok((values[0].clone(), values[1].clone())),
 		_ => Err("Size range length must be 2"),
+	}
+}
+
+pub fn parse_size_margins(src: &str) -> Result<Margins<SizeUnit>, &str> {
+	let values = parse_size_list(src, ',')?;
+	match values.len() {
+		1 => Ok(Margins::<SizeUnit> {
+			top: values[0].clone(),
+			right: values[0].clone(),
+			bottom: values[0].clone(),
+			left: values[0].clone(),
+		}),
+		2 => Ok(Margins::<SizeUnit> {
+			top: values[0].clone(),
+			right: values[1].clone(),
+			bottom: values[0].clone(),
+			left: values[1].clone(),
+		}),
+		3 => Ok(Margins::<SizeUnit> {
+			top: values[0].clone(),
+			right: values[1].clone(),
+			bottom: values[2].clone(),
+			left: values[1].clone(),
+		}),
+		4 => Ok(Margins::<SizeUnit> {
+			top: values[0].clone(),
+			right: values[1].clone(),
+			bottom: values[2].clone(),
+			left: values[3].clone(),
+		}),
+		_ => Err("Margin list length must be 1-4"),
 	}
 }
 
@@ -240,5 +271,63 @@ mod tests {
 		assert!(parse_size_pair("").is_err());
 		assert!(parse_size_pair("foo").is_err());
 		assert!(parse_size_pair("0-100-20").is_err());
+	}
+
+	#[test]
+	fn test_parse_size_margins() {
+		let u1pc = SizeUnit::Fraction(0.01);
+		let u50pc = SizeUnit::Fraction(0.5);
+		let u173_292pc = SizeUnit::Fraction(173.292);
+		let u10px = SizeUnit::Pixels(10);
+		let u55px = SizeUnit::Pixels(55);
+
+		// All
+		assert_eq!(
+			parse_size_margins("1%"),
+			Ok(Margins::<SizeUnit> {
+				top: u1pc.clone(),
+				right: u1pc.clone(),
+				bottom: u1pc.clone(),
+				left: u1pc.clone(),
+			})
+		);
+
+		// V, H
+		assert_eq!(
+			parse_size_margins("50%,55"),
+			Ok(Margins::<SizeUnit> {
+				top: u50pc.clone(),
+				right: u55px.clone(),
+				bottom: u50pc.clone(),
+				left: u55px.clone(),
+			})
+		);
+
+		// T, H, B
+		assert_eq!(
+			parse_size_margins("10,17329.2%,1%"),
+			Ok(Margins::<SizeUnit> {
+				top: u10px.clone(),
+				right: u173_292pc.clone(),
+				bottom: u1pc.clone(),
+				left: u173_292pc.clone(),
+			})
+		);
+
+		// T, R, B, L
+		assert_eq!(
+			parse_size_margins("55,50%,1%,17329.2%"),
+			Ok(Margins::<SizeUnit> {
+				top: u55px.clone(),
+				right: u50pc.clone(),
+				bottom: u1pc.clone(),
+				left: u173_292pc.clone(),
+			})
+		);
+
+		// Errors
+		assert!(parse_size_margins("").is_err());
+		assert!(parse_size_margins("foo").is_err());
+		assert!(parse_size_margins("1,2,3,4,5").is_err());
 	}
 }
