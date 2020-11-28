@@ -8,9 +8,11 @@ use structopt::StructOpt;
 
 use generator::painter::{circle::CirclePainter, rect::RectPainter, stroke::StrokePainter};
 use generator::utils::files;
-use generator::utils::parsing::{parse_color, parse_color_matrix, parse_float_pair, parse_size_pair};
+use generator::utils::parsing::{
+	parse_color, parse_color_matrix, parse_float_pair, parse_size_margins, parse_size_pair,
+};
 use generator::utils::random::get_random_seed;
-use generator::utils::units::SizeUnit;
+use generator::utils::units::{Margins, SizeUnit};
 use generator::Generator;
 
 mod generator;
@@ -146,6 +148,12 @@ struct Opt {
 	/// Number; bias for waviness (0.0 = normal, -1.0 = quad bias towards small, 1.0 = quad bias towards large)
 	#[structopt(long, default_value = "0.0", allow_hyphen_values = true)]
 	painter_wave_length_bias: f64,
+
+	/// Comma-separated size unit array; margins for the output image
+	///
+	/// This is in the format "all", or "vertical,horizontal", or "top,horizontal,bottom", or "top,right,bottom,left".
+	#[structopt(long, default_value = "0", allow_hyphen_values = true, parse(try_from_str = parse_size_margins))]
+	margins: Margins<SizeUnit>,
 }
 
 fn get_options() -> Opt {
