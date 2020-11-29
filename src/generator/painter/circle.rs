@@ -24,6 +24,7 @@ pub struct Options {
 	pub radius_bias: f64, // 0 = normal; -1 = quad bias towards small, 1 = quad bias towards big, etc
 	pub anti_alias: bool,
 	pub color_seed: f64,
+	pub rng_seed: u128,
 }
 
 impl CirclePainter {
@@ -35,6 +36,7 @@ impl CirclePainter {
 			radius_bias: 0.0f64,
 			anti_alias: true,
 			color_seed: 0.0f64,
+			rng_seed: 0u128,
 		};
 
 		CirclePainter {
@@ -44,8 +46,8 @@ impl CirclePainter {
 }
 
 impl Painter for CirclePainter {
-	fn paint(&self, canvas: &RgbImage, seed_map: &RgbImage) -> RgbImage {
-		let mut rng = get_rng();
+	fn paint(&self, canvas: &RgbImage, iteration: u64, seed_map: &RgbImage) -> RgbImage {
+		let mut rng = get_rng(self.options.rng_seed, iteration);
 
 		let image_w_i = canvas.dimensions().0;
 		let image_h_i = canvas.dimensions().1;

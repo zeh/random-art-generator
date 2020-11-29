@@ -8,6 +8,7 @@ use structopt::StructOpt;
 use generator::painter::{circle::CirclePainter, rect::RectPainter, stroke::StrokePainter};
 use generator::utils::files;
 use generator::utils::parsing::{parse_color, parse_color_matrix, parse_float_pair, parse_size_pair};
+use generator::utils::random::get_random_seed;
 use generator::utils::units::SizeUnit;
 use generator::Generator;
 
@@ -47,6 +48,10 @@ struct Opt {
 	/// String; the input image filename, if any
 	#[structopt(short, long, parse(from_os_str))]
 	input: Option<PathBuf>,
+
+	/// Integer; the seed to use for the pseudorandom number generator
+	#[structopt(long, default_value = "0")]
+	rng_seed: u128,
 
 	/// The color to be used as the default background for the new image, as a string in the typical HTML color formats.
 	///
@@ -236,6 +241,13 @@ fn main() {
 		num_cpus::get()
 	};
 
+	let rng_seed = if options.rng_seed == 0 {
+		get_random_seed()
+	} else {
+		options.rng_seed
+	};
+	println!("RNG seed is {}.", rng_seed);
+
 	// Process everything
 	// TODO: use actual enums here and use a single object from trait (can't seen to make it work)
 	// TODO: error out on passed painter options that are unused?
@@ -248,6 +260,7 @@ fn main() {
 			painter.options.radius_bias = options.painter_radius_bias;
 			painter.options.anti_alias = !options.painter_disable_anti_alias;
 			painter.options.color_seed = options.color_seed;
+			painter.options.rng_seed = rng_seed;
 			gen.process(options.max_tries, options.generations, candidates, painter, Some(on_processed));
 		}
 		"rects" => {
@@ -259,6 +272,7 @@ fn main() {
 			painter.options.height = options.painter_height;
 			painter.options.height_bias = options.painter_height_bias;
 			painter.options.color_seed = options.color_seed;
+			painter.options.rng_seed = rng_seed;
 			gen.process(options.max_tries, options.generations, candidates, painter, Some(on_processed));
 		}
 		"strokes" => {
@@ -275,6 +289,7 @@ fn main() {
 			painter.options.wave_length_bias = options.painter_wave_length_bias;
 			painter.options.anti_alias = !options.painter_disable_anti_alias;
 			painter.options.color_seed = options.color_seed;
+			painter.options.rng_seed = rng_seed;
 			gen.process(options.max_tries, options.generations, candidates, painter, Some(on_processed));
 		}
 		_ => unreachable!(),

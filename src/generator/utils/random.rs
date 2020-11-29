@@ -4,15 +4,20 @@ use std::f64::consts::PI;
 
 use crate::generator::utils::units::SizeUnit;
 
-pub fn get_rng() -> Rand64 {
+pub fn get_random_seed() -> u128 {
 	let mut seed_buffer = [0u8; 8];
 	getrandom(&mut seed_buffer).expect("Generating seed");
-	// Maybe brute force way to convert a [u8] to [u128]
+	// Not very elegant way to convert a [u8] to [u128]
 	let mut seed = 0u128;
 	for i in 0..seed_buffer.len() {
 		seed |= (seed_buffer[i] as u128) << i * 8;
 	}
-	Rand64::new(seed)
+	seed
+}
+
+pub fn get_rng(seed: u128, inc: u64) -> Rand64 {
+	// Seeds close to each other produce very similar results, so we multiply them a bit
+	Rand64::new(seed.wrapping_add((inc as u128) << 32))
 }
 
 #[inline(always)]

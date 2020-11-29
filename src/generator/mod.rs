@@ -84,10 +84,12 @@ impl Generator {
 		let mut total_tries: u32 = 0;
 		let mut total_gen: u32 = 0;
 
+		let mut total_processes: u64 = 0;
+
 		let arc_painter = Arc::new(painter);
 		let arc_target = Arc::new(self.target.clone());
 
-		println!("First try..");
+		println!("First try...");
 
 		loop {
 			time_started_iteration = Instant::now();
@@ -96,7 +98,7 @@ impl Generator {
 			if candidates == 1 {
 				// Simple path with no concurrency
 				let time_started_paint = Instant::now();
-				let new_candidate = arc_painter.paint(&self.current, &self.target);
+				let new_candidate = arc_painter.paint(&self.current, total_processes, &self.target);
 				time_elapsed_paint += time_started_paint.elapsed().as_micros();
 
 				let time_started_diff = Instant::now();
@@ -108,6 +110,8 @@ impl Generator {
 					curr_diff = new_diff;
 					used = true;
 				}
+
+				total_processes = total_processes.wrapping_add(1);
 			} else {
 				// Complex path with concurrency
 				// This can sometimes be slower because of all the image cloning done,
@@ -115,14 +119,18 @@ impl Generator {
 				// generations in about 25% of the original time
 				let (tx, rx) = mpsc::channel();
 
-				for _candidate in 0..candidates {
+				for candidate in 0..candidates {
 					let tx1 = mpsc::Sender::clone(&tx);
 					let thread_painter = Arc::clone(&arc_painter);
 					let thread_current = self.current.clone();
 					let thread_target = Arc::clone(&arc_target);
 
 					thread::spawn(move || {
-						let new_candidate = thread_painter.paint(&thread_current, &thread_target);
+						let new_candidate = thread_painter.paint(
+							&thread_current,
+							total_processes.wrapping_add(candidate as u64),
+							&thread_target,
+						);
 						let new_diff = diff(&new_candidate, &thread_target);
 
 						// Only report candidates that are actually better than the current diff,
@@ -143,6 +151,8 @@ impl Generator {
 						used = true;
 					}
 				}
+
+				total_processes = total_processes.wrapping_add(candidates as u64);
 			}
 
 			if used {
