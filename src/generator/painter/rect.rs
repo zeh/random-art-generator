@@ -1,9 +1,8 @@
 use image::{Pixel, Rgb, RgbImage};
-use rand::thread_rng;
 
 use crate::generator::utils::image::blend_pixel;
 use crate::generator::utils::random::{
-	get_random_range, get_random_ranges_bias, get_random_size_ranges_bias,
+	get_random_range, get_random_ranges_bias, get_random_size_ranges_bias, get_rng,
 };
 use crate::generator::utils::units::SizeUnit;
 use crate::generator::{
@@ -47,7 +46,7 @@ impl RectPainter {
 
 impl Painter for RectPainter {
 	fn paint(&self, canvas: &RgbImage, seed_map: &RgbImage) -> RgbImage {
-		let mut rng = thread_rng();
+		let mut rng = get_rng();
 
 		let image_w_i = canvas.dimensions().0;
 		let image_h_i = canvas.dimensions().1;

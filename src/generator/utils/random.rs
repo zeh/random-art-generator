@@ -1,22 +1,34 @@
-use rand::{rngs, Rng};
+use getrandom::getrandom;
+use oorandom::Rand64;
 use std::f64::consts::PI;
 
 use crate::generator::utils::units::SizeUnit;
 
-#[inline(always)]
-pub fn get_random_range(rng: &mut rngs::ThreadRng, min: f64, max: f64) -> f64 {
-	if min == max {
-		return min;
-	};
-	rng.gen_range(min, max)
+pub fn get_rng() -> Rand64 {
+	let mut seed_buffer = [0u8; 8];
+	getrandom(&mut seed_buffer).expect("Generating seed");
+	// Maybe brute force way to convert a [u8] to [u128]
+	let mut seed = 0u128;
+	for i in 0..seed_buffer.len() {
+		seed |= (seed_buffer[i] as u128) << i * 8;
+	}
+	Rand64::new(seed)
 }
 
 #[inline(always)]
-pub fn get_random_range_bias(rng: &mut rngs::ThreadRng, min: f64, max: f64, bias: f64) -> f64 {
+pub fn get_random_range(rng: &mut Rand64, min: f64, max: f64) -> f64 {
 	if min == max {
 		return min;
 	};
-	let mut r = rng.gen_range(0.0f64, 1.0f64);
+	min + rng.rand_float() * (max - min)
+}
+
+#[inline(always)]
+pub fn get_random_range_bias(rng: &mut Rand64, min: f64, max: f64, bias: f64) -> f64 {
+	if min == max {
+		return min;
+	};
+	let mut r = rng.rand_float();
 	if bias < 0.0f64 {
 		r = r.powf(-bias + 1.0f64);
 	} else if bias > 0.0f64 {
@@ -26,7 +38,7 @@ pub fn get_random_range_bias(rng: &mut rngs::ThreadRng, min: f64, max: f64, bias
 }
 
 pub fn get_random_size_range_bias(
-	rng: &mut rngs::ThreadRng,
+	rng: &mut Rand64,
 	min: &SizeUnit,
 	max: &SizeUnit,
 	bias: f64,
@@ -38,41 +50,41 @@ pub fn get_random_size_range_bias(
 }
 
 #[inline(always)]
-pub fn get_random_int(rng: &mut rngs::ThreadRng, min: u32, max: u32) -> u32 {
+pub fn get_random_int(rng: &mut Rand64, min: u64, max: u64) -> u64 {
 	if min == max {
 		return min;
 	};
-	rng.gen_range(min, max)
+	rng.rand_range(min..max)
 }
 
-pub fn get_random_ranges(rng: &mut rngs::ThreadRng, ranges: &Vec<(f64, f64)>) -> f64 {
-	let range: (f64, f64) = ranges[get_random_int(rng, 0, ranges.len() as u32) as usize];
+pub fn get_random_ranges(rng: &mut Rand64, ranges: &Vec<(f64, f64)>) -> f64 {
+	let range: (f64, f64) = ranges[get_random_int(rng, 0, ranges.len() as u64) as usize];
 	get_random_range(rng, range.0, range.1)
 }
 
-pub fn get_random_ranges_bias(rng: &mut rngs::ThreadRng, ranges: &Vec<(f64, f64)>, bias: f64) -> f64 {
+pub fn get_random_ranges_bias(rng: &mut Rand64, ranges: &Vec<(f64, f64)>, bias: f64) -> f64 {
 	if bias == 0.0f64 {
 		get_random_ranges(rng, &ranges)
 	} else {
-		let range: (f64, f64) = ranges[get_random_int(rng, 0, ranges.len() as u32) as usize];
+		let range: (f64, f64) = ranges[get_random_int(rng, 0, ranges.len() as u64) as usize];
 		get_random_range_bias(rng, range.0, range.1, bias)
 	}
 }
 
 pub fn get_random_size_ranges_bias(
-	rng: &mut rngs::ThreadRng,
+	rng: &mut Rand64,
 	ranges: &Vec<(SizeUnit, SizeUnit)>,
 	bias: f64,
 	pixel_size: u32,
 ) -> f64 {
-	let range: &(SizeUnit, SizeUnit) = &ranges[get_random_int(rng, 0, ranges.len() as u32) as usize];
+	let range: &(SizeUnit, SizeUnit) = &ranges[get_random_int(rng, 0, ranges.len() as u64) as usize];
 	get_random_size_range_bias(rng, &range.0, &range.1, bias, pixel_size)
 }
 
-pub fn get_random_noise_sequence(rng: &mut rngs::ThreadRng, min: f64, max: f64) -> [f64; 256] {
+pub fn get_random_noise_sequence(rng: &mut Rand64, min: f64, max: f64) -> [f64; 256] {
 	let mut sequence = [0f64; 256];
 	for i in 0..256 {
-		sequence[i] = rng.gen_range(min, max);
+		sequence[i] = get_random_range(rng, min, max);
 	}
 	return sequence;
 }
@@ -100,6 +112,6 @@ pub fn get_noise_value(noise: [f64; 256], position: f64) -> f64 {
 	v1 + (v2 - v1) * f
 }
 
-pub fn get_random_color(rng: &mut rngs::ThreadRng) -> [u8; 3] {
-	[rng.gen_range(0u8, 255u8), rng.gen_range(0u8, 255u8), rng.gen_range(0u8, 255u8)]
+pub fn get_random_color(rng: &mut Rand64) -> [u8; 3] {
+	[rng.rand_range(0..256) as u8, rng.rand_range(0..256) as u8, rng.rand_range(0..256) as u8]
 }
