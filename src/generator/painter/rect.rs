@@ -67,7 +67,7 @@ impl Painter for RectPainter {
 		// Found final, round positions
 		let x1 = rect_x.round().max(0.0).min(image_w) as u32;
 		let x2 = (rect_x + rect_w).round().max(0.0).min(image_w) as u32;
-		let y1 = rect_y.round().max(0.0).min(image_w) as u32;
+		let y1 = rect_y.round().max(0.0).min(image_h) as u32;
 		let y2 = (rect_y + rect_h).round().max(0.0).min(image_h) as u32;
 
 		// Determine color
