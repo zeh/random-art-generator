@@ -276,6 +276,7 @@ fn main() {
 			painter.options.anti_alias = !options.painter_disable_anti_alias;
 			painter.options.color_seed = options.color_seed;
 			painter.options.rng_seed = rng_seed;
+			painter.options.margins = options.margins;
 			gen.process(options.max_tries, options.generations, candidates, painter, Some(on_processed));
 		}
 		"rects" => {
@@ -288,6 +289,7 @@ fn main() {
 			painter.options.height_bias = options.painter_height_bias;
 			painter.options.color_seed = options.color_seed;
 			painter.options.rng_seed = rng_seed;
+			painter.options.margins = options.margins;
 			gen.process(options.max_tries, options.generations, candidates, painter, Some(on_processed));
 		}
 		"strokes" => {
@@ -305,6 +307,7 @@ fn main() {
 			painter.options.anti_alias = !options.painter_disable_anti_alias;
 			painter.options.color_seed = options.color_seed;
 			painter.options.rng_seed = rng_seed;
+			painter.options.margins = options.margins;
 			gen.process(options.max_tries, options.generations, candidates, painter, Some(on_processed));
 		}
 		_ => unreachable!(),

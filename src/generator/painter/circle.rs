@@ -7,7 +7,7 @@ use crate::generator::utils::image::blend_pixel;
 use crate::generator::utils::random::{
 	get_random_range, get_random_ranges_bias, get_random_size_ranges_bias, get_rng,
 };
-use crate::generator::utils::units::SizeUnit;
+use crate::generator::utils::units::{Margins, SizeUnit};
 use crate::generator::{
 	painter::Painter,
 	utils::{image::get_pixel_interpolated, random::get_random_color},
@@ -27,6 +27,7 @@ pub struct Options {
 	pub anti_alias: bool,
 	pub color_seed: f64,
 	pub rng_seed: u128,
+	pub margins: Margins<SizeUnit>,
 }
 
 impl CirclePainter {
@@ -39,6 +40,12 @@ impl CirclePainter {
 			anti_alias: true,
 			color_seed: 0.0f64,
 			rng_seed: 0u128,
+			margins: Margins::<SizeUnit> {
+				top: SizeUnit::Pixels(0),
+				right: SizeUnit::Pixels(0),
+				bottom: SizeUnit::Pixels(0),
+				left: SizeUnit::Pixels(0),
+			},
 		};
 
 		CirclePainter {
