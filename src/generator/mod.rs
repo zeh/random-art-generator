@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::sync::{mpsc, Arc};
 use std::thread;
 use std::time::Instant;
@@ -19,6 +20,7 @@ type ProcessCallback = fn(
 	num_generations: u32,
 	diff: f64,
 	time_elapsed: f32,
+	metadata: HashMap<String, String>,
 );
 
 /// A definition for the image generation. This will contain all data needed for a generation process.
@@ -173,6 +175,7 @@ impl Generator {
 					total_gen,
 					curr_diff,
 					time_started.elapsed().as_secs_f32(),
+					arc_painter.get_metadata(),
 				);
 			}
 

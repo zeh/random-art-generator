@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use image::{Pixel, Rgb, RgbImage};
 
 use crate::generator::utils::image::blend_pixel;
@@ -88,5 +90,11 @@ impl Painter for RectPainter {
 		}
 
 		painted_canvas
+	}
+
+	fn get_metadata(&self) -> HashMap<String, String> {
+		let mut data = HashMap::new();
+		data.insert(String::from("RNG seed"), format!("{}", &self.options.rng_seed));
+		data
 	}
 }

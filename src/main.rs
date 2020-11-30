@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::env;
 use std::path::PathBuf;
 use std::string::ToString;
@@ -159,6 +160,7 @@ fn on_processed(
 	num_generations: u32,
 	diff: f64,
 	time_elapsed: f32,
+	metadata: HashMap<String, String>,
 ) {
 	if is_success {
 		// Create basic image file data
@@ -172,7 +174,7 @@ fn on_processed(
 			// Write the file with metadata
 
 			// Define new metadata
-			let comments = vec![
+			let mut comments = vec![
 				format!(
 					"Produced {} generations after {} tries in {:.3}s ({:.3}ms avg per try); the final difference from target is {:.2}%.",
 					num_generations,
@@ -183,6 +185,11 @@ fn on_processed(
 				),
 				format!("Command line: {}", env::args().collect::<Vec<String>>().join(" ")),
 			];
+
+			// Add painter-specific metadata
+			for (key, value) in metadata {
+				comments.push(format!("{}: {}", key, value));
+			}
 
 			files::write_image_with_metadata(generator.get_current(), output_path, comments);
 		}
