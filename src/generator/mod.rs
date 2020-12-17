@@ -100,7 +100,7 @@ impl Generator {
 			if candidates == 1 {
 				// Simple path with no concurrency
 				let time_started_paint = Instant::now();
-				let new_candidate = arc_painter.paint(&self.current, total_processes, &self.target);
+				let new_candidate = arc_painter.paint(&self.current, total_processes, &self.target).expect("painting");
 				time_elapsed_paint += time_started_paint.elapsed().as_micros();
 
 				let time_started_diff = Instant::now();
@@ -132,7 +132,7 @@ impl Generator {
 							&thread_current,
 							total_processes.wrapping_add(candidate as u64),
 							&thread_target,
-						);
+						).expect("painting");
 						let new_diff = diff(&new_candidate, &thread_target);
 
 						// Only report candidates that are actually better than the current diff,

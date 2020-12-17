@@ -57,12 +57,14 @@ impl RectPainter {
 }
 
 impl Painter for RectPainter {
-	fn paint(&self, canvas: &RgbImage, iteration: u64, seed_map: &RgbImage) -> RgbImage {
+	fn paint(&self, canvas: &RgbImage, iteration: u64, seed_map: &RgbImage) -> Result<RgbImage, &str> {
 		let mut rng = get_rng(self.options.rng_seed, iteration);
 
 		let image_area = canvas.dimensions();
-		let target_area =
-			find_target_draw_rect(image_area, &self.options.margins).expect("finding target area");
+		let target_area = match find_target_draw_rect(image_area, &self.options.margins) {
+			Ok(rect) => rect,
+			Err(err) => return Err(err),
+		};
 		let target_visible_area =
 			(image_area.0.min(target_area.width as u32), image_area.1.min(target_area.height as u32));
 
@@ -114,7 +116,7 @@ impl Painter for RectPainter {
 			}
 		}
 
-		painted_canvas
+		Ok(painted_canvas)
 	}
 
 	fn get_metadata(&self) -> HashMap<String, String> {
