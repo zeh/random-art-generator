@@ -12,6 +12,15 @@ use utils::terminal;
 pub mod painter;
 pub mod utils;
 
+pub enum ProcessResult {
+	// Image generated and sent along with its diff value
+	Ok(RgbImage, f64),
+	// Image generated, but we now its diff is not better than the current one, so we don't send anything
+	Ignore,
+	// Could not generate image because of an error
+	Error(String),
+}
+
 type ProcessCallback = fn(
 	generator: &Generator,
 	is_success: bool,
@@ -100,7 +109,8 @@ impl Generator {
 			if candidates == 1 {
 				// Simple path with no concurrency
 				let time_started_paint = Instant::now();
-				let new_candidate = arc_painter.paint(&self.current, total_processes, &self.target).expect("painting");
+				let new_candidate =
+					arc_painter.paint(&self.current, total_processes, &self.target).expect("painting");
 				time_elapsed_paint += time_started_paint.elapsed().as_micros();
 
 				let time_started_diff = Instant::now();
@@ -128,29 +138,44 @@ impl Generator {
 					let thread_target = Arc::clone(&arc_target);
 
 					thread::spawn(move || {
-						let new_candidate = thread_painter.paint(
+						let result = match thread_painter.paint(
 							&thread_current,
 							total_processes.wrapping_add(candidate as u64),
 							&thread_target,
-						).expect("painting");
-						let new_diff = diff(&new_candidate, &thread_target);
+						) {
+							Ok(new_candidate) => {
+								let new_diff = diff(&new_candidate, &thread_target);
 
-						// Only report candidates that are actually better than the current diff,
-						// to minimize the back-and-forth of data. To be fair, however, this doesn't
-						// seem to to do much in terms of performance.
-						if new_diff < curr_diff {
-							tx1.send((new_candidate, new_diff)).unwrap();
-						}
+								// Only report candidates that are actually better than the current diff,
+								// to minimize the back-and-forth of data. To be fair, however, this doesn't
+								// seem to to do much in terms of performance.
+								if new_diff < curr_diff {
+									ProcessResult::Ok(new_candidate, new_diff)
+								} else {
+									ProcessResult::Ignore
+								}
+							}
+							Err(err) => ProcessResult::Error(err.to_owned()),
+						};
+						tx1.send(result).unwrap();
 					});
 				}
 
 				drop(tx);
 
-				for (new_candidate, new_diff) in rx {
-					if new_diff < curr_diff {
-						self.current = new_candidate;
-						curr_diff = new_diff;
-						used = true;
+				for result in rx {
+					match result {
+						ProcessResult::Ok(new_candidate, new_diff) => {
+							if new_diff < curr_diff {
+								self.current = new_candidate;
+								curr_diff = new_diff;
+								used = true;
+							}
+						}
+						ProcessResult::Ignore => {}
+						ProcessResult::Error(err) => {
+							panic!(err);
+						}
 					}
 				}
 
