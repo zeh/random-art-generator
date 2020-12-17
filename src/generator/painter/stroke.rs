@@ -2,6 +2,7 @@ use std::collections::HashMap;
 
 use image::{Pixel, Rgb, RgbImage};
 
+use crate::generator::utils::geom::find_target_draw_rect;
 use crate::generator::utils::image::blend_pixel;
 use crate::generator::utils::random::{
 	get_noise_value, get_random_noise_sequence, get_random_range, get_random_ranges_bias,
@@ -70,26 +71,43 @@ impl Painter for StrokePainter {
 	fn paint(&self, canvas: &RgbImage, iteration: u64, seed_map: &RgbImage) -> RgbImage {
 		let mut rng = get_rng(self.options.rng_seed, iteration);
 
-		let image_w_i = canvas.dimensions().0;
-		let image_h_i = canvas.dimensions().1;
-		let image_w = image_w_i as f64;
-		let image_h = image_h_i as f64;
+		let image_area = canvas.dimensions();
+		let target_area =
+			find_target_draw_rect(image_area, &self.options.margins).expect("finding target area");
+		let target_visible_area =
+			(image_area.0.min(target_area.width as u32), image_area.1.min(target_area.height as u32));
 
-		// Find random dimensions
-		let rect_w: f64 =
-			get_random_size_ranges_bias(&mut rng, &self.options.width, self.options.width_bias, image_w_i);
-		let rect_h: f64 =
-			get_random_size_ranges_bias(&mut rng, &self.options.height, self.options.height_bias, image_h_i);
+		// Find random dimensions for rect to be painted
+		let rect_w = get_random_size_ranges_bias(
+			&mut rng,
+			&self.options.width,
+			self.options.width_bias,
+			target_visible_area.0,
+		);
+		let rect_h = get_random_size_ranges_bias(
+			&mut rng,
+			&self.options.height,
+			self.options.height_bias,
+			target_visible_area.1,
+		);
 
 		// Distribute along the axis too
-		let rect_x: f64 = get_random_range(&mut rng, 0.0f64, 1.0f64) * (image_w - rect_w);
-		let rect_y: f64 = get_random_range(&mut rng, 0.0f64, 1.0f64) * (image_h - rect_h);
+		let rect_x = get_random_range(
+			&mut rng,
+			target_area.x as f64,
+			(target_area.x + target_area.width) as f64 - rect_w,
+		);
+		let rect_y = get_random_range(
+			&mut rng,
+			target_area.y as f64,
+			(target_area.y + target_area.height) as f64 - rect_h,
+		);
 
-		// Found final, round positions
-		let x1 = rect_x.round().max(0.0).min(image_w) as u32;
-		let x2 = (rect_x + rect_w).round().max(0.0).min(image_w) as u32;
-		let y1 = rect_y.round().max(0.0).min(image_w) as u32;
-		let y2 = (rect_y + rect_h).round().max(0.0).min(image_h) as u32;
+		// Find final, round positions
+		let x1 = rect_x.round().max(0.0).min(image_area.0 as f64) as u32;
+		let x2 = (rect_x + rect_w).round().max(0.0).min(image_area.0 as f64) as u32;
+		let y1 = rect_y.round().max(0.0).min(image_area.1 as f64) as u32;
+		let y2 = (rect_y + rect_h).round().max(0.0).min(image_area.1 as f64) as u32;
 
 		// Determine color
 		let random_color = get_random_color(&mut rng);
@@ -99,17 +117,17 @@ impl Painter for StrokePainter {
 		let alpha = get_random_ranges_bias(&mut rng, &self.options.alpha, self.options.alpha_bias);
 
 		// Determine waviness
-		let wave_height: f64 = get_random_size_ranges_bias(
+		let wave_height = get_random_size_ranges_bias(
 			&mut rng,
 			&self.options.wave_height,
 			self.options.wave_height_bias,
-			image_h_i,
+			target_visible_area.0 as u32,
 		);
-		let wave_length: f64 = get_random_size_ranges_bias(
+		let wave_length = get_random_size_ranges_bias(
 			&mut rng,
 			&self.options.wave_length,
 			self.options.wave_length_bias,
-			image_w_i,
+			target_visible_area.1 as u32,
 		);
 
 		let mut painted_canvas = canvas.clone();
@@ -133,9 +151,9 @@ impl Painter for StrokePainter {
 			let noise_freq = wave_length;
 
 			let x1_safe = (x1 as i64 - margin_ceil as i64).max(0) as u32;
-			let x2_safe = (x2 + margin_ceil).min(image_w as u32);
+			let x2_safe = (x2 + margin_ceil).min(image_area.0 as u32);
 			let y1_safe = (y1 as i64 - margin_ceil as i64).max(0) as u32;
-			let y2_safe = (y2 + margin_ceil).min(image_h as u32);
+			let y2_safe = (y2 + margin_ceil).min(image_area.1 as u32);
 
 			for x in x1_safe..x2_safe {
 				for y in y1_safe..y2_safe {
