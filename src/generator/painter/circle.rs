@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use image::{Pixel, Rgb, RgbImage};
 
-use crate::generator::utils::geom::distance;
+use crate::generator::utils::geom::{distance, find_target_draw_rect};
 use crate::generator::utils::image::blend_pixel;
 use crate::generator::utils::random::{
 	get_random_range, get_random_ranges_bias, get_random_size_ranges_bias, get_rng,
@@ -58,30 +58,42 @@ impl Painter for CirclePainter {
 	fn paint(&self, canvas: &RgbImage, iteration: u64, seed_map: &RgbImage) -> RgbImage {
 		let mut rng = get_rng(self.options.rng_seed, iteration);
 
-		let image_w_i = canvas.dimensions().0;
-		let image_h_i = canvas.dimensions().1;
-		let image_w = image_w_i as f64;
-		let image_h = image_h_i as f64;
+		let image_area = canvas.dimensions();
+		let target_area =
+			find_target_draw_rect(image_area, &self.options.margins).expect("finding target area");
+		let target_visible_area =
+			(image_area.0.min(target_area.width as u32), image_area.1.min(target_area.height as u32));
 
-		// Find random radius
-		let radius: f64 =
-			get_random_size_ranges_bias(&mut rng, &self.options.radius, self.options.radius_bias, image_w_i);
+		// Find random radius for the circle to be painted
+		let max_dimension = target_visible_area.0.max(target_visible_area.1);
+		let radius = get_random_size_ranges_bias(
+			&mut rng,
+			&self.options.radius,
+			self.options.radius_bias,
+			max_dimension,
+		);
 
 		// Distribute along the axis too
-		let circle_x: f64 = get_random_range(&mut rng, 0.0f64, 1.0f64) * (image_w - radius * 2.0f64);
-		let circle_y: f64 = get_random_range(&mut rng, 0.0f64, 1.0f64) * (image_h - radius * 2.0f64);
+		let circle_x = get_random_range(
+			&mut rng,
+			target_area.x as f64 + radius,
+			(target_area.x + target_area.width) as f64 - radius,
+		);
+		let circle_y = get_random_range(
+			&mut rng,
+			target_area.y as f64 + radius,
+			(target_area.y + target_area.height) as f64 - radius,
+		);
 
-		// Found final, round positions
-		let cx = circle_x + radius;
-		let cy = circle_y + radius;
-		let x1 = (cx - radius).floor().max(0.0).min(image_w) as u32;
-		let y1 = (cy - radius).floor().max(0.0).min(image_h) as u32;
-		let x2 = (cx + radius).ceil().max(0.0).min(image_w) as u32;
-		let y2 = (cy + radius).ceil().max(0.0).min(image_h) as u32;
+		// Find final, round positions
+		let x1 = (circle_x - radius).floor().max(0.0).min(image_area.0 as f64) as u32;
+		let y1 = (circle_y - radius).floor().max(0.0).min(image_area.1 as f64) as u32;
+		let x2 = (circle_x + radius).ceil().max(0.0).min(image_area.0 as f64) as u32;
+		let y2 = (circle_y + radius).ceil().max(0.0).min(image_area.1 as f64) as u32;
 
 		// Determine color
 		let random_color = get_random_color(&mut rng);
-		let seed_color = get_pixel_interpolated(seed_map, cx, cy);
+		let seed_color = get_pixel_interpolated(seed_map, circle_x, circle_y);
 		let color = blend_pixel(&random_color, &seed_color, self.options.color_seed);
 		let alpha = get_random_ranges_bias(&mut rng, &self.options.alpha, self.options.alpha_bias);
 
@@ -89,7 +101,7 @@ impl Painter for CirclePainter {
 		let mut painted_canvas = canvas.clone();
 		for x in x1..x2 {
 			for y in y1..y2 {
-				let dist = distance(cx, cy, x as f64, y as f64);
+				let dist = distance(circle_x, circle_y, x as f64, y as f64);
 				if dist <= radius {
 					let abs = radius - dist;
 					let new_alpha = if abs > 1.0f64 {
