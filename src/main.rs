@@ -54,7 +54,7 @@ struct Opt {
 
 	/// Integer; the seed to use for the pseudorandom number generator
 	#[structopt(long, default_value = "0")]
-	rng_seed: u128,
+	rng_seed: u32,
 
 	/// The color to be used as the default background for the new image, as a string in the typical HTML color formats.
 	///

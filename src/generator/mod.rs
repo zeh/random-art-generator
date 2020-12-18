@@ -95,7 +95,7 @@ impl Generator {
 		let mut total_tries: u32 = 0;
 		let mut total_gen: u32 = 0;
 
-		let mut total_processes: u64 = 0;
+		let mut total_processes: u32 = 0;
 
 		let arc_painter = Arc::new(painter);
 		let arc_target = Arc::new(self.target.clone());
@@ -140,7 +140,7 @@ impl Generator {
 					thread::spawn(move || {
 						let result = match thread_painter.paint(
 							&thread_current,
-							total_processes.wrapping_add(candidate as u64),
+							total_processes.wrapping_add(candidate as u32),
 							&thread_target,
 						) {
 							Ok(new_candidate) => {
@@ -179,7 +179,7 @@ impl Generator {
 					}
 				}
 
-				total_processes = total_processes.wrapping_add(candidates as u64);
+				total_processes = total_processes.wrapping_add(candidates as u32);
 			}
 
 			if used {

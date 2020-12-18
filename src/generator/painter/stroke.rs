@@ -33,7 +33,7 @@ pub struct Options {
 	pub wave_length_bias: f64,
 	pub anti_alias: bool,
 	pub color_seed: f64,
-	pub rng_seed: u128,
+	pub rng_seed: u32,
 	pub margins: Margins<SizeUnit>,
 }
 
@@ -67,7 +67,7 @@ impl StrokePainter {
 			wave_length_bias: 0.0f64,
 			anti_alias: true,
 			color_seed: 0.0f64,
-			rng_seed: 0u128,
+			rng_seed: 0,
 			margins: Margins::<SizeUnit> {
 				top: SizeUnit::Pixels(0),
 				right: SizeUnit::Pixels(0),
@@ -83,7 +83,7 @@ impl StrokePainter {
 }
 
 impl Painter for StrokePainter {
-	fn paint(&self, canvas: &RgbImage, iteration: u64, seed_map: &RgbImage) -> Result<RgbImage, &str> {
+	fn paint(&self, canvas: &RgbImage, iteration: u32, seed_map: &RgbImage) -> Result<RgbImage, &str> {
 		let mut rng = get_rng(self.options.rng_seed, iteration);
 
 		let image_area = canvas.dimensions();
