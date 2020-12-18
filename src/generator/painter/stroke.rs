@@ -5,10 +5,10 @@ use image::{Pixel, Rgb, RgbImage};
 use crate::generator::utils::geom::find_target_draw_rect;
 use crate::generator::utils::image::blend_pixel;
 use crate::generator::utils::random::{
-	get_noise_value, get_random_noise_sequence, get_random_range, get_random_ranges_bias,
-	get_random_size_ranges_bias, get_rng,
+	get_noise_value, get_random_noise_sequence, get_random_range, get_random_ranges_bias_weighted,
+	get_random_size_ranges_bias_weighted, get_rng,
 };
-use crate::generator::utils::units::{Margins, SizeUnit};
+use crate::generator::utils::units::{Margins, SizeUnit, WeightedValue};
 use crate::generator::{
 	painter::Painter,
 	utils::{image::get_pixel_interpolated, random::get_random_color},
@@ -21,15 +21,15 @@ pub struct StrokePainter {
 
 #[derive(Clone)]
 pub struct Options {
-	pub alpha: Vec<(f64, f64)>,
+	pub alpha: Vec<WeightedValue<(f64, f64)>>,
 	pub alpha_bias: f64,
-	pub width: Vec<(SizeUnit, SizeUnit)>,
-	pub height: Vec<(SizeUnit, SizeUnit)>,
+	pub width: Vec<WeightedValue<(SizeUnit, SizeUnit)>>,
+	pub height: Vec<WeightedValue<(SizeUnit, SizeUnit)>>,
 	pub width_bias: f64, // 0 = normal; -1 = quad bias towards small, 1 = quad bias towards big, etc
 	pub height_bias: f64, // 0 = normal; -1 = quad bias towards small, 1 = quad bias towards big, etc
-	pub wave_height: Vec<(SizeUnit, SizeUnit)>,
+	pub wave_height: Vec<WeightedValue<(SizeUnit, SizeUnit)>>,
 	pub wave_height_bias: f64,
-	pub wave_length: Vec<(SizeUnit, SizeUnit)>,
+	pub wave_length: Vec<WeightedValue<(SizeUnit, SizeUnit)>>,
 	pub wave_length_bias: f64,
 	pub anti_alias: bool,
 	pub color_seed: f64,
@@ -40,15 +40,30 @@ pub struct Options {
 impl StrokePainter {
 	pub fn new() -> StrokePainter {
 		let options = Options {
-			alpha: vec![(1.0, 1.0)],
+			alpha: vec![WeightedValue {
+				value: (1.0, 1.0),
+				weight: 1.0,
+			}],
 			alpha_bias: 0.0f64,
-			width: vec![(SizeUnit::Fraction(0.0), SizeUnit::Fraction(1.0))],
+			width: vec![WeightedValue {
+				value: (SizeUnit::Fraction(0.0), SizeUnit::Fraction(1.0)),
+				weight: 1.0,
+			}],
 			width_bias: 0.0f64,
-			height: vec![(SizeUnit::Fraction(0.0), SizeUnit::Fraction(1.0))],
+			height: vec![WeightedValue {
+				value: (SizeUnit::Fraction(0.0), SizeUnit::Fraction(1.0)),
+				weight: 1.0,
+			}],
 			height_bias: 0.0f64,
-			wave_height: vec![(SizeUnit::Fraction(0.01), SizeUnit::Fraction(0.01))],
+			wave_height: vec![WeightedValue {
+				value: (SizeUnit::Fraction(0.01), SizeUnit::Fraction(0.01)),
+				weight: 1.0,
+			}],
 			wave_height_bias: 0.0f64,
-			wave_length: vec![(SizeUnit::Fraction(0.5), SizeUnit::Fraction(0.5))],
+			wave_length: vec![WeightedValue {
+				value: (SizeUnit::Fraction(0.5), SizeUnit::Fraction(0.5)),
+				weight: 1.0,
+			}],
 			wave_length_bias: 0.0f64,
 			anti_alias: true,
 			color_seed: 0.0f64,
@@ -80,13 +95,13 @@ impl Painter for StrokePainter {
 			(image_area.0.min(target_area.width as u32), image_area.1.min(target_area.height as u32));
 
 		// Find random dimensions for rect to be painted
-		let rect_w = get_random_size_ranges_bias(
+		let rect_w = get_random_size_ranges_bias_weighted(
 			&mut rng,
 			&self.options.width,
 			self.options.width_bias,
 			target_visible_area.0,
 		);
-		let rect_h = get_random_size_ranges_bias(
+		let rect_h = get_random_size_ranges_bias_weighted(
 			&mut rng,
 			&self.options.height,
 			self.options.height_bias,
@@ -116,16 +131,16 @@ impl Painter for StrokePainter {
 		let seed_color =
 			get_pixel_interpolated(seed_map, (x1 + x2) as f64 / 2.0f64, (y1 + y2) as f64 / 2.0f64);
 		let color = blend_pixel(&random_color, &seed_color, self.options.color_seed);
-		let alpha = get_random_ranges_bias(&mut rng, &self.options.alpha, self.options.alpha_bias);
+		let alpha = get_random_ranges_bias_weighted(&mut rng, &self.options.alpha, self.options.alpha_bias);
 
 		// Determine waviness
-		let wave_height = get_random_size_ranges_bias(
+		let wave_height = get_random_size_ranges_bias_weighted(
 			&mut rng,
 			&self.options.wave_height,
 			self.options.wave_height_bias,
 			target_visible_area.0 as u32,
 		);
-		let wave_length = get_random_size_ranges_bias(
+		let wave_length = get_random_size_ranges_bias_weighted(
 			&mut rng,
 			&self.options.wave_length,
 			self.options.wave_length_bias,

@@ -5,9 +5,9 @@ use image::{Pixel, Rgb, RgbImage};
 use crate::generator::utils::geom::{distance, find_target_draw_rect};
 use crate::generator::utils::image::blend_pixel;
 use crate::generator::utils::random::{
-	get_random_range, get_random_ranges_bias, get_random_size_ranges_bias, get_rng,
+	get_random_range, get_random_ranges_bias_weighted, get_random_size_ranges_bias_weighted, get_rng,
 };
-use crate::generator::utils::units::{Margins, SizeUnit};
+use crate::generator::utils::units::{Margins, SizeUnit, WeightedValue};
 use crate::generator::{
 	painter::Painter,
 	utils::{image::get_pixel_interpolated, random::get_random_color},
@@ -20,9 +20,9 @@ pub struct CirclePainter {
 
 #[derive(Clone)]
 pub struct Options {
-	pub alpha: Vec<(f64, f64)>,
+	pub alpha: Vec<WeightedValue<(f64, f64)>>,
 	pub alpha_bias: f64,
-	pub radius: Vec<(SizeUnit, SizeUnit)>,
+	pub radius: Vec<WeightedValue<(SizeUnit, SizeUnit)>>,
 	pub radius_bias: f64, // 0 = normal; -1 = quad bias towards small, 1 = quad bias towards big, etc
 	pub anti_alias: bool,
 	pub color_seed: f64,
@@ -33,9 +33,15 @@ pub struct Options {
 impl CirclePainter {
 	pub fn new() -> CirclePainter {
 		let options = Options {
-			alpha: vec![(1.0, 1.0)],
+			alpha: vec![WeightedValue {
+				value: (1.0, 1.0),
+				weight: 1.0,
+			}],
 			alpha_bias: 0.0f64,
-			radius: vec![(SizeUnit::Fraction(0.0), SizeUnit::Fraction(0.5))],
+			radius: vec![WeightedValue {
+				value: (SizeUnit::Fraction(0.0), SizeUnit::Fraction(0.5)),
+				weight: 1.0,
+			}],
 			radius_bias: 0.0f64,
 			anti_alias: true,
 			color_seed: 0.0f64,
@@ -68,7 +74,7 @@ impl Painter for CirclePainter {
 
 		// Find random radius for the circle to be painted
 		let max_dimension = target_visible_area.0.max(target_visible_area.1);
-		let radius = get_random_size_ranges_bias(
+		let radius = get_random_size_ranges_bias_weighted(
 			&mut rng,
 			&self.options.radius,
 			self.options.radius_bias,
@@ -97,7 +103,7 @@ impl Painter for CirclePainter {
 		let random_color = get_random_color(&mut rng);
 		let seed_color = get_pixel_interpolated(seed_map, circle_x, circle_y);
 		let color = blend_pixel(&random_color, &seed_color, self.options.color_seed);
-		let alpha = get_random_ranges_bias(&mut rng, &self.options.alpha, self.options.alpha_bias);
+		let alpha = get_random_ranges_bias_weighted(&mut rng, &self.options.alpha, self.options.alpha_bias);
 
 		// Finally, paint
 		let mut painted_canvas = canvas.clone();

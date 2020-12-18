@@ -9,10 +9,10 @@ use structopt::StructOpt;
 use generator::painter::{circle::CirclePainter, rect::RectPainter, stroke::StrokePainter};
 use generator::utils::files;
 use generator::utils::parsing::{
-	parse_color, parse_color_matrix, parse_float_pair, parse_size_margins, parse_size_pair,
+	parse_color, parse_color_matrix, parse_size_margins, parse_weighted_float_pair, parse_weighted_size_pair,
 };
 use generator::utils::random::get_random_seed;
-use generator::utils::units::{Margins, SizeUnit};
+use generator::utils::units::{Margins, SizeUnit, WeightedValue};
 use generator::Generator;
 
 mod generator;
@@ -98,32 +98,32 @@ struct Opt {
 	painter: String,
 
 	/// List of number ranges; the alphas to be used at random. Examples: "1.0", "0.1", "0.1-0.2", "0.1-0.2 0.3 0.5 0.9-1.0"
-	#[structopt(long, default_value = "1", parse(try_from_str = parse_float_pair))]
-	painter_alpha: Vec<(f64, f64)>,
+	#[structopt(long, default_value = "1", parse(try_from_str = parse_weighted_float_pair))]
+	painter_alpha: Vec<WeightedValue<(f64, f64)>>,
 
 	/// Number; bias for alpha (0.0 = normal, -1.0 = quad bias towards transparency, 1.0 = quad bias towards opacity)
 	#[structopt(long, default_value = "0.0", allow_hyphen_values = true)]
 	painter_alpha_bias: f64,
 
 	/// List of size ranges; the radius when applicable
-	#[structopt(long, default_value = "0%-50%", parse(try_from_str = parse_size_pair))]
-	painter_radius: Vec<(SizeUnit, SizeUnit)>,
+	#[structopt(long, default_value = "0%-50%", parse(try_from_str = parse_weighted_size_pair))]
+	painter_radius: Vec<WeightedValue<(SizeUnit, SizeUnit)>>,
 
 	/// Number; bias for radius (0.0 = normal, -1.0 = quad bias towards small, 1.0 = quad bias towards large)
 	#[structopt(long, default_value = "0.0", allow_hyphen_values = true)]
 	painter_radius_bias: f64,
 
 	/// List of size ranges; width when applicable
-	#[structopt(long, default_value = "0%-100%", parse(try_from_str = parse_size_pair))]
-	painter_width: Vec<(SizeUnit, SizeUnit)>,
+	#[structopt(long, default_value = "0%-100%", parse(try_from_str = parse_weighted_size_pair))]
+	painter_width: Vec<WeightedValue<(SizeUnit, SizeUnit)>>,
 
 	/// Number; bias for width (0.0 = normal, -1.0 = quad bias towards small, 1.0 = quad bias towards large)
 	#[structopt(long, default_value = "0.0", allow_hyphen_values = true)]
 	painter_width_bias: f64,
 
 	/// List of size ranges; height when applicable
-	#[structopt(long, default_value = "0%-100%", parse(try_from_str = parse_size_pair))]
-	painter_height: Vec<(SizeUnit, SizeUnit)>,
+	#[structopt(long, default_value = "0%-100%", parse(try_from_str = parse_weighted_size_pair))]
+	painter_height: Vec<WeightedValue<(SizeUnit, SizeUnit)>>,
 
 	/// Number; bias for height (0.0 = normal, -1.0 = quad bias towards small, 1.0 = quad bias towards large)
 	#[structopt(long, default_value = "0.0", allow_hyphen_values = true)]
@@ -134,16 +134,16 @@ struct Opt {
 	painter_disable_anti_alias: bool,
 
 	/// List of size ranges; waviness when applicable
-	#[structopt(long, default_value = "0.5%", parse(try_from_str = parse_size_pair))]
-	painter_wave_height: Vec<(SizeUnit, SizeUnit)>,
+	#[structopt(long, default_value = "0.5%", parse(try_from_str = parse_weighted_size_pair))]
+	painter_wave_height: Vec<WeightedValue<(SizeUnit, SizeUnit)>>,
 
 	/// Number; bias for waviness (0.0 = normal, -1.0 = quad bias towards small, 1.0 = quad bias towards large)
 	#[structopt(long, default_value = "0.0", allow_hyphen_values = true)]
 	painter_wave_height_bias: f64,
 
 	/// List of size ranges; waviness when applicable
-	#[structopt(long, default_value = "400%", parse(try_from_str = parse_size_pair))]
-	painter_wave_length: Vec<(SizeUnit, SizeUnit)>,
+	#[structopt(long, default_value = "400%", parse(try_from_str = parse_weighted_size_pair))]
+	painter_wave_length: Vec<WeightedValue<(SizeUnit, SizeUnit)>>,
 
 	/// Number; bias for waviness (0.0 = normal, -1.0 = quad bias towards small, 1.0 = quad bias towards large)
 	#[structopt(long, default_value = "0.0", allow_hyphen_values = true)]

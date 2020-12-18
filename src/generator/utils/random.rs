@@ -2,7 +2,7 @@ use getrandom::getrandom;
 use oorandom::Rand64;
 use std::f64::consts::PI;
 
-use crate::generator::utils::units::SizeUnit;
+use crate::generator::utils::units::{SizeUnit, WeightedValue};
 
 pub fn get_random_seed() -> u128 {
 	let mut seed_buffer = [0u8; 8];
@@ -54,35 +54,36 @@ pub fn get_random_size_range_bias(
 	return get_random_range_bias(rng, min_pixels as f64, max_pixels as f64, bias);
 }
 
-#[inline(always)]
-pub fn get_random_int(rng: &mut Rand64, min: u64, max: u64) -> u64 {
-	if min == max {
-		return min;
-	};
-	rng.rand_range(min..max)
+pub fn get_random_entry_weighted<'a, T>(rng: &mut Rand64, entries: &'a Vec<WeightedValue<T>>) -> &'a T {
+	let total_weight = entries.iter().map(|r| r.weight).sum();
+	let desired_position = get_random_range(rng, 0.0, total_weight);
+	let mut acc = 0.0f64;
+	&entries
+		.iter()
+		.find(|&r| {
+			acc += r.weight;
+			acc >= desired_position
+		})
+		.expect("finding weighted random value")
+		.value
 }
 
-pub fn get_random_ranges(rng: &mut Rand64, ranges: &Vec<(f64, f64)>) -> f64 {
-	let range: (f64, f64) = ranges[get_random_int(rng, 0, ranges.len() as u64) as usize];
-	get_random_range(rng, range.0, range.1)
-}
-
-pub fn get_random_ranges_bias(rng: &mut Rand64, ranges: &Vec<(f64, f64)>, bias: f64) -> f64 {
-	if bias == 0.0f64 {
-		get_random_ranges(rng, &ranges)
-	} else {
-		let range: (f64, f64) = ranges[get_random_int(rng, 0, ranges.len() as u64) as usize];
-		get_random_range_bias(rng, range.0, range.1, bias)
-	}
-}
-
-pub fn get_random_size_ranges_bias(
+pub fn get_random_ranges_bias_weighted(
 	rng: &mut Rand64,
-	ranges: &Vec<(SizeUnit, SizeUnit)>,
+	ranges: &Vec<WeightedValue<(f64, f64)>>,
+	bias: f64,
+) -> f64 {
+	let range = get_random_entry_weighted(rng, ranges);
+	get_random_range_bias(rng, range.0, range.1, bias)
+}
+
+pub fn get_random_size_ranges_bias_weighted(
+	rng: &mut Rand64,
+	ranges: &Vec<WeightedValue<(SizeUnit, SizeUnit)>>,
 	bias: f64,
 	pixel_size: u32,
 ) -> f64 {
-	let range: &(SizeUnit, SizeUnit) = &ranges[get_random_int(rng, 0, ranges.len() as u64) as usize];
+	let range = get_random_entry_weighted(rng, ranges);
 	get_random_size_range_bias(rng, &range.0, &range.1, bias, pixel_size)
 }
 
