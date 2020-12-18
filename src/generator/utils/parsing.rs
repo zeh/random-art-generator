@@ -2,7 +2,7 @@ use std::convert::TryInto;
 
 use color_processing::Color;
 
-use crate::generator::utils::units::{Margins, SizeUnit};
+use crate::generator::utils::units::{Margins, SizeUnit, WeightedValue};
 
 pub fn parse_color(src: &str) -> Result<(u8, u8, u8), &str> {
 	match Color::new_string(src) {
@@ -112,6 +112,34 @@ pub fn parse_weight(src: &str) -> Result<(&str, f64), &str> {
 			Err(err) => Err(err),
 		},
 		_ => Err("Value cannot contain more than one weight value"),
+	}
+}
+
+/// Parses a size pair with a weight (e.f. "1-2@1", "10%", "5-10%@2") into a WeightedValue<>
+pub fn parse_weighted_size_pair(src: &str) -> Result<WeightedValue<(SizeUnit, SizeUnit)>, &str> {
+	match parse_weight(src) {
+		Ok((src_pair, weight)) => match parse_size_pair(src_pair) {
+			Ok(value) => Ok(WeightedValue {
+				value,
+				weight,
+			}),
+			Err(err) => Err(err),
+		},
+		Err(err) => Err(err),
+	}
+}
+
+/// Parses a float pair with a weight (e.f. "1-2@1", "10.2", "5.2-10@2") into a WeightedValue<>
+pub fn parse_weighted_float_pair(src: &str) -> Result<WeightedValue<(f64, f64)>, &str> {
+	match parse_weight(src) {
+		Ok((src_pair, weight)) => match parse_float_pair(src_pair) {
+			Ok(value) => Ok(WeightedValue {
+				value,
+				weight,
+			}),
+			Err(err) => Err(err),
+		},
+		Err(err) => Err(err),
 	}
 }
 
@@ -363,5 +391,144 @@ mod tests {
 		assert!(parse_weight("1@1@1").is_err());
 		assert!(parse_weight("2@1/1").is_err());
 		assert!(parse_weight("3@a").is_err());
+	}
+
+	#[test]
+	fn test_parse_weighted_size_pair() {
+		assert_eq!(
+			parse_weighted_size_pair("0%"),
+			Ok(WeightedValue {
+				value: (SizeUnit::Fraction(0.0), SizeUnit::Fraction(0.0)),
+				weight: 1.0
+			}),
+		);
+		assert_eq!(
+			parse_weighted_size_pair("5"),
+			Ok(WeightedValue {
+				value: (SizeUnit::Pixels(5), SizeUnit::Pixels(5)),
+				weight: 1.0
+			}),
+		);
+		assert_eq!(
+			parse_weighted_size_pair("0.0%-100%@2"),
+			Ok(WeightedValue {
+				value: (SizeUnit::Fraction(0.0), SizeUnit::Fraction(1.0)),
+				weight: 2.0
+			}),
+		);
+		assert_eq!(
+			parse_weighted_size_pair("50.1-60%@5.5"),
+			Ok(WeightedValue {
+				value: (SizeUnit::Pixels(50), SizeUnit::Fraction(0.6)),
+				weight: 5.5
+			}),
+		);
+		assert_eq!(
+			parse_weighted_size_pair("50%@100"),
+			Ok(WeightedValue {
+				value: (SizeUnit::Fraction(0.5), SizeUnit::Fraction(0.5)),
+				weight: 100.0
+			}),
+		);
+		assert_eq!(
+			parse_weighted_size_pair("100%@1337"),
+			Ok(WeightedValue {
+				value: (SizeUnit::Fraction(1.0), SizeUnit::Fraction(1.0)),
+				weight: 1337.0
+			}),
+		);
+		assert_eq!(
+			parse_weighted_size_pair("0-122@15.5"),
+			Ok(WeightedValue {
+				value: (SizeUnit::Pixels(0), SizeUnit::Pixels(122)),
+				weight: 15.5
+			}),
+		);
+		assert_eq!(
+			parse_weighted_size_pair("1%-200@2"),
+			Ok(WeightedValue {
+				value: (SizeUnit::Fraction(0.01), SizeUnit::Pixels(200)),
+				weight: 2.0
+			}),
+		);
+		assert_eq!(
+			parse_weighted_size_pair("6-15.56@3.9"),
+			Ok(WeightedValue {
+				value: (SizeUnit::Pixels(6), SizeUnit::Pixels(16)),
+				weight: 3.9
+			}),
+		);
+		assert_eq!(
+			parse_weighted_size_pair("9-12%"),
+			Ok(WeightedValue {
+				value: (SizeUnit::Pixels(9), SizeUnit::Fraction(0.12)),
+				weight: 1.0
+			}),
+		);
+		assert_eq!(
+			parse_weighted_size_pair("10%-2000.2"),
+			Ok(WeightedValue {
+				value: (SizeUnit::Fraction(0.1), SizeUnit::Pixels(2000)),
+				weight: 1.0
+			}),
+		);
+
+		// Errors
+		assert!(parse_size_pair("@1").is_err());
+		assert!(parse_size_pair("foo@2").is_err());
+		assert!(parse_size_pair("0-100-20@1").is_err());
+		assert!(parse_size_pair("0-100@1@2").is_err());
+		assert!(parse_size_pair("0.2@1_2").is_err());
+		assert!(parse_size_pair("10%@a").is_err());
+	}
+
+	#[test]
+	fn test_parse_weighted_float_pair() {
+		assert_eq!(
+			parse_weighted_float_pair("0"),
+			Ok(WeightedValue {
+				value: (0.0, 0.0),
+				weight: 1.0
+			}),
+		);
+		assert_eq!(
+			parse_weighted_float_pair("5"),
+			Ok(WeightedValue {
+				value: (5.0, 5.0),
+				weight: 1.0
+			}),
+		);
+		assert_eq!(
+			parse_weighted_float_pair("0.0-100@2"),
+			Ok(WeightedValue {
+				value: (0.0, 100.0),
+				weight: 2.0
+			}),
+		);
+		assert_eq!(
+			parse_weighted_float_pair("50.1-60@5.5"),
+			Ok(WeightedValue {
+				value: (50.1, 60.0),
+				weight: 5.5
+			}),
+		);
+		assert_eq!(
+			parse_weighted_float_pair("1-1.2@100"),
+			Ok(WeightedValue {
+				value: (1.0, 1.2),
+				weight: 100.0
+			}),
+		);
+
+		// Errors
+		assert!(parse_weighted_float_pair("").is_err());
+		assert!(parse_weighted_float_pair("foo").is_err());
+		assert!(parse_weighted_float_pair("1-2-3").is_err());
+		assert!(parse_weighted_float_pair("@1").is_err());
+		assert!(parse_weighted_float_pair("foo@2").is_err());
+		assert!(parse_weighted_float_pair("0-100-20@1").is_err());
+		assert!(parse_weighted_float_pair("0-100@1@2").is_err());
+		assert!(parse_weighted_float_pair("0.2@1_2").is_err());
+		assert!(parse_weighted_float_pair("10%@a").is_err());
 	}
 }
