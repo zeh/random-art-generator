@@ -54,6 +54,12 @@ impl Margins<SizeUnit> {
 	}
 }
 
+#[derive(Clone, Debug, PartialEq)]
+pub struct WeightedValue<T> {
+	pub value: T,
+	pub weight: f64,
+}
+
 #[cfg(test)]
 mod tests {
 	use super::*;
