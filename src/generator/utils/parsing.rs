@@ -102,6 +102,19 @@ pub fn parse_size_margins(src: &str) -> Result<Margins<SizeUnit>, &str> {
 	}
 }
 
+/// Parses "*@n" into a string "*" with n weight. This is used so we can have pairs with weights.
+pub fn parse_weight(src: &str) -> Result<(&str, f64), &str> {
+	let values = src.split('@').collect::<Vec<&str>>();
+	match values.len() {
+		1 => Ok((src, 1.0)),
+		2 => match parse_float(values[1]) {
+			Ok(val) => Ok((values[0].clone(), val)),
+			Err(err) => Err(err),
+		},
+		_ => Err("Value cannot contain more than one weight value"),
+	}
+}
+
 #[cfg(test)]
 mod tests {
 	use super::*;
@@ -329,5 +342,22 @@ mod tests {
 		assert!(parse_size_margins("").is_err());
 		assert!(parse_size_margins("foo").is_err());
 		assert!(parse_size_margins("1,2,3,4,5").is_err());
+	}
+
+	#[test]
+	fn test_parse_weight() {
+		assert_eq!(parse_weight(""), Ok(("", 1.0)));
+		assert_eq!(parse_weight("0"), Ok(("0", 1.0)));
+		assert_eq!(parse_weight("foo"), Ok(("foo", 1.0)));
+		assert_eq!(parse_weight("0.2@2"), Ok(("0.2", 2.0)));
+		assert_eq!(parse_weight("bar@100"), Ok(("bar", 100.0)));
+		assert_eq!(parse_weight("50%@2000.57"), Ok(("50%", 2000.57)));
+		assert_eq!(parse_weight("10-20%@0.123"), Ok(("10-20%", 0.123)));
+		assert_eq!(parse_weight("-5.5@0.333"), Ok(("-5.5", 0.333)));
+
+		// Errors
+		assert!(parse_weight("1@1@1").is_err());
+		assert!(parse_weight("2@1/1").is_err());
+		assert!(parse_weight("3@a").is_err());
 	}
 }
