@@ -280,6 +280,10 @@ mod tests {
 		assert_eq!(parse_size_pair("100-20000"), Ok((SizeUnit::Pixels(100), SizeUnit::Pixels(20000))));
 		assert_eq!(parse_size_pair("100-120"), Ok((SizeUnit::Pixels(100), SizeUnit::Pixels(120))));
 
+		// Mixed
+		assert_eq!(parse_size_pair("12.3-60%"), Ok((SizeUnit::Pixels(12), SizeUnit::Fraction(0.6))));
+		assert_eq!(parse_size_pair("2.3%-1230"), Ok((SizeUnit::Fraction(0.023), SizeUnit::Pixels(1230))));
+
 		// Errors
 		assert!(parse_size_pair("").is_err());
 		assert!(parse_size_pair("foo").is_err());
