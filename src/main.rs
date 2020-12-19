@@ -9,7 +9,8 @@ use structopt::StructOpt;
 use generator::painter::{circle::CirclePainter, rect::RectPainter, stroke::StrokePainter};
 use generator::utils::files;
 use generator::utils::parsing::{
-	parse_color, parse_color_matrix, parse_size_margins, parse_weighted_float_pair, parse_weighted_size_pair,
+	parse_color, parse_color_matrix, parse_scale, parse_size_margins, parse_weighted_float_pair,
+	parse_weighted_size_pair,
 };
 use generator::utils::random::get_random_seed;
 use generator::utils::units::{Margins, SizeUnit, WeightedValue};
@@ -37,7 +38,7 @@ struct Opt {
 	candidates: usize,
 
 	/// Number; amount of color from the original target image to use as the newly painted color at the painted location (0.0 = completely random, 1.0 = use target color)
-	#[structopt(long, default_value = "0")]
+	#[structopt(long, default_value = "0", parse(try_from_str = parse_scale))]
 	color_seed: f64,
 
 	/// Flag; disables writing meta-data (software name and version, generation statistics, and original command line arguments) to the output file
