@@ -76,6 +76,7 @@ impl Generator {
 		&mut self,
 		tries: u32,
 		generations: u32,
+		target_diff: f64,
 		candidates: usize,
 		painter: impl Painter + Send + Sync + 'static,
 		cb: Option<ProcessCallback>,
@@ -188,8 +189,9 @@ impl Generator {
 
 			total_tries += 1;
 
-			let finished =
-				(tries > 0 && total_tries == tries) || (generations > 0 && total_gen == generations);
+			let finished = (tries > 0 && total_tries == tries)
+				|| (generations > 0 && total_gen == generations)
+				|| (target_diff > 0.0 && curr_diff <= target_diff);
 
 			if cb.is_some() {
 				(cb.unwrap())(
@@ -226,7 +228,11 @@ impl Generator {
 				}
 
 				// Diff block
-				println!("new difference is {:.2}%", curr_diff * 100.0);
+				if target_diff > 0.0 {
+					println!("new difference is {:.2}%/{:.2}%", curr_diff * 100.0, target_diff * 100.0);
+				} else {
+					println!("new difference is {:.2}%", curr_diff * 100.0);
+				}
 			}
 
 			if finished {

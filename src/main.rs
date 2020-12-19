@@ -29,13 +29,17 @@ struct Opt {
 	#[structopt(short = "t", long, default_value = "0", required_if("generations", "0"))]
 	max_tries: u32,
 
-	/// Integer; minimum number of generations (successful tries) required (0 = no minimum)
+	/// Integer; number of generations (successful tries) required (0 = no minimum)
 	#[structopt(short, long, default_value = "0", required_if("max_tries", "0"))]
 	generations: u32,
 
 	/// Integer; number of parallel candidates per try (0 = number of cores)
 	#[structopt(short, long, default_value = "0")]
 	candidates: usize,
+
+	/// Number; expected diff score to reach (0 = no target diff score)
+	#[structopt(short, long, default_value = "0", parse(try_from_str = parse_scale))]
+	diff: f64,
 
 	/// Number; amount of color from the original target image to use as the newly painted color at the painted location (0.0 = completely random, 1.0 = use target color)
 	#[structopt(long, default_value = "0", parse(try_from_str = parse_scale))]
@@ -279,7 +283,14 @@ fn main() {
 			painter.options.color_seed = options.color_seed;
 			painter.options.rng_seed = rng_seed;
 			painter.options.margins = options.margins;
-			gen.process(options.max_tries, options.generations, candidates, painter, Some(on_processed));
+			gen.process(
+				options.max_tries,
+				options.generations,
+				options.diff,
+				candidates,
+				painter,
+				Some(on_processed),
+			);
 		}
 		"rects" => {
 			let mut painter = RectPainter::new();
@@ -292,7 +303,14 @@ fn main() {
 			painter.options.color_seed = options.color_seed;
 			painter.options.rng_seed = rng_seed;
 			painter.options.margins = options.margins;
-			gen.process(options.max_tries, options.generations, candidates, painter, Some(on_processed));
+			gen.process(
+				options.max_tries,
+				options.generations,
+				options.diff,
+				candidates,
+				painter,
+				Some(on_processed),
+			);
 		}
 		"strokes" => {
 			let mut painter = StrokePainter::new();
@@ -310,7 +328,14 @@ fn main() {
 			painter.options.color_seed = options.color_seed;
 			painter.options.rng_seed = rng_seed;
 			painter.options.margins = options.margins;
-			gen.process(options.max_tries, options.generations, candidates, painter, Some(on_processed));
+			gen.process(
+				options.max_tries,
+				options.generations,
+				options.diff,
+				candidates,
+				painter,
+				Some(on_processed),
+			);
 		}
 		_ => unreachable!(),
 	}
