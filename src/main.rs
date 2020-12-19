@@ -253,6 +253,7 @@ fn main() {
 	let candidates = if options.candidates > 0 {
 		options.candidates
 	} else {
+		println!("Using auto {} candidates.", num_cpus::get());
 		num_cpus::get()
 	};
 
