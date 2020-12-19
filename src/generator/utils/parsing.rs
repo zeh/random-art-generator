@@ -43,6 +43,20 @@ pub fn parse_float_pair(src: &str) -> Result<(f64, f64), &str> {
 	}
 }
 
+pub fn parse_scale(src: &str) -> Result<f64, &str> {
+	if src.ends_with("%") {
+		match src[..src.len() - 1].parse::<f64>() {
+			Ok(value) => Ok(value / 100.0),
+			_ => Err("Could not parse scale percent value"),
+		}
+	} else {
+		match src.parse::<f64>() {
+			Ok(value) => Ok(value),
+			_ => Err("Could not parse scale float value"),
+		}
+	}
+}
+
 pub fn parse_size(src: &str) -> Result<SizeUnit, &str> {
 	if src.ends_with("%") {
 		match src[..src.len() - 1].parse::<f64>() {
@@ -231,6 +245,27 @@ mod tests {
 		assert!(parse_float_pair("foo").is_err());
 		assert!(parse_float_pair("1-foo").is_err());
 		assert!(parse_float_pair("1-2-3").is_err());
+	}
+
+	#[test]
+	fn test_parse_scale() {
+		assert_eq!(parse_scale("0"), Ok(0.0));
+		assert_eq!(parse_scale("0.0"), Ok(0.0));
+		assert_eq!(parse_scale("0.5"), Ok(0.5));
+		assert_eq!(parse_scale("1"), Ok(1.0));
+		assert_eq!(parse_scale("13.244"), Ok(13.244));
+		assert_eq!(parse_scale("0%"), Ok(0.0));
+		assert_eq!(parse_scale("0.0%"), Ok(0.0));
+		assert_eq!(parse_scale("0.5%"), Ok(0.005));
+		assert_eq!(parse_scale("10%"), Ok(0.1));
+		assert_eq!(parse_scale("50%"), Ok(0.5));
+		assert_eq!(parse_scale("100%"), Ok(1.0));
+		assert_eq!(parse_scale("133.24%"), Ok(1.3324));
+
+		// Errors
+		assert!(parse_float("").is_err());
+		assert!(parse_float("%").is_err());
+		assert!(parse_float("foo").is_err());
 	}
 
 	#[test]
