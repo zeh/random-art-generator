@@ -25,14 +25,6 @@ pub fn parse_float_list(src: &str, divider: char) -> Result<Vec<f64>, &str> {
 	src.split(divider).collect::<Vec<&str>>().iter().map(|&e| parse_float(e)).collect()
 }
 
-pub fn parse_color_matrix(src: &str) -> Result<[f64; 12], &str> {
-	let values = parse_float_list(&src, ',')?;
-	match values.len() {
-		12 => values.try_into().or(Err("Could not convert float list")) as Result<[f64; 12], &str>,
-		_ => Err("Matrix length must be 12"),
-	}
-}
-
 // Parses "1.0", "0.9-1.0" into (1.0, 1.0), (0.9, 1.0)
 pub fn parse_float_pair(src: &str) -> Result<(f64, f64), &str> {
 	let values = parse_float_list(&src, '-')?;
@@ -54,6 +46,14 @@ pub fn parse_scale(src: &str) -> Result<f64, &str> {
 			Ok(value) => Ok(value),
 			_ => Err("Could not parse scale float value"),
 		}
+	}
+}
+
+pub fn parse_color_matrix(src: &str) -> Result<[f64; 12], &str> {
+	let values = parse_float_list(&src, ',')?;
+	match values.len() {
+		12 => values.try_into().or(Err("Could not convert float list")) as Result<[f64; 12], &str>,
+		_ => Err("Matrix length must be 12"),
 	}
 }
 
@@ -201,28 +201,6 @@ mod tests {
 	}
 
 	#[test]
-	fn test_parse_color_matrix() {
-		assert_eq!(
-			parse_color_matrix("1,2,3,4,5,6,7,8,9,10,11,12"),
-			Ok([1., 2., 3., 4., 5., 6., 7., 8., 9., 10., 11., 12.])
-		);
-		assert_eq!(
-			parse_color_matrix("-1,2,3,4,5,6,-7,8,9,10,11,-12"),
-			Ok([-1., 2., 3., 4., 5., 6., -7., 8., 9., 10., 11., -12.])
-		);
-		assert_eq!(
-			parse_color_matrix("1.1,2.2,-3.3,4.4,5.5,6.6,7.7,8.8,9.9,10.0,-11.1,12.2"),
-			Ok([1.1, 2.2, -3.3, 4.4, 5.5, 6.6, 7.7, 8.8, 9.9, 10., -11.1, 12.2])
-		);
-
-		// Errors
-		assert!(parse_color_matrix("").is_err());
-		assert!(parse_color_matrix("foo").is_err());
-		assert!(parse_color_matrix("0.5,3,foo").is_err());
-		assert!(parse_color_matrix("1,2,3,4").is_err());
-	}
-
-	#[test]
 	fn test_parse_float_pair() {
 		// Singles
 		assert_eq!(parse_float_pair("0"), Ok((0.0f64, 0.0f64)));
@@ -266,6 +244,28 @@ mod tests {
 		assert!(parse_float("").is_err());
 		assert!(parse_float("%").is_err());
 		assert!(parse_float("foo").is_err());
+	}
+
+	#[test]
+	fn test_parse_color_matrix() {
+		assert_eq!(
+			parse_color_matrix("1,2,3,4,5,6,7,8,9,10,11,12"),
+			Ok([1., 2., 3., 4., 5., 6., 7., 8., 9., 10., 11., 12.])
+		);
+		assert_eq!(
+			parse_color_matrix("-1,2,3,4,5,6,-7,8,9,10,11,-12"),
+			Ok([-1., 2., 3., 4., 5., 6., -7., 8., 9., 10., 11., -12.])
+		);
+		assert_eq!(
+			parse_color_matrix("1.1,2.2,-3.3,4.4,5.5,6.6,7.7,8.8,9.9,10.0,-11.1,12.2"),
+			Ok([1.1, 2.2, -3.3, 4.4, 5.5, 6.6, 7.7, 8.8, 9.9, 10., -11.1, 12.2])
+		);
+
+		// Errors
+		assert!(parse_color_matrix("").is_err());
+		assert!(parse_color_matrix("foo").is_err());
+		assert!(parse_color_matrix("0.5,3,foo").is_err());
+		assert!(parse_color_matrix("1,2,3,4").is_err());
 	}
 
 	#[test]
