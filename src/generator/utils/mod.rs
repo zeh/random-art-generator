@@ -1,4 +1,5 @@
 pub mod files;
+pub mod formatting;
 pub mod geom;
 pub mod image;
 pub mod numbers;
