@@ -6,7 +6,9 @@ use std::time::Instant;
 use image::{DynamicImage, Rgb, RgbImage};
 
 use painter::Painter;
+use utils::formatting::format_time;
 use utils::image::{color_transform, diff, scale_image};
+use utils::numbers::AverageNumber;
 use utils::terminal;
 
 pub mod painter;
@@ -101,7 +103,15 @@ impl Generator {
 		let arc_painter = Arc::new(painter);
 		let arc_target = Arc::new(self.target.clone());
 
+		let mut time_elapsed_iteration_avg = AverageNumber::new(100);
+		let mut time_elapsed_generation_avg = AverageNumber::new(50);
+		let mut time_elapsed_diff_pct_avg = AverageNumber::new(50);
+
 		println!("First try...");
+
+		let mut time_started_generation = Instant::now();
+		let mut time_started_diff = Instant::now();
+		let mut diff_last_generation = curr_diff;
 
 		loop {
 			time_started_iteration = Instant::now();
@@ -185,6 +195,18 @@ impl Generator {
 
 			if used {
 				total_gen += 1;
+
+				// Update time stats for generation
+				time_elapsed_generation_avg.put(time_started_generation.elapsed().as_micros() as f64);
+				time_started_generation = Instant::now();
+
+				// Update time stats for diff
+				let diff_change = diff_last_generation - curr_diff;
+				let diff_time = time_started_diff.elapsed().as_micros() as f64;
+				let diff_time_per_pct = diff_time / diff_change;
+				time_elapsed_diff_pct_avg.put(diff_time_per_pct);
+				diff_last_generation = curr_diff;
+				time_started_diff = Instant::now();
 			}
 
 			total_tries += 1;
@@ -206,7 +228,9 @@ impl Generator {
 				);
 			}
 
+			// Update time stats for tries
 			time_elapsed_iteration += time_started_iteration.elapsed().as_micros();
+			time_elapsed_iteration_avg.put(time_started_iteration.elapsed().as_micros() as f64);
 
 			// Only output log if the generation succeeded
 			if used {
@@ -215,23 +239,44 @@ impl Generator {
 
 				// Tries block
 				if tries > 0 {
-					print!("Try {}/{} is useful; ", total_tries, tries);
+					let remaining = tries - total_tries;
+					let time_left = remaining as f64 * time_elapsed_iteration_avg.get().unwrap();
+					print!(
+						"Try {}/{} is useful ({} left); ",
+						total_tries,
+						tries,
+						format_time(time_left / 1000.0)
+					);
 				} else {
 					print!("Try {} is useful; ", total_tries);
 				}
 
 				// Generations block
 				if generations > 0 {
-					print!("{}/{} generations so far, ", total_gen, generations);
+					let remaining = generations - total_gen;
+					let time_left = remaining as f64 * time_elapsed_generation_avg.get().unwrap();
+					print!(
+						"{}/{} generations so far ({} left); ",
+						total_gen,
+						generations,
+						format_time(time_left / 1000.0)
+					);
 				} else {
-					print!("{} generations so far, ", total_gen);
+					print!("{} generations so far; ", total_gen);
 				}
 
 				// Diff block
 				if target_diff > 0.0 {
-					println!("new difference is {:.2}%/{:.2}%", curr_diff * 100.0, target_diff * 100.0);
+					let remaining = curr_diff - target_diff;
+					let time_left = remaining as f64 * time_elapsed_diff_pct_avg.get().unwrap();
+					println!(
+						"new difference is {:.2}%/{:.2}% ({} left);",
+						curr_diff * 100.0,
+						target_diff * 100.0,
+						format_time(time_left / 1000.0)
+					);
 				} else {
-					println!("new difference is {:.2}%", curr_diff * 100.0);
+					println!("new difference is {:.2}%;", curr_diff * 100.0);
 				}
 			}
 
