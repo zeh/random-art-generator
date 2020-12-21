@@ -31,6 +31,7 @@ impl Rng {
 		rng
 	}
 
+	#[inline(always)]
 	fn xorshift(mut value: u32) -> u32 {
 		// Xorshift*32
 		// Based on George Marsaglia's work: http://www.jstatsoft.org/v08/i14/paper
@@ -40,6 +41,7 @@ impl Rng {
 		value
 	}
 
+	#[inline(always)]
 	fn recalculate(&mut self) {
 		self.value = Rng::xorshift(self.value);
 	}
