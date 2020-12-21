@@ -76,8 +76,8 @@ impl Generator {
 
 	pub fn process(
 		&mut self,
-		tries: u32,
-		generations: u32,
+		target_tries: u32,
+		target_generations: u32,
 		target_diff: f64,
 		candidates: usize,
 		painter: impl Painter + Send + Sync + 'static,
@@ -85,25 +85,25 @@ impl Generator {
 	) {
 		let mut curr_diff = diff(&self.current, &self.target);
 
-		println!("Starting iterations; initial difference from target is {:.2}%.", curr_diff * 100.0);
+		println!("Starting tries; initial difference from target is {:.2}%.", curr_diff * 100.0);
 
 		let mut used;
 
 		let time_started = Instant::now();
 		let mut time_elapsed_paint = 0;
 		let mut time_elapsed_diff = 0;
-		let mut time_started_iteration;
-		let mut time_elapsed_iteration = 0;
+		let mut time_started_try;
+		let mut time_elapsed_try = 0;
 
-		let mut total_tries: u32 = 0;
-		let mut total_gen: u32 = 0;
+		let mut curr_tries: u32 = 0;
+		let mut curr_generations: u32 = 0;
 
 		let mut total_processes: u32 = 0;
 
 		let arc_painter = Arc::new(painter);
 		let arc_target = Arc::new(self.target.clone());
 
-		let mut time_elapsed_iteration_avg = AverageNumber::new(100);
+		let mut time_elapsed_try_avg = AverageNumber::new(100);
 		let mut time_elapsed_generation_avg = AverageNumber::new(50);
 		let mut time_elapsed_diff_pct_avg = AverageNumber::new(50);
 
@@ -114,7 +114,7 @@ impl Generator {
 		let mut diff_last_generation = curr_diff;
 
 		loop {
-			time_started_iteration = Instant::now();
+			time_started_try = Instant::now();
 			used = false;
 
 			if candidates == 1 {
@@ -194,7 +194,7 @@ impl Generator {
 			}
 
 			if used {
-				total_gen += 1;
+				curr_generations += 1;
 
 				// Update time stats for generation
 				time_elapsed_generation_avg.put(time_started_generation.elapsed().as_micros() as f64);
@@ -209,10 +209,10 @@ impl Generator {
 				time_started_diff = Instant::now();
 			}
 
-			total_tries += 1;
+			curr_tries += 1;
 
-			let finished = (tries > 0 && total_tries == tries)
-				|| (generations > 0 && total_gen == generations)
+			let finished = (target_tries > 0 && curr_tries == target_tries)
+				|| (target_generations > 0 && curr_generations == target_generations)
 				|| (target_diff > 0.0 && curr_diff <= target_diff);
 
 			if cb.is_some() {
@@ -220,8 +220,8 @@ impl Generator {
 					&self,
 					used,
 					finished,
-					total_tries,
-					total_gen,
+					curr_tries,
+					curr_generations,
 					curr_diff,
 					time_started.elapsed().as_secs_f32(),
 					arc_painter.get_metadata(),
@@ -229,8 +229,8 @@ impl Generator {
 			}
 
 			// Update time stats for tries
-			time_elapsed_iteration += time_started_iteration.elapsed().as_micros();
-			time_elapsed_iteration_avg.put(time_started_iteration.elapsed().as_micros() as f64);
+			time_elapsed_try += time_started_try.elapsed().as_micros();
+			time_elapsed_try_avg.put(time_started_try.elapsed().as_micros() as f64);
 
 			// Only output log if the generation succeeded
 			if used {
@@ -238,31 +238,31 @@ impl Generator {
 				terminal::erase_line_to_end();
 
 				// Tries block
-				if tries > 0 {
-					let remaining = tries - total_tries;
-					let time_left = remaining as f64 * time_elapsed_iteration_avg.get().unwrap();
+				if target_tries > 0 {
+					let remaining = target_tries - curr_tries;
+					let time_left = remaining as f64 * time_elapsed_try_avg.get().unwrap();
 					print!(
 						"Try {}/{} is useful ({} left); ",
-						total_tries,
-						tries,
+						curr_tries,
+						target_tries,
 						format_time(time_left / 1000.0)
 					);
 				} else {
-					print!("Try {} is useful; ", total_tries);
+					print!("Try {} is useful; ", curr_tries);
 				}
 
 				// Generations block
-				if generations > 0 {
-					let remaining = generations - total_gen;
+				if target_generations > 0 {
+					let remaining = target_generations - curr_generations;
 					let time_left = remaining as f64 * time_elapsed_generation_avg.get().unwrap();
 					print!(
 						"{}/{} generations so far ({} left); ",
-						total_gen,
-						generations,
+						curr_generations,
+						target_generations,
 						format_time(time_left / 1000.0)
 					);
 				} else {
-					print!("{} generations so far; ", total_gen);
+					print!("{} generations so far; ", curr_generations);
 				}
 
 				// Diff block
@@ -281,20 +281,20 @@ impl Generator {
 			}
 
 			if finished {
-				// Requirements reached, can stop iterations
+				// Requirements reached, can stop trying
 				break;
 			}
 		}
 
 		let time_elapsed = time_started.elapsed().as_secs_f32();
-		let atts = total_tries as f64 * 1000.0;
+		let atts = curr_tries as f64 * 1000.0;
 
 		let final_diff = diff(&self.current, &self.target);
 		println!(
 			"Finished {} tries in {:.3}s ({:.3}ms avg per try), using {} candidate threads.",
-			total_tries,
+			curr_tries,
 			time_elapsed,
-			time_elapsed_iteration as f64 / atts,
+			time_elapsed_try as f64 / atts,
 			candidates
 		);
 		if candidates == 1 {
@@ -306,8 +306,8 @@ impl Generator {
 		}
 		println!(
 			"Produced {} generations, a {:.2}% success rate.",
-			total_gen,
-			total_gen as f64 / total_tries as f64 * 100.0
+			curr_generations,
+			curr_generations as f64 / curr_tries as f64 * 100.0
 		);
 		println!("The final difference from target is {:.2}%.", final_diff * 100.0);
 	}
