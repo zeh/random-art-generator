@@ -60,10 +60,13 @@ jobs:
           format: YYYY-MM-DD
           utcOffset: "-05:00"
 
+      # References:
+      # - https://github.com/battila7/get-version-action
+      # - https://github.community/t/how-to-get-just-the-tag-name/16241/25
       # TODO: in the future, this should probably grab the Cargo.toml version
       - name: Get the tag name for version
+        uses: battila7/get-version-action@v2
         id: current-version
-        run: echo ::set-output name=version::${GITHUB_REF#refs/tags/v}
 
       - name: Set output filename
         id: output-name
@@ -88,3 +91,4 @@ jobs:
           path: ${{ steps.output-name.outputs.filename }}
 
 # TODO: add to artifacts on GitHub's Tag/Release tab
+# TODO: release to chocolatey/homebrew/apt
