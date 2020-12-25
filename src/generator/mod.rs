@@ -23,16 +23,17 @@ pub enum ProcessResult {
 	Error(String),
 }
 
-type ProcessCallback = fn(
-	generator: &Generator,
-	is_success: bool,
-	is_final: bool,
-	num_tries: u32,
-	num_generations: u32,
-	diff: f64,
-	time_elapsed: f32,
-	metadata: HashMap<String, String>,
-);
+pub struct ProcessCallbackResult {
+	pub is_success: bool,
+	pub is_final: bool,
+	pub num_tries: u32,
+	pub num_generations: u32,
+	pub diff: f64,
+	pub time_elapsed: f32,
+	pub metadata: HashMap<String, String>,
+}
+
+type ProcessCallback = fn(generator: &Generator, result: ProcessCallbackResult);
 
 /// A definition for the image generation. This will contain all data needed for a generation process.
 pub struct Generator {
@@ -215,16 +216,18 @@ impl Generator {
 				|| (target_generations > 0 && curr_generations == target_generations)
 				|| (target_diff > 0.0 && curr_diff <= target_diff);
 
-			if cb.is_some() {
-				(cb.unwrap())(
+			if let Some(process_callback) = cb {
+				process_callback(
 					&self,
-					used,
-					finished,
-					curr_tries,
-					curr_generations,
-					curr_diff,
-					time_started.elapsed().as_secs_f32(),
-					arc_painter.get_metadata(),
+					ProcessCallbackResult {
+						is_success: used,
+						is_final: finished,
+						num_tries: curr_tries,
+						num_generations: curr_generations,
+						diff: curr_diff,
+						time_elapsed: time_started.elapsed().as_secs_f32(),
+						metadata: arc_painter.get_metadata(),
+					},
 				);
 			}
 

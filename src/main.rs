@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 use std::env;
 use std::path::PathBuf;
 use std::string::ToString;
@@ -14,7 +13,7 @@ use generator::utils::parsing::{
 };
 use generator::utils::random::get_random_seed;
 use generator::utils::units::{Margins, SizeUnit, WeightedValue};
-use generator::Generator;
+use generator::{Generator, ProcessCallbackResult};
 
 mod generator;
 
@@ -165,17 +164,8 @@ fn get_options() -> Opt {
 	return Opt::from_args();
 }
 
-fn on_processed(
-	generator: &Generator,
-	is_success: bool,
-	_is_final: bool,
-	num_tries: u32,
-	num_generations: u32,
-	diff: f64,
-	time_elapsed: f32,
-	metadata: HashMap<String, String>,
-) {
-	if is_success {
+fn on_processed(generator: &Generator, result: ProcessCallbackResult) {
+	if result.is_success {
 		// Create basic image file data
 		let options = get_options();
 		let output_path = options.output.as_path();
@@ -190,17 +180,17 @@ fn on_processed(
 			let mut comments = vec![
 				format!(
 					"Produced {} generations after {} tries in {:.3}s ({:.3}ms avg per try); the final difference from target is {:.2}%.",
-					num_generations,
-					num_tries,
-					time_elapsed,
-					time_elapsed / (num_tries as f32) * 1000.0,
-					diff * 100.0
+					result.num_generations,
+					result.num_tries,
+					result.time_elapsed,
+					result.time_elapsed / (result.num_tries as f32) * 1000.0,
+					result.diff * 100.0
 				),
 				format!("Command line: {}", env::args().collect::<Vec<String>>().join(" ")),
 			];
 
 			// Add painter-specific metadata
-			for (key, value) in metadata {
+			for (key, value) in result.metadata {
 				comments.push(format!("{}: {}", key, value));
 			}
 
