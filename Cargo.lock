@@ -260,6 +260,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "imgref"
+version = "1.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d8767843be7909b5b3ffd9b52cdc042882b94e2cfe0c00abc4ce1c301cb1fcae"
+
+[[package]]
 name = "jpeg-decoder"
 version = "0.1.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -313,6 +319,15 @@ checksum = "0f2d26ec3309788e423cfbf68ad1800f061638098d76a83681af979dc4eda19d"
 dependencies = [
  "adler",
  "autocfg 1.0.0",
+]
+
+[[package]]
+name = "mss_saliency"
+version = "1.0.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "968f0eff35f88ee72134879a7a76ffa77203144a733b63a7e01cd60c29cbceea"
+dependencies = [
+ "imgref",
 ]
 
 [[package]]
@@ -431,6 +446,7 @@ dependencies = [
  "getrandom",
  "image",
  "img-parts",
+ "mss_saliency",
  "num_cpus",
  "structopt",
 ]
