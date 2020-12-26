@@ -4,6 +4,7 @@ use image::{imageops, GenericImageView, GrayImage, ImageBuffer, Pixel, RgbImage}
 
 #[cfg(test)]
 use image::Rgb;
+use mss_saliency::{maximum_symmetric_surround_saliency, Img};
 
 const LUMA_R: f64 = 0.2126;
 const LUMA_G: f64 = 0.7152;
@@ -102,6 +103,59 @@ where
 
 pub fn grayscale_image(image: &RgbImage) -> GrayImage {
 	imageops::grayscale(image)
+}
+
+pub fn create_focus_map(image: &RgbImage) -> GrayImage {
+	// Create a source image that conforms to the maximum size first
+	let max_focus_map_dimensions = 512;
+	let image_width = image.dimensions().0;
+	let image_height = image.dimensions().1;
+	let grayscale_image =
+		if image_width <= max_focus_map_dimensions && image_height <= max_focus_map_dimensions {
+			grayscale_image(&image)
+		} else {
+			let scale_width = max_focus_map_dimensions as f64 / image_width as f64;
+			let scale_height = max_focus_map_dimensions as f64 / image_height as f64;
+			let resized_image = scale_image(image, scale_width.min(scale_height));
+			grayscale_image(&resized_image)
+		};
+	let width = grayscale_image.dimensions().0 as usize;
+	let height = grayscale_image.dimensions().1 as usize;
+
+	// Finally, create the original focus map
+	let original_focus_map =
+		maximum_symmetric_surround_saliency(Img::new(grayscale_image.as_ref(), width, height));
+
+	// We force the first row and column to have value 0
+	// because mss_saliency gives them hight values, but
+	// that's an artifact
+	let focus_pixels: Vec<u16> = original_focus_map
+		.pixels()
+		.enumerate()
+		.map(|(pos, val)| {
+			let x = pos % width;
+			let y = pos / width;
+			if x == 0 || x == width - 1 || y == 0 || y == height - 1 {
+				0
+			} else {
+				val
+			}
+		})
+		.collect();
+	let min_value = focus_pixels.iter().min().unwrap();
+	let max_value = focus_pixels.iter().max().unwrap();
+	let range = (max_value - min_value) as f32;
+
+	// Create the final grayscale image, normalized from all values
+	GrayImage::from_raw(
+		original_focus_map.width() as u32,
+		original_focus_map.height() as u32,
+		focus_pixels
+			.iter()
+			.map(|p| ((p - min_value) as f32 / range * u8::MAX as f32).round() as u8)
+			.collect(),
+	)
+	.unwrap()
 }
 
 pub fn get_pixel_interpolated(image: &RgbImage, x: f64, y: f64) -> [u8; 3] {
