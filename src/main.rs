@@ -244,6 +244,11 @@ fn main() {
 	let output_file = options.output.as_path();
 	println!("Using output image of {:?}.", output_file);
 
+	// TODO: write focus
+	// let focus_map = create_focus_map(&self.target);
+	// let ff = std::path::Path::new("zeh_focus.png");
+	// utils::files::write_image_luma(focus_map, ff);
+
 	// Other options
 	let candidates = if options.candidates > 0 {
 		options.candidates
