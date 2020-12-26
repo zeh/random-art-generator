@@ -27,6 +27,19 @@ pub fn blend_pixel(bottom: &[u8], top: &[u8], alpha: f64) -> [u8; 3] {
 	[nr, ng, nb]
 }
 
+#[inline(always)]
+pub fn blend_channel(bottom: u8, top: u8, alpha: f64) -> u8 {
+	if alpha == 1.0f64 {
+		top
+	} else if alpha == 0.0f64 {
+		bottom
+	} else {
+		// Blend colors
+		let alpha_n: f64 = 1.0f64 - alpha;
+		(top as f64 * alpha + bottom as f64 * alpha_n).round() as u8
+	}
+}
+
 pub fn diff(a: &RgbImage, b: &RgbImage) -> f64 {
 	let w = a.dimensions().0;
 	let h = a.dimensions().1;
@@ -187,6 +200,38 @@ pub fn get_pixel_interpolated(image: &RgbImage, x: f64, y: f64) -> [u8; 3] {
 	let color_t = blend_pixel(color_tl, color_tr, xf);
 	let color_b = blend_pixel(color_bl, color_br, xf);
 	return blend_pixel(&color_t, &color_b, yf);
+}
+
+pub fn get_pixel_interpolated_gray(image: &GrayImage, x: f64, y: f64) -> u8 {
+	// Quick path if in a round pixel
+	let width: f64 = image.width() as f64;
+	let height: f64 = image.height() as f64;
+	let xx = f64::max(0.0f64, f64::min(width - 1.0, x));
+	let yy = f64::max(0.0f64, f64::min(height - 1.0, y));
+	let xf = xx.fract();
+	let yf = yy.fract();
+	if xf == 0f64 && yf == 0f64 {
+		let channels: [u8; 1] = image
+			.get_pixel(xx as u32, yy as u32)
+			.channels()
+			.to_owned()
+			.try_into()
+			.expect("converting pixels to array");
+		return channels[0];
+	}
+
+	// Otherwise, do bilinear interpolation
+	let x1 = xx.floor();
+	let x2 = xx.ceil();
+	let y1 = yy.floor();
+	let y2 = yy.ceil();
+	let color_tl = image.get_pixel(x1 as u32, y1 as u32).channels()[0];
+	let color_tr = image.get_pixel(x2 as u32, y1 as u32).channels()[0];
+	let color_bl = image.get_pixel(x1 as u32, y2 as u32).channels()[0];
+	let color_br = image.get_pixel(x2 as u32, y2 as u32).channels()[0];
+	let color_t = blend_channel(color_tl, color_tr, xf);
+	let color_b = blend_channel(color_bl, color_br, xf);
+	return blend_channel(color_t, color_b, yf);
 }
 
 #[cfg(test)]
