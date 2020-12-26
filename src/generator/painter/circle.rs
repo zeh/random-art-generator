@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use image::{Pixel, Rgb, RgbImage};
+use image::{GrayImage, Pixel, Rgb, RgbImage};
 
 use crate::generator::utils::geom::{distance, find_target_draw_rect};
 use crate::generator::utils::image::blend_pixel;
@@ -61,7 +61,13 @@ impl CirclePainter {
 }
 
 impl Painter for CirclePainter {
-	fn paint(&self, canvas: &RgbImage, iteration: u32, seed_map: &RgbImage) -> Result<RgbImage, &str> {
+	fn paint(
+		&self,
+		canvas: &RgbImage,
+		iteration: u32,
+		seed_map: &RgbImage,
+		focus_map: &GrayImage,
+	) -> Result<RgbImage, &str> {
 		let mut rng = get_rng(self.options.rng_seed, iteration);
 
 		let image_area = canvas.dimensions();

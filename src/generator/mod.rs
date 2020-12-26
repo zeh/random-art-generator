@@ -100,6 +100,7 @@ impl Generator {
 
 		let arc_painter = Arc::new(painter);
 		let arc_target = Arc::new(self.target.clone());
+		let arc_focus_map = Arc::new(self.focus_map.clone());
 
 		let mut time_elapsed_try_avg = AverageNumber::new(100);
 		let mut time_elapsed_generation_avg = AverageNumber::new(50);
@@ -118,8 +119,9 @@ impl Generator {
 			if candidates == 1 {
 				// Simple path with no concurrency
 				let time_started_paint = Instant::now();
-				let new_candidate =
-					arc_painter.paint(&self.current, total_processes, &self.target).expect("painting");
+				let new_candidate = arc_painter
+					.paint(&self.current, total_processes, &self.target, &self.focus_map)
+					.expect("painting");
 				time_elapsed_paint += time_started_paint.elapsed().as_micros();
 
 				let time_started_diff = Instant::now();
@@ -145,12 +147,14 @@ impl Generator {
 					let thread_painter = Arc::clone(&arc_painter);
 					let thread_current = self.current.clone();
 					let thread_target = Arc::clone(&arc_target);
+					let thread_focus_map = Arc::clone(&arc_focus_map);
 
 					thread::spawn(move || {
 						let result = match thread_painter.paint(
 							&thread_current,
 							total_processes.wrapping_add(candidate as u32),
 							&thread_target,
+							&thread_focus_map,
 						) {
 							Ok(new_candidate) => {
 								let new_diff = diff(&new_candidate, &thread_target);
