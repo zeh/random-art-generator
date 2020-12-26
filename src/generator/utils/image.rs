@@ -1,6 +1,6 @@
 use std::convert::TryInto;
 
-use image::{imageops, GrayImage, Pixel, RgbImage};
+use image::{imageops, GenericImageView, GrayImage, ImageBuffer, Pixel, RgbImage};
 
 #[cfg(test)]
 use image::Rgb;
@@ -75,13 +75,28 @@ pub fn color_transform(image: &RgbImage, matrix: [f64; 12]) -> RgbImage {
 	transformed_image
 }
 
-pub fn scale_image(image: &RgbImage, scale: f64) -> RgbImage {
+pub fn scale_image<I: GenericImageView>(
+	image: &I,
+	scale: f64,
+) -> ImageBuffer<I::Pixel, Vec<<I::Pixel as Pixel>::Subpixel>>
+where
+	I::Pixel: 'static,
+	<I::Pixel as Pixel>::Subpixel: 'static,
+{
 	let width = (image.dimensions().0 as f64 * scale).round() as u32;
 	let height = (image.dimensions().1 as f64 * scale).round() as u32;
 	resize_image(image, width, height)
 }
 
-pub fn resize_image(image: &RgbImage, width: u32, height: u32) -> RgbImage {
+pub fn resize_image<I: GenericImageView>(
+	image: &I,
+	width: u32,
+	height: u32,
+) -> ImageBuffer<I::Pixel, Vec<<I::Pixel as Pixel>::Subpixel>>
+where
+	I::Pixel: 'static,
+	<I::Pixel as Pixel>::Subpixel: 'static,
+{
 	imageops::resize(image, width, height, imageops::FilterType::CatmullRom)
 }
 
