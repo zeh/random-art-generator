@@ -4,11 +4,10 @@ use std::thread;
 use std::time::Instant;
 
 use image::{DynamicImage, GrayImage, Rgb, RgbImage};
-use mss_saliency::{maximum_symmetric_surround_saliency, Img};
 
 use painter::Painter;
 use utils::formatting::format_time;
-use utils::image::{color_transform, diff, grayscale_image, scale_image};
+use utils::image::{color_transform, create_focus_map, diff, scale_image};
 use utils::numbers::AverageNumber;
 use utils::terminal;
 
@@ -40,6 +39,7 @@ type ProcessCallback = fn(generator: &Generator, result: ProcessCallbackResult);
 pub struct Generator {
 	target: RgbImage,
 	current: RgbImage,
+	focus_map: GrayImage,
 }
 
 impl Generator {
@@ -49,22 +49,18 @@ impl Generator {
 			target = scale_image(&target, scale);
 		}
 		let current = RgbImage::new(target.dimensions().0, target.dimensions().1);
+		let focus_map = create_focus_map(&target);
 		Generator {
-			target: target,
-			current: current,
+			target,
+			current,
+			focus_map,
 		}
 	}
 
 	pub fn from_image_and_matrix(target_image: DynamicImage, scale: f64, matrix: [f64; 12]) -> Generator {
 		let mut target = target_image.to_rgb8();
-		if scale != 1.0f64 {
-			target = scale_image(&target, scale);
-		}
-		let current = RgbImage::new(target.dimensions().0, target.dimensions().1);
-		Generator {
-			target: color_transform(&target, matrix),
-			current: current,
-		}
+		target = color_transform(&target, matrix);
+		Self::from_image(DynamicImage::ImageRgb8(target), scale)
 	}
 
 	pub fn prepopulate_with_image(&mut self, current_image: DynamicImage) {
@@ -108,50 +104,6 @@ impl Generator {
 		let mut time_elapsed_try_avg = AverageNumber::new(100);
 		let mut time_elapsed_generation_avg = AverageNumber::new(50);
 		let mut time_elapsed_diff_pct_avg = AverageNumber::new(50);
-
-		// Temp start
-
-		let grayscale_target = grayscale_image(&self.target);
-		let grayscale_width = grayscale_target.dimensions().0 as usize;
-		let grayscale_height = grayscale_target.dimensions().1 as usize;
-		let focus_map = maximum_symmetric_surround_saliency(Img::new(
-			grayscale_target.as_ref(),
-			grayscale_width,
-			grayscale_height,
-		));
-
-		let ff = std::path::Path::new("z_focus.png");
-		let pixels: Vec<u16> = focus_map
-			.pixels()
-			.enumerate()
-			.map(|(pos, val)| {
-				let x = pos % grayscale_width;
-				let y = pos / grayscale_width;
-				if x == 0 || x == grayscale_width - 1 || y == 0 || y == grayscale_height - 1 {
-					0
-				} else {
-					val
-				}
-			})
-			.collect();
-		let min_value = pixels.iter().min().unwrap();
-		let max_value = pixels.iter().max().unwrap();
-		let range = (max_value - min_value) as f32;
-
-		utils::files::write_image_luma(
-			GrayImage::from_raw(
-				focus_map.width() as u32,
-				focus_map.height() as u32,
-				pixels
-					.iter()
-					.map(|p| ((p - min_value) as f32 / range * u8::MAX as f32).round() as u8)
-					.collect(),
-			)
-			.unwrap(),
-			ff,
-		);
-
-		// Temp end
 
 		println!("First try...");
 
