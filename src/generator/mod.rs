@@ -3,7 +3,7 @@ use std::sync::{mpsc, Arc};
 use std::thread;
 use std::time::Instant;
 
-use image::{DynamicImage, Rgb, RgbImage};
+use image::{DynamicImage, GrayImage, Rgb, RgbImage};
 use mss_saliency::{maximum_symmetric_surround_saliency, Img};
 
 use painter::Painter;
@@ -120,7 +120,7 @@ impl Generator {
 			grayscale_height,
 		));
 
-		let ff = std::path::Path::new("_focus.png");
+		let ff = std::path::Path::new("z_focus.png");
 		let pixels: Vec<u16> = focus_map
 			.pixels()
 			.enumerate()
@@ -138,16 +138,13 @@ impl Generator {
 		let max_value = pixels.iter().max().unwrap();
 		let range = (max_value - min_value) as f32;
 
-		utils::files::write_image(
-			RgbImage::from_raw(
+		utils::files::write_image_luma(
+			GrayImage::from_raw(
 				focus_map.width() as u32,
 				focus_map.height() as u32,
 				pixels
 					.iter()
-					.flat_map(|p| {
-						let pp = ((p - min_value) as f32 / range * u8::MAX as f32).round() as u8;
-						vec![pp, pp, pp]
-					})
+					.map(|p| ((p - min_value) as f32 / range * u8::MAX as f32).round() as u8)
 					.collect(),
 			)
 			.unwrap(),
