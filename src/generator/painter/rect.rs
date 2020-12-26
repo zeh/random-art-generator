@@ -2,16 +2,14 @@ use std::collections::HashMap;
 
 use image::{GrayImage, Pixel, Rgb, RgbImage};
 
+use crate::generator::painter::Painter;
 use crate::generator::utils::geom::find_target_draw_rect;
-use crate::generator::utils::image::blend_pixel;
+use crate::generator::utils::image::{blend_pixel, get_pixel_interpolated, get_pixel_interpolated_gray};
 use crate::generator::utils::random::{
-	get_random_range, get_random_ranges_bias_weighted, get_random_size_ranges_bias_weighted, get_rng,
+	get_random_color, get_random_range, get_random_ranges_bias_weighted,
+	get_random_size_ranges_bias_weighted, get_rng,
 };
 use crate::generator::utils::units::{Margins, SizeUnit, WeightedValue};
-use crate::generator::{
-	painter::Painter,
-	utils::{image::get_pixel_interpolated, random::get_random_color},
-};
 
 #[derive(Clone)]
 pub struct RectPainter {
@@ -116,11 +114,28 @@ impl Painter for RectPainter {
 		let y2 = (rect_y + rect_h).round().max(0.0).min(image_area.1 as f64) as u32;
 
 		// Determine color
+		let center_x = (x1 + x2) as f64 / 2.0f64;
+		let center_y = (y1 + y2) as f64 / 2.0f64;
 		let random_color = get_random_color(&mut rng);
-		let seed_color =
-			get_pixel_interpolated(seed_map, (x1 + x2) as f64 / 2.0f64, (y1 + y2) as f64 / 2.0f64);
+		let seed_color = get_pixel_interpolated(seed_map, center_x, center_y);
 		let color = blend_pixel(&random_color, &seed_color, self.options.color_seed);
 		let alpha = get_random_ranges_bias_weighted(&mut rng, &self.options.alpha, self.options.alpha_bias);
+
+		// Apply focus
+		// 1.0 = maintain original size, n = scale to n
+		let focus_scale = 1.0
+			- (get_pixel_interpolated_gray(focus_map, (x1 + x2) as f64 / 2.0f64, (y1 + y2) as f64 / 2.0f64)
+				as f64 / 256.0);
+		let (x1, x2) = {
+			let w = (x2 - x1) as f64;
+			let nw = (w * focus_scale).max(1.0);
+			((center_x as f64 - nw * 0.5).round() as u32, (center_x as f64 + nw * 0.5).round() as u32)
+		};
+		let (y1, y2) = {
+			let h = (y2 - y1) as f64;
+			let nh = h * (focus_scale).max(1.0);
+			((center_y as f64 - nh * 0.5).round() as u32, (center_y as f64 + nh * 0.5).round() as u32)
+		};
 
 		// Finally, paint
 		let mut painted_canvas = canvas.clone();
