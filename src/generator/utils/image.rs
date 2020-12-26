@@ -1,6 +1,6 @@
 use std::convert::TryInto;
 
-use image::{imageops, Pixel, RgbImage};
+use image::{imageops, GrayImage, Pixel, RgbImage};
 
 #[cfg(test)]
 use image::Rgb;
@@ -76,9 +76,17 @@ pub fn color_transform(image: &RgbImage, matrix: [f64; 12]) -> RgbImage {
 }
 
 pub fn scale_image(image: &RgbImage, scale: f64) -> RgbImage {
-	let w = (image.dimensions().0 as f64 * scale).round() as u32;
-	let h = (image.dimensions().1 as f64 * scale).round() as u32;
-	imageops::resize(image, w, h, imageops::FilterType::CatmullRom)
+	let width = (image.dimensions().0 as f64 * scale).round() as u32;
+	let height = (image.dimensions().1 as f64 * scale).round() as u32;
+	resize_image(image, width, height)
+}
+
+pub fn resize_image(image: &RgbImage, width: u32, height: u32) -> RgbImage {
+	imageops::resize(image, width, height, imageops::FilterType::CatmullRom)
+}
+
+pub fn grayscale_image(image: &RgbImage) -> GrayImage {
+	imageops::grayscale(image)
 }
 
 pub fn get_pixel_interpolated(image: &RgbImage, x: f64, y: f64) -> [u8; 3] {
