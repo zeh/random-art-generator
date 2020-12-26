@@ -1,7 +1,7 @@
 use std::{fs::File, path::Path};
 
 use bytes::{BufMut, BytesMut};
-use image::{DynamicImage, ImageFormat, RgbImage};
+use image::{DynamicImage, GrayImage, ImageFormat, RgbImage};
 use img_parts::{
 	jpeg::{markers, Jpeg, JpegSegment},
 	png::{Png, PngChunk},
@@ -35,6 +35,14 @@ impl FileFormat {
 
 pub fn write_image(image_buffer: RgbImage, path: &Path) {
 	let image = DynamicImage::ImageRgb8(image_buffer);
+	let mut image_file = File::create(path).expect("creating output file");
+	let image_format = FileFormat::from_path(path).expect("parsing image format");
+	// We could also have used "image.save(output_path)"
+	image.write_to(&mut image_file, image_format.get_native_format()).unwrap();
+}
+
+pub fn write_image_luma(image_buffer: GrayImage, path: &Path) {
+	let image = DynamicImage::ImageLuma8(image_buffer);
 	let mut image_file = File::create(path).expect("creating output file");
 	let image_format = FileFormat::from_path(path).expect("parsing image format");
 	// We could also have used "image.save(output_path)"
