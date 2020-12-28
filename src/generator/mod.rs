@@ -114,6 +114,8 @@ impl Generator {
 		let mut time_started_diff = Instant::now();
 		let mut diff_last_generation = curr_diff;
 
+		let mut time_last_print = Instant::now();
+
 		loop {
 			time_started_try = Instant::now();
 			used = false;
@@ -235,8 +237,8 @@ impl Generator {
 			time_elapsed_try += time_started_try.elapsed().as_micros();
 			time_elapsed_try_avg.put(time_started_try.elapsed().as_micros() as f64);
 
-			// Only output log if the generation succeeded
-			if used {
+			// Only output log if the generation succeeded, or if enough time has passed
+			if used || time_last_print.elapsed().as_secs() >= 1 {
 				terminal::cursor_up();
 				terminal::erase_line_to_end();
 
@@ -245,13 +247,13 @@ impl Generator {
 					let remaining = target_tries - curr_tries;
 					let time_left = remaining as f64 * time_elapsed_try_avg.get().unwrap();
 					print!(
-						"Try {}/{} is useful ({} left); ",
+						"Try {}/{} ({} left): ",
 						curr_tries,
 						target_tries,
 						format_time(time_left / 1000.0)
 					);
 				} else {
-					print!("Try {} is useful; ", curr_tries);
+					print!("Try {}: ", curr_tries);
 				}
 
 				// Generations block
@@ -259,13 +261,13 @@ impl Generator {
 					let remaining = target_generations - curr_generations;
 					let time_left = remaining as f64 * time_elapsed_generation_avg.get().unwrap();
 					print!(
-						"{}/{} generations so far ({} left); ",
+						"{}/{} generations so far ({} left), ",
 						curr_generations,
 						target_generations,
 						format_time(time_left / 1000.0)
 					);
 				} else {
-					print!("{} generations so far; ", curr_generations);
+					print!("{} generations so far, ", curr_generations);
 				}
 
 				// Diff block
@@ -273,14 +275,16 @@ impl Generator {
 					let remaining = curr_diff - target_diff;
 					let time_left = remaining as f64 * time_elapsed_diff_pct_avg.get().unwrap();
 					println!(
-						"new difference is {:.2}%/{:.2}% ({} left);",
+						"new difference is {:.2}%/{:.2}% ({} left)",
 						curr_diff * 100.0,
 						target_diff * 100.0,
 						format_time(time_left / 1000.0)
 					);
 				} else {
-					println!("new difference is {:.2}%;", curr_diff * 100.0);
+					println!("new difference is {:.2}%", curr_diff * 100.0);
 				}
+
+				time_last_print = Instant::now();
 			}
 
 			if finished {
