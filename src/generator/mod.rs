@@ -188,7 +188,7 @@ impl Generator {
 						}
 						ProcessResult::Ignore => {}
 						ProcessResult::Error(err) => {
-							panic!(err);
+							panic!("{}", err);
 						}
 					}
 				}
