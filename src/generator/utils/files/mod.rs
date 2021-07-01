@@ -1,5 +1,7 @@
+use std::io::prelude::*;
 use std::{fs::File, path::Path};
 
+use bytes;
 use bytes::{BufMut, BytesMut};
 use image::{DynamicImage, ImageFormat, RgbImage};
 use img_parts::{
@@ -9,55 +11,61 @@ use img_parts::{
 };
 use structopt::clap::crate_version;
 
-#[derive(Clone, Debug, PartialEq)]
-pub enum FileFormat {
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum ImageFileFormat {
 	PNG,
 	JPEG,
 }
 
-impl FileFormat {
-	pub fn from_path(path: &Path) -> Result<FileFormat, &str> {
+impl ImageFileFormat {
+	pub fn from_path(path: &Path) -> Result<ImageFileFormat, &str> {
 		let format = ImageFormat::from_path(&path).expect("reading image format from path");
 		match format {
-			ImageFormat::Png => Ok(FileFormat::PNG),
-			ImageFormat::Jpeg => Ok(FileFormat::JPEG),
+			ImageFormat::Png => Ok(ImageFileFormat::PNG),
+			ImageFormat::Jpeg => Ok(ImageFileFormat::JPEG),
 			_ => Err("Invalid file format; only PNG and JPEG are accepted"),
 		}
 	}
 
 	pub fn get_native_format(&self) -> ImageFormat {
 		match &self {
-			FileFormat::PNG => ImageFormat::Png,
-			FileFormat::JPEG => ImageFormat::Jpeg,
+			ImageFileFormat::PNG => ImageFormat::Png,
+			ImageFileFormat::JPEG => ImageFormat::Jpeg,
 		}
 	}
 }
 
 pub fn write_image(image_buffer: RgbImage, path: &Path) {
 	let image = DynamicImage::ImageRgb8(image_buffer);
-	let mut image_file = File::create(path).expect("creating output file");
-	let image_format = FileFormat::from_path(path).expect("parsing image format");
+	let image_format = ImageFileFormat::from_path(path).expect("parsing image format");
+	let mut output_file = File::create(path).expect("creating output file");
 	// We could also have used "image.save(output_path)"
-	image.write_to(&mut image_file, image_format.get_native_format()).unwrap();
+	image.write_to(&mut output_file, image_format.get_native_format()).unwrap();
 }
 
-pub fn write_image_with_metadata(image_buffer: RgbImage, path: &Path, comments: Vec<String>) {
+pub fn generate_image(image_buffer: RgbImage, image_format: ImageFileFormat) -> Bytes {
 	let image = DynamicImage::ImageRgb8(image_buffer);
-	let image_format = FileFormat::from_path(path).expect("parsing image format");
 
 	// Encode the image first
 	let mut image_writer = BytesMut::new().writer();
 	image.write_to(&mut image_writer, image_format.get_native_format()).expect("writing image to Bytes");
-	let image_bytes = Bytes::from(image_writer.into_inner().freeze().to_vec());
+	Bytes::from(image_writer.into_inner().freeze().to_vec())
+}
+
+pub fn generate_image_with_metadata(
+	image_buffer: RgbImage,
+	image_format: ImageFileFormat,
+	comments: Vec<String>,
+) -> bytes::Bytes {
+	let image_bytes = generate_image(image_buffer, image_format);
+	let mut image_and_meta_writer = BytesMut::new().writer();
 
 	// Additional metadata
 	let meta_software = format!("Random Art Generator v{}", crate_version!());
 
-	let output_file = File::create(path).expect("creating output file with metadata");
-
 	// Save differently based on file format
 	match image_format {
-		FileFormat::PNG => {
+		ImageFileFormat::PNG => {
 			// Is PNG, add chunks
 			let mut png = Png::from_bytes(image_bytes).expect("reading encoded PNG image");
 
@@ -70,9 +78,9 @@ pub fn write_image_with_metadata(image_buffer: RgbImage, path: &Path, comments: 
 			png.chunks_mut().insert(chunks - 1, comments_chunk);
 			png.chunks_mut().insert(chunks - 1, software_chunk);
 
-			png.encoder().write_to(output_file).expect("writing encoded PNG file");
+			png.encoder().write_to(&mut image_and_meta_writer).expect("writing encoded PNG file");
 		}
-		FileFormat::JPEG => {
+		ImageFileFormat::JPEG => {
 			// Is JPEG, add segments
 			let mut jpeg = Jpeg::from_bytes(image_bytes).expect("reading encoded JPEG image");
 
@@ -84,7 +92,16 @@ pub fn write_image_with_metadata(image_buffer: RgbImage, path: &Path, comments: 
 			let segments = jpeg.segments_mut().len();
 			jpeg.segments_mut().insert(segments - 1, comments_segment);
 
-			jpeg.encoder().write_to(output_file).expect("writing encoded JPEG file");
+			jpeg.encoder().write_to(&mut image_and_meta_writer).expect("writing encoded JPEG file");
 		}
 	}
+
+	bytes::Bytes::from(image_and_meta_writer.into_inner().freeze().to_vec())
+}
+
+pub fn write_image_with_metadata(image_buffer: RgbImage, path: &Path, comments: Vec<String>) {
+	let image_format = ImageFileFormat::from_path(path).expect("parsing image format");
+	let image_bytes = generate_image_with_metadata(image_buffer, image_format, comments);
+	let mut output_file = File::create(path).expect("creating output file with metadata");
+	output_file.write(&image_bytes[..]).expect("writing output file with metadata");
 }
