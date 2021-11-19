@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use image::{Pixel, Rgb, RgbImage};
 
 use crate::generator::utils::geom::{distance, find_target_draw_rect};
-use crate::generator::utils::image::blend_pixel;
+use crate::generator::utils::pixel::blend;
 use crate::generator::utils::random::{
 	get_random_range, get_random_ranges_bias_weighted, get_random_size_ranges_bias_weighted, get_rng,
 };
@@ -102,7 +102,7 @@ impl Painter for CirclePainter {
 		// Determine color
 		let random_color = get_random_color(&mut rng);
 		let seed_color = get_pixel_interpolated(seed_map, circle_x, circle_y);
-		let color = blend_pixel(&random_color, &seed_color, self.options.color_seed);
+		let color = blend(&random_color, &seed_color, self.options.color_seed);
 		let alpha = get_random_ranges_bias_weighted(&mut rng, &self.options.alpha, self.options.alpha_bias);
 
 		// Finally, paint
@@ -125,11 +125,8 @@ impl Painter for CirclePainter {
 							}
 						}
 					};
-					let new_pixel = Rgb(blend_pixel(
-						painted_canvas.get_pixel(x, y).channels(),
-						&color,
-						new_alpha * alpha,
-					));
+					let new_pixel =
+						Rgb(blend(painted_canvas.get_pixel(x, y).channels(), &color, new_alpha * alpha));
 					painted_canvas.put_pixel(x, y, new_pixel);
 				}
 			}

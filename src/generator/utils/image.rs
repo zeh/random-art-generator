@@ -2,29 +2,14 @@ use std::convert::TryInto;
 
 use image::{imageops, GenericImageView, GrayImage, ImageBuffer, Pixel, RgbImage};
 
+use crate::generator::utils::pixel;
+
 #[cfg(test)]
 use image::Rgb;
 
 const LUMA_R: f64 = 0.2126;
 const LUMA_G: f64 = 0.7152;
 const LUMA_B: f64 = 0.0722;
-
-#[inline(always)]
-pub fn blend_pixel(bottom: &[u8], top: &[u8], alpha: f64) -> [u8; 3] {
-	// Return early if no need to blend
-	if alpha == 1.0f64 {
-		return [top[0], top[1], top[2]];
-	} else if alpha == 0.0f64 {
-		return [bottom[0], bottom[1], bottom[2]];
-	}
-
-	// Blend pixels
-	let alpha_n: f64 = 1.0f64 - alpha;
-	let nr: u8 = (top[0] as f64 * alpha + bottom[0] as f64 * alpha_n).round() as u8;
-	let ng: u8 = (top[1] as f64 * alpha + bottom[1] as f64 * alpha_n).round() as u8;
-	let nb: u8 = (top[2] as f64 * alpha + bottom[2] as f64 * alpha_n).round() as u8;
-	[nr, ng, nb]
-}
 
 pub fn diff(a: &RgbImage, b: &RgbImage) -> f64 {
 	let w = a.dimensions().0;
@@ -57,25 +42,12 @@ pub fn diff(a: &RgbImage, b: &RgbImage) -> f64 {
 pub fn color_transform(image: &RgbImage, matrix: [f64; 12]) -> RgbImage {
 	let mut transformed_image = image.clone();
 	for (_x, _y, pixel) in transformed_image.enumerate_pixels_mut() {
-		let channels = pixel.channels();
-		let o_r = channels[0] as f64;
-		let o_g = channels[1] as f64;
-		let o_b = channels[2] as f64;
-		let n_r = ((o_r * matrix[0] + o_g * matrix[1] + o_b * matrix[2] + matrix[3]).round())
-			.max(0.0)
-			.min(255.0) as u8;
-		let n_g = ((o_r * matrix[4] + o_g * matrix[5] + o_b * matrix[6] + matrix[7]).round())
-			.max(0.0)
-			.min(255.0) as u8;
-		let n_b = ((o_r * matrix[8] + o_g * matrix[9] + o_b * matrix[10] + matrix[11]).round())
-			.max(0.0)
-			.min(255.0) as u8;
-		*pixel = image::Rgb([n_r, n_g, n_b]);
+		*pixel = image::Rgb(pixel::color_matrix(pixel.channels(), matrix));
 	}
 	transformed_image
 }
 
-pub fn scale_image<I: GenericImageView>(
+pub fn scale<I: GenericImageView>(
 	image: &I,
 	scale: f64,
 ) -> ImageBuffer<I::Pixel, Vec<<I::Pixel as Pixel>::Subpixel>>
@@ -85,10 +57,10 @@ where
 {
 	let width = (image.dimensions().0 as f64 * scale).round() as u32;
 	let height = (image.dimensions().1 as f64 * scale).round() as u32;
-	resize_image(image, width, height)
+	resize(image, width, height)
 }
 
-pub fn resize_image<I: GenericImageView>(
+pub fn resize<I: GenericImageView>(
 	image: &I,
 	width: u32,
 	height: u32,
@@ -100,7 +72,7 @@ where
 	imageops::resize(image, width, height, imageops::FilterType::CatmullRom)
 }
 
-pub fn grayscale_image(image: &RgbImage) -> GrayImage {
+pub fn color_grayscale(image: &RgbImage) -> GrayImage {
 	imageops::grayscale(image)
 }
 
@@ -130,34 +102,14 @@ pub fn get_pixel_interpolated(image: &RgbImage, x: f64, y: f64) -> [u8; 3] {
 	let color_tr = image.get_pixel(x2 as u32, y1 as u32).channels();
 	let color_bl = image.get_pixel(x1 as u32, y2 as u32).channels();
 	let color_br = image.get_pixel(x2 as u32, y2 as u32).channels();
-	let color_t = blend_pixel(color_tl, color_tr, xf);
-	let color_b = blend_pixel(color_bl, color_br, xf);
-	return blend_pixel(&color_t, &color_b, yf);
+	let color_t = pixel::blend(color_tl, color_tr, xf);
+	let color_b = pixel::blend(color_bl, color_br, xf);
+	return pixel::blend(&color_t, &color_b, yf);
 }
 
 #[cfg(test)]
 mod tests {
 	use super::*;
-
-	#[test]
-	fn test_blend_pixel() {
-		assert_eq!(blend_pixel(&[0, 0, 0], &[255, 128, 0], 0.0), [0, 0, 0]);
-		assert_eq!(blend_pixel(&[0, 0, 0], &[255, 128, 0], 0.1), [26, 13, 0]);
-		assert_eq!(blend_pixel(&[0, 0, 0], &[255, 128, 0], 0.5), [128, 64, 0]);
-		assert_eq!(blend_pixel(&[0, 0, 0], &[255, 128, 0], 1.0), [255, 128, 0]);
-		assert_eq!(blend_pixel(&[128, 128, 128], &[255, 128, 0], 0.0), [128, 128, 128]);
-		assert_eq!(blend_pixel(&[128, 128, 128], &[255, 128, 0], 0.1), [141, 128, 115]);
-		assert_eq!(blend_pixel(&[128, 128, 128], &[255, 128, 0], 0.5), [192, 128, 64]);
-		assert_eq!(blend_pixel(&[128, 128, 128], &[255, 128, 0], 1.0), [255, 128, 0]);
-		assert_eq!(blend_pixel(&[255, 255, 255], &[255, 128, 0], 0.0), [255, 255, 255]);
-		assert_eq!(blend_pixel(&[255, 255, 255], &[255, 128, 0], 0.1), [255, 242, 230]);
-		assert_eq!(blend_pixel(&[255, 255, 255], &[255, 128, 0], 0.5), [255, 192, 128]);
-		assert_eq!(blend_pixel(&[255, 255, 255], &[255, 128, 0], 1.0), [255, 128, 0]);
-		assert_eq!(blend_pixel(&[0, 128, 255], &[0, 10, 20], 0.0), [0, 128, 255]);
-		assert_eq!(blend_pixel(&[0, 128, 255], &[0, 10, 20], 0.1), [0, 116, 232]);
-		assert_eq!(blend_pixel(&[0, 128, 255], &[0, 10, 20], 0.5), [0, 69, 138]);
-		assert_eq!(blend_pixel(&[0, 128, 255], &[0, 10, 20], 1.0), [0, 10, 20]);
-	}
 
 	#[test]
 	fn test_diff() {
@@ -211,127 +163,15 @@ mod tests {
 		assert_eq!(color_transform(&g_img, red_filter_mtx).get_pixel(0, 0), &Rgb([0u8, 0u8, 0u8]));
 		assert_eq!(color_transform(&b_img, red_filter_mtx).get_pixel(0, 0), &Rgb([0u8, 0u8, 0u8]));
 
-		let green_filter_mtx = [0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0];
-		assert_eq!(color_transform(&white_img, green_filter_mtx).get_pixel(0, 0), &Rgb([0u8, 255u8, 0u8]));
-		assert_eq!(color_transform(&black_img, green_filter_mtx).get_pixel(0, 0), &Rgb([0u8, 0u8, 0u8]));
-		assert_eq!(color_transform(&r_img, green_filter_mtx).get_pixel(0, 0), &Rgb([0u8, 0u8, 0u8]));
-		assert_eq!(color_transform(&g_img, green_filter_mtx).get_pixel(0, 0), &Rgb([0u8, 255u8, 0u8]));
-		assert_eq!(color_transform(&b_img, green_filter_mtx).get_pixel(0, 0), &Rgb([0u8, 0u8, 0u8]));
-
-		let blue_filter_mtx = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0];
-		assert_eq!(color_transform(&white_img, blue_filter_mtx).get_pixel(0, 0), &Rgb([0u8, 0u8, 255u8]));
-		assert_eq!(color_transform(&black_img, blue_filter_mtx).get_pixel(0, 0), &Rgb([0u8, 0u8, 0u8]));
-		assert_eq!(color_transform(&r_img, blue_filter_mtx).get_pixel(0, 0), &Rgb([0u8, 0u8, 0u8]));
-		assert_eq!(color_transform(&g_img, blue_filter_mtx).get_pixel(0, 0), &Rgb([0u8, 0u8, 0u8]));
-		assert_eq!(color_transform(&b_img, blue_filter_mtx).get_pixel(0, 0), &Rgb([0u8, 0u8, 255u8]));
-
-		let red_fill_mtx = [1.0, 0.0, 0.0, 255.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0];
-		assert_eq!(color_transform(&white_img, red_fill_mtx).get_pixel(0, 0), &Rgb([255u8, 255u8, 255u8]));
-		assert_eq!(color_transform(&black_img, red_fill_mtx).get_pixel(0, 0), &Rgb([255u8, 0u8, 0u8]));
-		assert_eq!(color_transform(&r_img, red_fill_mtx).get_pixel(0, 0), &Rgb([255u8, 0u8, 0u8]));
-		assert_eq!(color_transform(&g_img, red_fill_mtx).get_pixel(0, 0), &Rgb([255u8, 255u8, 0u8]));
-		assert_eq!(color_transform(&b_img, red_fill_mtx).get_pixel(0, 0), &Rgb([255u8, 0u8, 255u8]));
-
-		let green_fill_mtx = [1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 255.0, 0.0, 0.0, 1.0, 0.0];
-		assert_eq!(color_transform(&white_img, green_fill_mtx).get_pixel(0, 0), &Rgb([255u8, 255u8, 255u8]));
-		assert_eq!(color_transform(&black_img, green_fill_mtx).get_pixel(0, 0), &Rgb([0u8, 255u8, 0u8]));
-		assert_eq!(color_transform(&r_img, green_fill_mtx).get_pixel(0, 0), &Rgb([255u8, 255u8, 0u8]));
-		assert_eq!(color_transform(&g_img, green_fill_mtx).get_pixel(0, 0), &Rgb([0u8, 255u8, 0u8]));
-		assert_eq!(color_transform(&b_img, green_fill_mtx).get_pixel(0, 0), &Rgb([0u8, 255u8, 255u8]));
-
-		let blue_fill_mtx = [1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 255.0];
-		assert_eq!(color_transform(&white_img, blue_fill_mtx).get_pixel(0, 0), &Rgb([255u8, 255u8, 255u8]));
-		assert_eq!(color_transform(&black_img, blue_fill_mtx).get_pixel(0, 0), &Rgb([0u8, 0u8, 255u8]));
-		assert_eq!(color_transform(&r_img, blue_fill_mtx).get_pixel(0, 0), &Rgb([255u8, 0u8, 255u8]));
-		assert_eq!(color_transform(&g_img, blue_fill_mtx).get_pixel(0, 0), &Rgb([0u8, 255u8, 255u8]));
-		assert_eq!(color_transform(&b_img, blue_fill_mtx).get_pixel(0, 0), &Rgb([0u8, 0u8, 255u8]));
-
-		let red_drain_mtx = [1.0, 0.0, 0.0, -255.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0];
-		assert_eq!(color_transform(&white_img, red_drain_mtx).get_pixel(0, 0), &Rgb([0u8, 255u8, 255u8]));
-		assert_eq!(color_transform(&black_img, red_drain_mtx).get_pixel(0, 0), &Rgb([0u8, 0u8, 0u8]));
-		assert_eq!(color_transform(&r_img, red_drain_mtx).get_pixel(0, 0), &Rgb([0u8, 0u8, 0u8]));
-		assert_eq!(color_transform(&g_img, red_drain_mtx).get_pixel(0, 0), &Rgb([0u8, 255u8, 0u8]));
-		assert_eq!(color_transform(&b_img, red_drain_mtx).get_pixel(0, 0), &Rgb([0u8, 0u8, 255u8]));
-
-		let green_drain_mtx = [1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, -255.0, 0.0, 0.0, 1.0, 0.0];
-		assert_eq!(color_transform(&white_img, green_drain_mtx).get_pixel(0, 0), &Rgb([255u8, 0u8, 255u8]));
-		assert_eq!(color_transform(&black_img, green_drain_mtx).get_pixel(0, 0), &Rgb([0u8, 0u8, 0u8]));
-		assert_eq!(color_transform(&r_img, green_drain_mtx).get_pixel(0, 0), &Rgb([255u8, 0u8, 0u8]));
-		assert_eq!(color_transform(&g_img, green_drain_mtx).get_pixel(0, 0), &Rgb([0u8, 0u8, 0u8]));
-		assert_eq!(color_transform(&b_img, green_drain_mtx).get_pixel(0, 0), &Rgb([0u8, 0u8, 255u8]));
-
-		let blue_drain_mtx = [1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, -255.0];
-		assert_eq!(color_transform(&white_img, blue_drain_mtx).get_pixel(0, 0), &Rgb([255u8, 255u8, 0u8]));
-		assert_eq!(color_transform(&black_img, blue_drain_mtx).get_pixel(0, 0), &Rgb([0u8, 0u8, 0u8]));
-		assert_eq!(color_transform(&r_img, blue_drain_mtx).get_pixel(0, 0), &Rgb([255u8, 0u8, 0u8]));
-		assert_eq!(color_transform(&g_img, blue_drain_mtx).get_pixel(0, 0), &Rgb([0u8, 255u8, 0u8]));
-		assert_eq!(color_transform(&b_img, blue_drain_mtx).get_pixel(0, 0), &Rgb([0u8, 0u8, 0u8]));
-
-		let r2g_mtx = [1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0];
-		assert_eq!(color_transform(&white_img, r2g_mtx).get_pixel(0, 0), &Rgb([255u8, 255u8, 255u8]));
-		assert_eq!(color_transform(&black_img, r2g_mtx).get_pixel(0, 0), &Rgb([0u8, 0u8, 0u8]));
-		assert_eq!(color_transform(&r_img, r2g_mtx).get_pixel(0, 0), &Rgb([255u8, 255u8, 0u8]));
-		assert_eq!(color_transform(&g_img, r2g_mtx).get_pixel(0, 0), &Rgb([0u8, 0u8, 0u8]));
-		assert_eq!(color_transform(&b_img, r2g_mtx).get_pixel(0, 0), &Rgb([0u8, 0u8, 255u8]));
-
-		let r2b_mtx = [1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0];
-		assert_eq!(color_transform(&white_img, r2b_mtx).get_pixel(0, 0), &Rgb([255u8, 255u8, 255u8]));
-		assert_eq!(color_transform(&black_img, r2b_mtx).get_pixel(0, 0), &Rgb([0u8, 0u8, 0u8]));
-		assert_eq!(color_transform(&r_img, r2b_mtx).get_pixel(0, 0), &Rgb([255u8, 0u8, 255u8]));
-		assert_eq!(color_transform(&g_img, r2b_mtx).get_pixel(0, 0), &Rgb([0u8, 255u8, 0u8]));
-		assert_eq!(color_transform(&b_img, r2b_mtx).get_pixel(0, 0), &Rgb([0u8, 0u8, 0u8]));
-
-		let g2r_mtx = [0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0];
-		assert_eq!(color_transform(&white_img, g2r_mtx).get_pixel(0, 0), &Rgb([255u8, 255u8, 255u8]));
-		assert_eq!(color_transform(&black_img, g2r_mtx).get_pixel(0, 0), &Rgb([0u8, 0u8, 0u8]));
-		assert_eq!(color_transform(&r_img, g2r_mtx).get_pixel(0, 0), &Rgb([0u8, 0u8, 0u8]));
-		assert_eq!(color_transform(&g_img, g2r_mtx).get_pixel(0, 0), &Rgb([255u8, 255u8, 0u8]));
-		assert_eq!(color_transform(&b_img, g2r_mtx).get_pixel(0, 0), &Rgb([0u8, 0u8, 255u8]));
-
-		let g2b_mtx = [1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0];
-		assert_eq!(color_transform(&white_img, g2b_mtx).get_pixel(0, 0), &Rgb([255u8, 255u8, 255u8]));
-		assert_eq!(color_transform(&black_img, g2b_mtx).get_pixel(0, 0), &Rgb([0u8, 0u8, 0u8]));
-		assert_eq!(color_transform(&r_img, g2b_mtx).get_pixel(0, 0), &Rgb([255u8, 0u8, 0u8]));
-		assert_eq!(color_transform(&g_img, g2b_mtx).get_pixel(0, 0), &Rgb([0u8, 255u8, 255u8]));
-		assert_eq!(color_transform(&b_img, g2b_mtx).get_pixel(0, 0), &Rgb([0u8, 0u8, 0u8]));
-
-		let b2r_mtx = [0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0];
-		assert_eq!(color_transform(&white_img, b2r_mtx).get_pixel(0, 0), &Rgb([255u8, 255u8, 255u8]));
-		assert_eq!(color_transform(&black_img, b2r_mtx).get_pixel(0, 0), &Rgb([0u8, 0u8, 0u8]));
-		assert_eq!(color_transform(&r_img, b2r_mtx).get_pixel(0, 0), &Rgb([0u8, 0u8, 0u8]));
-		assert_eq!(color_transform(&g_img, b2r_mtx).get_pixel(0, 0), &Rgb([0u8, 255u8, 0u8]));
-		assert_eq!(color_transform(&b_img, b2r_mtx).get_pixel(0, 0), &Rgb([255u8, 0u8, 255u8]));
-
-		let b2g_mtx = [1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0];
-		assert_eq!(color_transform(&white_img, b2g_mtx).get_pixel(0, 0), &Rgb([255u8, 255u8, 255u8]));
-		assert_eq!(color_transform(&black_img, b2g_mtx).get_pixel(0, 0), &Rgb([0u8, 0u8, 0u8]));
-		assert_eq!(color_transform(&r_img, b2g_mtx).get_pixel(0, 0), &Rgb([255u8, 0u8, 0u8]));
-		assert_eq!(color_transform(&g_img, b2g_mtx).get_pixel(0, 0), &Rgb([0u8, 0u8, 0u8]));
-		assert_eq!(color_transform(&b_img, b2g_mtx).get_pixel(0, 0), &Rgb([0u8, 255u8, 255u8]));
-
-		let naive_gray_mtx =
-			[0.3333, 0.3333, 0.3333, 0.0, 0.3333, 0.3333, 0.3333, 0.0, 0.3333, 0.3333, 0.3333, 0.0];
-		assert_eq!(color_transform(&white_img, naive_gray_mtx).get_pixel(0, 0), &Rgb([255u8, 255u8, 255u8]));
-		assert_eq!(color_transform(&black_img, naive_gray_mtx).get_pixel(0, 0), &Rgb([0u8, 0u8, 0u8]));
-		assert_eq!(color_transform(&r_img, naive_gray_mtx).get_pixel(0, 0), &Rgb([85u8, 85u8, 85u8]));
-		assert_eq!(color_transform(&g_img, naive_gray_mtx).get_pixel(0, 0), &Rgb([85u8, 85u8, 85u8]));
-		assert_eq!(color_transform(&b_img, naive_gray_mtx).get_pixel(0, 0), &Rgb([85u8, 85u8, 85u8]));
-
-		let luma_gray_mtx =
-			[0.2126, 0.7152, 0.0722, 0.0, 0.2126, 0.7152, 0.0722, 0.0, 0.2126, 0.7152, 0.0722, 0.0];
-		assert_eq!(color_transform(&white_img, luma_gray_mtx).get_pixel(0, 0), &Rgb([255u8, 255u8, 255u8]));
-		assert_eq!(color_transform(&black_img, luma_gray_mtx).get_pixel(0, 0), &Rgb([0u8, 0u8, 0u8]));
-		assert_eq!(color_transform(&r_img, luma_gray_mtx).get_pixel(0, 0), &Rgb([54u8, 54u8, 54u8]));
-		assert_eq!(color_transform(&g_img, luma_gray_mtx).get_pixel(0, 0), &Rgb([182u8, 182u8, 182u8]));
-		assert_eq!(color_transform(&b_img, luma_gray_mtx).get_pixel(0, 0), &Rgb([18u8, 18u8, 18u8]));
+		// Further tests are performed in pixel::test_color_matrix()
 	}
 
 	#[test]
-	fn test_scale_image() {
+	fn test_scale() {
 		let img = &RgbImage::from_fn(8, 8, |_x, _y| Rgb([255u8, 255u8, 255u8]));
-		assert_eq!(scale_image(img, 2.0).dimensions(), (16, 16));
-		assert_eq!(scale_image(img, 0.5).dimensions(), (4, 4));
-		assert_eq!(scale_image(img, 1.01).dimensions(), (8, 8));
+		assert_eq!(scale(img, 2.0).dimensions(), (16, 16));
+		assert_eq!(scale(img, 0.5).dimensions(), (4, 4));
+		assert_eq!(scale(img, 1.01).dimensions(), (8, 8));
 	}
 
 	#[test]

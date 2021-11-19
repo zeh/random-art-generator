@@ -7,7 +7,7 @@ use image::{DynamicImage, Rgb, RgbImage};
 
 use painter::Painter;
 use utils::formatting::format_time;
-use utils::image::{color_transform, diff, scale_image};
+use utils::image::{color_transform as image_color_transform, diff as image_diff, scale as image_scale};
 use utils::numbers::AverageNumber;
 use utils::terminal;
 
@@ -45,7 +45,7 @@ impl Generator {
 	pub fn from_image(target_image: DynamicImage, scale: f64) -> Generator {
 		let mut target = target_image.to_rgb8();
 		if scale != 1.0f64 {
-			target = scale_image(&target, scale);
+			target = image_scale(&target, scale);
 		}
 		let current = RgbImage::new(target.dimensions().0, target.dimensions().1);
 		Generator {
@@ -57,11 +57,11 @@ impl Generator {
 	pub fn from_image_and_matrix(target_image: DynamicImage, scale: f64, matrix: [f64; 12]) -> Generator {
 		let mut target = target_image.to_rgb8();
 		if scale != 1.0f64 {
-			target = scale_image(&target, scale);
+			target = image_scale(&target, scale);
 		}
 		let current = RgbImage::new(target.dimensions().0, target.dimensions().1);
 		Generator {
-			target: color_transform(&target, matrix),
+			target: image_color_transform(&target, matrix),
 			current: current,
 		}
 	}
@@ -84,7 +84,7 @@ impl Generator {
 		painter: impl Painter + Send + Sync + 'static,
 		cb: Option<ProcessCallback>,
 	) {
-		let mut curr_diff = diff(&self.current, &self.target);
+		let mut curr_diff = image_diff(&self.current, &self.target);
 
 		println!("Starting tries; initial difference from target is {:.2}%.", curr_diff * 100.0);
 
@@ -128,7 +128,7 @@ impl Generator {
 				time_elapsed_paint += time_started_paint.elapsed().as_micros();
 
 				let time_started_diff = Instant::now();
-				let new_diff = diff(&new_candidate, &self.target);
+				let new_diff = image_diff(&new_candidate, &self.target);
 				time_elapsed_diff += time_started_diff.elapsed().as_micros();
 
 				if new_diff < curr_diff {
@@ -158,7 +158,7 @@ impl Generator {
 							&thread_target,
 						) {
 							Ok(new_candidate) => {
-								let new_diff = diff(&new_candidate, &thread_target);
+								let new_diff = image_diff(&new_candidate, &thread_target);
 
 								// Only report candidates that are actually better than the current diff,
 								// to minimize the back-and-forth of data. To be fair, however, this doesn't
@@ -296,7 +296,7 @@ impl Generator {
 		let time_elapsed = time_started.elapsed().as_secs_f32();
 		let atts = curr_tries as f64 * 1000.0;
 
-		let final_diff = diff(&self.current, &self.target);
+		let final_diff = image_diff(&self.current, &self.target);
 		println!(
 			"Finished {} tries in {:.3}s ({:.3}ms avg per try), using {} candidate threads.",
 			curr_tries,
