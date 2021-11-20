@@ -6,10 +6,11 @@ use image::GenericImageView;
 use structopt::StructOpt;
 
 use generator::painter::{circle::CirclePainter, rect::RectPainter, stroke::StrokePainter};
+use generator::utils::color::BlendingMode;
 use generator::utils::files;
 use generator::utils::parsing::{
-	parse_color, parse_color_matrix, parse_scale, parse_size_margins, parse_weighted_float_pair,
-	parse_weighted_size_pair,
+	parse_color, parse_color_matrix, parse_scale, parse_size_margins, parse_weighted_blending_mode,
+	parse_weighted_float_pair, parse_weighted_size_pair,
 };
 use generator::utils::random::get_random_seed;
 use generator::utils::units::{Margins, SizeUnit, WeightedValue};
@@ -96,6 +97,12 @@ struct Opt {
 	/// Number; the new size of the output image, as a scale of the target image
 	#[structopt(short, long, default_value = "1")]
 	scale: f64,
+
+	// TODO: add other blending modes
+
+	/// List of strings; blending mode(s) to be used when overlaying new candidates ("normal", "all", "screen", "multiply", "overlay", others)
+	#[structopt(long, default_value = "normal", default_value = "normal", parse(try_from_str = parse_weighted_blending_mode))]
+	blending_mode: Vec<WeightedValue<BlendingMode>>,
 
 	/// String; painter to be used ("circles", "strokes", "rects")
 	#[structopt(short, long, possible_values = &["circles", "strokes", "rects"], default_value = "rects")]
@@ -265,6 +272,7 @@ fn main() {
 	match &options.painter[..] {
 		"circles" => {
 			let mut painter = CirclePainter::new();
+			painter.options.blending_mode = options.blending_mode;
 			painter.options.alpha = options.painter_alpha;
 			painter.options.alpha_bias = options.painter_alpha_bias;
 			painter.options.radius = options.painter_radius;
@@ -284,6 +292,7 @@ fn main() {
 		}
 		"rects" => {
 			let mut painter = RectPainter::new();
+			painter.options.blending_mode = options.blending_mode;
 			painter.options.alpha = options.painter_alpha;
 			painter.options.alpha_bias = options.painter_alpha_bias;
 			painter.options.width = options.painter_width;
@@ -304,6 +313,7 @@ fn main() {
 		}
 		"strokes" => {
 			let mut painter = StrokePainter::new();
+			painter.options.blending_mode = options.blending_mode;
 			painter.options.alpha = options.painter_alpha;
 			painter.options.alpha_bias = options.painter_alpha_bias;
 			painter.options.width = options.painter_width;

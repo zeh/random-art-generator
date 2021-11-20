@@ -1,18 +1,37 @@
-#[inline(always)]
-pub fn blend(bottom: &[u8], top: &[u8], alpha: f64) -> [u8; 3] {
-	// Return early if no need to blend
-	if alpha == 1.0f64 {
-		return [top[0], top[1], top[2]];
-	} else if alpha == 0.0f64 {
-		return [bottom[0], bottom[1], bottom[2]];
-	}
+use crate::generator::utils::color::BlendingMode;
 
-	// Blend pixels
-	let alpha_n: f64 = 1.0f64 - alpha;
-	let nr: u8 = (top[0] as f64 * alpha + bottom[0] as f64 * alpha_n).round() as u8;
-	let ng: u8 = (top[1] as f64 * alpha + bottom[1] as f64 * alpha_n).round() as u8;
-	let nb: u8 = (top[2] as f64 * alpha + bottom[2] as f64 * alpha_n).round() as u8;
-	[nr, ng, nb]
+#[inline(always)]
+pub fn blend(bottom: &[u8], top: &[u8], opacity: f64, blending_mode: &BlendingMode) -> [u8; 3] {
+	if opacity == 0.0 {
+		[bottom[0], bottom[1], bottom[2]]
+	} else {
+		[
+			channel_f64_to_u8(blending_mode.blend_with_opacity(
+				channel_u8_to_f64(bottom[0]),
+				channel_u8_to_f64(top[0]),
+				opacity,
+			)),
+			channel_f64_to_u8(blending_mode.blend_with_opacity(
+				channel_u8_to_f64(bottom[1]),
+				channel_u8_to_f64(top[1]),
+				opacity,
+			)),
+			channel_f64_to_u8(blending_mode.blend_with_opacity(
+				channel_u8_to_f64(bottom[2]),
+				channel_u8_to_f64(top[2]),
+				opacity,
+			)),
+		]
+	}
+}
+
+#[inline(always)]
+pub fn blend_linear(bottom: &[u8], top: &[u8], opacity: f64) -> [u8; 3] {
+	if opacity == 1.0 {
+		[top[0], top[1], top[2]]
+	} else {
+		blend(bottom, top, opacity, &BlendingMode::Normal)
+	}
 }
 
 #[inline(always)]
@@ -31,28 +50,51 @@ fn color_matrix_channel(rgb: [f64; 3], rgb_mul: [f64; 3], offset: f64) -> u8 {
 	result.round().max(0.0).min(255.0) as u8
 }
 
+#[inline(always)]
+fn channel_f64_to_u8(color: f64) -> u8 {
+	(color * 255.0).round() as u8
+}
+
+#[inline(always)]
+fn channel_u8_to_f64(color: u8) -> f64 {
+	color as f64 / 255.0
+}
+
 #[cfg(test)]
 mod tests {
 	use super::*;
 
 	#[test]
 	fn test_blend() {
-		assert_eq!(blend(&[0, 0, 0], &[255, 128, 0], 0.0), [0, 0, 0]);
-		assert_eq!(blend(&[0, 0, 0], &[255, 128, 0], 0.1), [26, 13, 0]);
-		assert_eq!(blend(&[0, 0, 0], &[255, 128, 0], 0.5), [128, 64, 0]);
-		assert_eq!(blend(&[0, 0, 0], &[255, 128, 0], 1.0), [255, 128, 0]);
-		assert_eq!(blend(&[128, 128, 128], &[255, 128, 0], 0.0), [128, 128, 128]);
-		assert_eq!(blend(&[128, 128, 128], &[255, 128, 0], 0.1), [141, 128, 115]);
-		assert_eq!(blend(&[128, 128, 128], &[255, 128, 0], 0.5), [192, 128, 64]);
-		assert_eq!(blend(&[128, 128, 128], &[255, 128, 0], 1.0), [255, 128, 0]);
-		assert_eq!(blend(&[255, 255, 255], &[255, 128, 0], 0.0), [255, 255, 255]);
-		assert_eq!(blend(&[255, 255, 255], &[255, 128, 0], 0.1), [255, 242, 230]);
-		assert_eq!(blend(&[255, 255, 255], &[255, 128, 0], 0.5), [255, 192, 128]);
-		assert_eq!(blend(&[255, 255, 255], &[255, 128, 0], 1.0), [255, 128, 0]);
-		assert_eq!(blend(&[0, 128, 255], &[0, 10, 20], 0.0), [0, 128, 255]);
-		assert_eq!(blend(&[0, 128, 255], &[0, 10, 20], 0.1), [0, 116, 232]);
-		assert_eq!(blend(&[0, 128, 255], &[0, 10, 20], 0.5), [0, 69, 138]);
-		assert_eq!(blend(&[0, 128, 255], &[0, 10, 20], 1.0), [0, 10, 20]);
+		assert_eq!(blend(&[0, 10, 250], &[255, 128, 0], 0.0, &BlendingMode::Normal), [0, 10, 250]);
+		assert_eq!(blend(&[0, 10, 250], &[255, 128, 0], 0.5, &BlendingMode::Normal), [128, 69, 125]);
+		assert_eq!(blend(&[0, 10, 250], &[255, 128, 0], 1.0, &BlendingMode::Normal), [255, 128, 0]);
+
+		// Actual individual blending mode tests are part of the "color" module,
+		// this is just to verify that the parameters are respected
+		assert_eq!(blend(&[0, 10, 250], &[255, 128, 0], 0.0, &BlendingMode::Multiply), [0, 10, 250]);
+		assert_eq!(blend(&[0, 10, 250], &[255, 128, 0], 0.5, &BlendingMode::Multiply), [0, 8, 125]);
+		assert_eq!(blend(&[0, 10, 250], &[255, 128, 0], 1.0, &BlendingMode::Multiply), [0, 5, 0]);
+	}
+
+	#[test]
+	fn test_blend_linear() {
+		assert_eq!(blend_linear(&[0, 0, 0], &[255, 128, 0], 0.0), [0, 0, 0]);
+		assert_eq!(blend_linear(&[0, 0, 0], &[255, 128, 0], 0.1), [26, 13, 0]);
+		assert_eq!(blend_linear(&[0, 0, 0], &[255, 128, 0], 0.5), [128, 64, 0]);
+		assert_eq!(blend_linear(&[0, 0, 0], &[255, 128, 0], 1.0), [255, 128, 0]);
+		assert_eq!(blend_linear(&[128, 128, 128], &[255, 128, 0], 0.0), [128, 128, 128]);
+		assert_eq!(blend_linear(&[128, 128, 128], &[255, 128, 0], 0.1), [141, 128, 115]);
+		assert_eq!(blend_linear(&[128, 128, 128], &[255, 128, 0], 0.5), [192, 128, 64]);
+		assert_eq!(blend_linear(&[128, 128, 128], &[255, 128, 0], 1.0), [255, 128, 0]);
+		assert_eq!(blend_linear(&[255, 255, 255], &[255, 128, 0], 0.0), [255, 255, 255]);
+		assert_eq!(blend_linear(&[255, 255, 255], &[255, 128, 0], 0.1), [255, 242, 230]);
+		assert_eq!(blend_linear(&[255, 255, 255], &[255, 128, 0], 0.5), [255, 192, 128]);
+		assert_eq!(blend_linear(&[255, 255, 255], &[255, 128, 0], 1.0), [255, 128, 0]);
+		assert_eq!(blend_linear(&[0, 128, 255], &[0, 10, 20], 0.0), [0, 128, 255]);
+		assert_eq!(blend_linear(&[0, 128, 255], &[0, 10, 20], 0.1), [0, 116, 232]);
+		assert_eq!(blend_linear(&[0, 128, 255], &[0, 10, 20], 0.5), [0, 69, 138]);
+		assert_eq!(blend_linear(&[0, 128, 255], &[0, 10, 20], 1.0), [0, 10, 20]);
 	}
 
 	#[test]
@@ -236,5 +278,22 @@ mod tests {
 		assert_eq!(color_matrix_channel(blue, [1.0, 0.0, 0.0], 0.0), 0);
 		assert_eq!(color_matrix_channel(blue, [0.0, 1.0, 0.0], 0.0), 0);
 		assert_eq!(color_matrix_channel(blue, [0.0, 0.0, 1.0], 0.0), 255);
+	}
+
+	#[test]
+	fn test_channel_u8_to_f64() {
+		assert_eq!(channel_u8_to_f64(0), 0.0);
+		assert_eq!(channel_u8_to_f64(12), 12.0 / 255.0);
+		assert_eq!(channel_u8_to_f64(127), 127.0 / 255.0);
+		assert_eq!(channel_u8_to_f64(255), 1.0);
+	}
+
+	#[test]
+	fn test_channel_f64_to_u8() {
+		assert_eq!(channel_f64_to_u8(0.0), 0);
+		assert_eq!(channel_f64_to_u8(0.499), 127);
+		assert_eq!(channel_f64_to_u8(0.5), 128);
+		assert_eq!(channel_f64_to_u8(0.75), 191);
+		assert_eq!(channel_f64_to_u8(1.0), 255);
 	}
 }

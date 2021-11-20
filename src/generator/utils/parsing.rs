@@ -1,7 +1,9 @@
 use std::convert::TryInto;
+use std::str::FromStr;
 
 use color_processing::Color;
 
+use crate::generator::utils::color::BlendingMode;
 use crate::generator::utils::units::{Margins, SizeUnit, WeightedValue};
 
 pub fn parse_color(src: &str) -> Result<(u8, u8, u8), &str> {
@@ -25,7 +27,7 @@ pub fn parse_float_list(src: &str, divider: char) -> Result<Vec<f64>, &str> {
 	src.split(divider).collect::<Vec<&str>>().iter().map(|&e| parse_float(e)).collect()
 }
 
-// Parses "1.0", "0.9-1.0" into (1.0, 1.0), (0.9, 1.0)
+/// Parses "1.0", "0.9-1.0" into (1.0, 1.0), (0.9, 1.0)
 pub fn parse_float_pair(src: &str) -> Result<(f64, f64), &str> {
 	let values = parse_float_list(&src, '-')?;
 	match values.len() {
@@ -35,6 +37,7 @@ pub fn parse_float_pair(src: &str) -> Result<(f64, f64), &str> {
 	}
 }
 
+/// Parses "10%", "20.3" into 0.1, 20.3
 pub fn parse_scale(src: &str) -> Result<f64, &str> {
 	if src.ends_with("%") {
 		match src[..src.len() - 1].parse::<f64>() {
@@ -132,7 +135,7 @@ pub fn parse_weight(src: &str) -> Result<(&str, f64), &str> {
 /// Parses a size pair with a weight (e.f. "1-2@1", "10%", "5-10%@2") into a WeightedValue<>
 pub fn parse_weighted_size_pair(src: &str) -> Result<WeightedValue<(SizeUnit, SizeUnit)>, &str> {
 	match parse_weight(src) {
-		Ok((src_pair, weight)) => match parse_size_pair(src_pair) {
+		Ok((src_value, weight)) => match parse_size_pair(src_value) {
 			Ok(value) => Ok(WeightedValue {
 				value,
 				weight,
@@ -146,12 +149,28 @@ pub fn parse_weighted_size_pair(src: &str) -> Result<WeightedValue<(SizeUnit, Si
 /// Parses a float pair with a weight (e.f. "1-2@1", "10.2", "5.2-10@2") into a WeightedValue<>
 pub fn parse_weighted_float_pair(src: &str) -> Result<WeightedValue<(f64, f64)>, &str> {
 	match parse_weight(src) {
-		Ok((src_pair, weight)) => match parse_float_pair(src_pair) {
+		Ok((src_value, weight)) => match parse_float_pair(src_value) {
 			Ok(value) => Ok(WeightedValue {
 				value,
 				weight,
 			}),
 			Err(err) => Err(err),
+		},
+		Err(err) => Err(err),
+	}
+}
+
+/// Parses a blending mode with a weight (e.f. "normal", "screen@2") into a WeightedValue<>
+pub fn parse_weighted_blending_mode(src: &str) -> Result<WeightedValue<BlendingMode>, &str> {
+	match parse_weight(src) {
+		Ok((src_value, weight)) => match BlendingMode::from_str(src_value) {
+			Ok(value) => Ok(WeightedValue {
+				value,
+				weight,
+			}),
+			Err(_) => {
+				Err("Cannot parse value variant for blending mode")
+			}
 		},
 		Err(err) => Err(err),
 	}
@@ -565,5 +584,54 @@ mod tests {
 		assert!(parse_weighted_float_pair("0-100@1@2").is_err());
 		assert!(parse_weighted_float_pair("0.2@1_2").is_err());
 		assert!(parse_weighted_float_pair("10%@a").is_err());
+	}
+
+	#[test]
+	fn test_parse_weighted_blending_mode() {
+		assert_eq!(
+			parse_weighted_blending_mode("normal"),
+			Ok(WeightedValue {
+				value: BlendingMode::Normal,
+				weight: 1.0
+			}),
+		);
+		assert_eq!(
+			parse_weighted_blending_mode("screen"),
+			Ok(WeightedValue {
+				value: BlendingMode::Screen,
+				weight: 1.0
+			}),
+		);
+		assert_eq!(
+			parse_weighted_blending_mode("multiply@3"),
+			Ok(WeightedValue {
+				value: BlendingMode::Multiply,
+				weight: 3.0
+			}),
+		);
+		assert_eq!(
+			parse_weighted_blending_mode("overlay@7.521"),
+			Ok(WeightedValue {
+				value: BlendingMode::Overlay,
+				weight: 7.521
+			}),
+		);
+		assert_eq!(
+			parse_weighted_blending_mode("normal@200"),
+			Ok(WeightedValue {
+				value: BlendingMode::Normal,
+				weight: 200.0
+			}),
+		);
+
+		// Errors
+		assert!(parse_weighted_blending_mode("").is_err());
+		assert!(parse_weighted_blending_mode("foo").is_err());
+		assert!(parse_weighted_blending_mode("@1").is_err());
+		assert!(parse_weighted_blending_mode("foo@2").is_err());
+		assert!(parse_weighted_blending_mode("normall@1").is_err());
+		assert!(parse_weighted_blending_mode("overlay@1@2").is_err());
+		assert!(parse_weighted_blending_mode("multiply@1_2").is_err());
+		assert!(parse_weighted_blending_mode("normal@a").is_err());
 	}
 }

@@ -102,9 +102,9 @@ pub fn get_pixel_interpolated(image: &RgbImage, x: f64, y: f64) -> [u8; 3] {
 	let color_tr = image.get_pixel(x2 as u32, y1 as u32).channels();
 	let color_bl = image.get_pixel(x1 as u32, y2 as u32).channels();
 	let color_br = image.get_pixel(x2 as u32, y2 as u32).channels();
-	let color_t = pixel::blend(color_tl, color_tr, xf);
-	let color_b = pixel::blend(color_bl, color_br, xf);
-	return pixel::blend(&color_t, &color_b, yf);
+	let color_t = pixel::blend_linear(color_tl, color_tr, xf);
+	let color_b = pixel::blend_linear(color_bl, color_br, xf);
+	return pixel::blend_linear(&color_t, &color_b, yf);
 }
 
 #[cfg(test)]

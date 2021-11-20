@@ -42,7 +42,7 @@ pub fn get_random_size_range_bias(
 ) -> f64 {
 	let min_pixels = min.to_pixels(pixel_size);
 	let max_pixels = max.to_pixels(pixel_size);
-	return get_random_range_bias(rng, min_pixels as f64, max_pixels as f64, bias);
+	get_random_range_bias(rng, min_pixels as f64, max_pixels as f64, bias)
 }
 
 pub fn get_random_entry_weighted<'a, T>(rng: &mut Rng, entries: &'a Vec<WeightedValue<T>>) -> &'a T {

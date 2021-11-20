@@ -2,11 +2,12 @@ use std::collections::HashMap;
 
 use image::{Pixel, Rgb, RgbImage};
 
+use crate::generator::utils::color::BlendingMode;
 use crate::generator::utils::geom::find_target_draw_rect;
-use crate::generator::utils::pixel::blend;
+use crate::generator::utils::pixel::{blend, blend_linear};
 use crate::generator::utils::random::{
-	get_noise_value, get_random_noise_sequence, get_random_range, get_random_ranges_bias_weighted,
-	get_random_size_ranges_bias_weighted, get_rng,
+	get_noise_value, get_random_entry_weighted, get_random_noise_sequence, get_random_range,
+	get_random_ranges_bias_weighted, get_random_size_ranges_bias_weighted, get_rng,
 };
 use crate::generator::utils::units::{Margins, SizeUnit, WeightedValue};
 use crate::generator::{
@@ -21,6 +22,7 @@ pub struct StrokePainter {
 
 #[derive(Clone)]
 pub struct Options {
+	pub blending_mode: Vec<WeightedValue<BlendingMode>>,
 	pub alpha: Vec<WeightedValue<(f64, f64)>>,
 	pub alpha_bias: f64,
 	pub width: Vec<WeightedValue<(SizeUnit, SizeUnit)>>,
@@ -40,33 +42,37 @@ pub struct Options {
 impl StrokePainter {
 	pub fn new() -> StrokePainter {
 		let options = Options {
+			blending_mode: vec![WeightedValue {
+				value: BlendingMode::default(),
+				weight: 1.0,
+			}],
 			alpha: vec![WeightedValue {
 				value: (1.0, 1.0),
 				weight: 1.0,
 			}],
-			alpha_bias: 0.0f64,
+			alpha_bias: 0.0,
 			width: vec![WeightedValue {
 				value: (SizeUnit::Fraction(0.0), SizeUnit::Fraction(1.0)),
 				weight: 1.0,
 			}],
-			width_bias: 0.0f64,
+			width_bias: 0.0,
 			height: vec![WeightedValue {
 				value: (SizeUnit::Fraction(0.0), SizeUnit::Fraction(1.0)),
 				weight: 1.0,
 			}],
-			height_bias: 0.0f64,
+			height_bias: 0.0,
 			wave_height: vec![WeightedValue {
 				value: (SizeUnit::Fraction(0.01), SizeUnit::Fraction(0.01)),
 				weight: 1.0,
 			}],
-			wave_height_bias: 0.0f64,
+			wave_height_bias: 0.0,
 			wave_length: vec![WeightedValue {
 				value: (SizeUnit::Fraction(0.5), SizeUnit::Fraction(0.5)),
 				weight: 1.0,
 			}],
-			wave_length_bias: 0.0f64,
+			wave_length_bias: 0.0,
 			anti_alias: true,
-			color_seed: 0.0f64,
+			color_seed: 0.0,
 			rng_seed: 0,
 			margins: Margins::<SizeUnit> {
 				top: SizeUnit::Pixels(0),
@@ -128,9 +134,8 @@ impl Painter for StrokePainter {
 
 		// Determine color
 		let random_color = get_random_color(&mut rng);
-		let seed_color =
-			get_pixel_interpolated(seed_map, (x1 + x2) as f64 / 2.0f64, (y1 + y2) as f64 / 2.0f64);
-		let color = blend(&random_color, &seed_color, self.options.color_seed);
+		let seed_color = get_pixel_interpolated(seed_map, (x1 + x2) as f64 / 2.0, (y1 + y2) as f64 / 2.0);
+		let color = blend_linear(&random_color, &seed_color, self.options.color_seed);
 		let alpha = get_random_ranges_bias_weighted(&mut rng, &self.options.alpha, self.options.alpha_bias);
 
 		// Determine waviness
@@ -147,6 +152,9 @@ impl Painter for StrokePainter {
 			target_visible_area.1 as u32,
 		);
 
+		// Decide on blending mode
+		let blending_mode = get_random_entry_weighted(&mut rng, &self.options.blending_mode);
+
 		let mut painted_canvas = canvas.clone();
 
 		// Finally, paint
@@ -154,7 +162,8 @@ impl Painter for StrokePainter {
 			// Fast path, no waviness
 			for x in x1..x2 {
 				for y in y1..y2 {
-					let new_pixel = Rgb(blend(painted_canvas.get_pixel(x, y).channels(), &color, alpha));
+					let new_pixel =
+						Rgb(blend(painted_canvas.get_pixel(x, y).channels(), &color, alpha, &blending_mode));
 					painted_canvas.put_pixel(x, y, new_pixel);
 				}
 			}
@@ -175,27 +184,27 @@ impl Painter for StrokePainter {
 				for y in y1_safe..y2_safe {
 					let alpha_x = if x >= x1 + margin_ceil && x < x2 - margin_ceil {
 						// Inner box
-						1.0f64
+						1.0
 					} else {
 						// // Part of margin
 						let noise_x = get_noise_value(noise, y as f64 / noise_freq);
 
 						let offset_x1 = x as f64 - (x1 as f64 + noise_x);
 						let alpha_x1 = if offset_x1 > 0.5 {
-							1.0f64
+							1.0
 						} else if offset_x1 < -0.5 {
-							0.0f64
+							0.0
 						} else {
-							offset_x1 + 0.5f64
+							offset_x1 + 0.5
 						};
 
 						let offset_x2 = (x2 as f64 + noise_x) - x as f64;
 						let alpha_x2 = if offset_x2 > 0.5 {
-							1.0f64
+							1.0
 						} else if offset_x2 < -0.5 {
-							0.0f64
+							0.0
 						} else {
-							offset_x2 + 0.5f64
+							offset_x2 + 0.5
 						};
 
 						alpha_x1 * alpha_x2
@@ -203,27 +212,27 @@ impl Painter for StrokePainter {
 
 					let alpha_y = if y >= y1 + margin_ceil && y < y2 - margin_ceil {
 						// Inner box
-						1.0f64
+						1.0
 					} else {
 						// // Part of margin
 						let noise_y = get_noise_value(noise, x as f64 / noise_freq);
 
 						let offset_y1 = y as f64 - (y1 as f64 + noise_y);
 						let alpha_y1 = if offset_y1 > 0.5 {
-							1.0f64
+							1.0
 						} else if offset_y1 < -0.5 {
-							0.0f64
+							0.0
 						} else {
-							offset_y1 + 0.5f64
+							offset_y1 + 0.5
 						};
 
 						let offset_y2 = (y2 as f64 + noise_y) - y as f64;
 						let alpha_y2 = if offset_y2 > 0.5 {
-							1.0f64
+							1.0
 						} else if offset_y2 < -0.5 {
-							0.0f64
+							0.0
 						} else {
-							offset_y2 + 0.5f64
+							offset_y2 + 0.5
 						};
 
 						alpha_y1 * alpha_y2
@@ -235,12 +244,13 @@ impl Painter for StrokePainter {
 						if self.options.anti_alias {
 							alpha_x * alpha_y * alpha
 						} else {
-							if alpha_x * alpha_y >= 0.5f64 {
-								1.0f64
+							if alpha_x * alpha_y >= 0.5 {
+								1.0
 							} else {
-								0.0f64
+								0.0
 							}
 						},
+						&blending_mode,
 					));
 					painted_canvas.put_pixel(x, y, new_pixel);
 				}
