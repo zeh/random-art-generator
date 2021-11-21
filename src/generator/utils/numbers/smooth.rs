@@ -30,7 +30,7 @@ impl SmoothNumber {
 		if self.has_value {
 			Ok(self.value)
 		} else {
-			Err("No values added yet")
+			Err("Trying to get smooth number from empty list")
 		}
 	}
 }

@@ -245,13 +245,12 @@ impl Generator {
 				// Tries block
 				if target_tries > 0 {
 					let remaining = target_tries - curr_tries;
-					let time_left = remaining as f64 * time_elapsed_try_avg.get().unwrap();
-					print!(
-						"Try {}/{} ({} left): ",
-						curr_tries,
-						target_tries,
-						format_time(time_left / 1000.0)
-					);
+					let time_left = if curr_tries > 0 {
+						format_time(remaining as f64 * time_elapsed_try_avg.get().unwrap() / 1000.0)
+					} else {
+						"∞".to_string()
+					};
+					print!("Try {}/{} ({} left): ", curr_tries, target_tries, time_left,);
 				} else {
 					print!("Try {}: ", curr_tries);
 				}
@@ -259,12 +258,14 @@ impl Generator {
 				// Generations block
 				if target_generations > 0 {
 					let remaining = target_generations - curr_generations;
-					let time_left = remaining as f64 * time_elapsed_generation_avg.get().unwrap();
+					let time_left = if curr_generations > 0 {
+						format_time(remaining as f64 * time_elapsed_generation_avg.get().unwrap() / 1000.0)
+					} else {
+						"∞".to_string()
+					};
 					print!(
 						"{}/{} generations so far ({} left), ",
-						curr_generations,
-						target_generations,
-						format_time(time_left / 1000.0)
+						curr_generations, target_generations, time_left,
 					);
 				} else {
 					print!("{} generations so far, ", curr_generations);
@@ -273,12 +274,13 @@ impl Generator {
 				// Diff block
 				if target_diff > 0.0 {
 					let remaining = curr_diff - target_diff;
-					let time_left = remaining as f64 * time_elapsed_diff_pct_avg.get().unwrap();
+					let time_left =
+						format_time(remaining as f64 * time_elapsed_diff_pct_avg.get().unwrap() / 1000.0);
 					println!(
 						"new difference is {:.2}%/{:.2}% ({} left)",
 						curr_diff * 100.0,
 						target_diff * 100.0,
-						format_time(time_left / 1000.0)
+						time_left,
 					);
 				} else {
 					println!("new difference is {:.2}%", curr_diff * 100.0);

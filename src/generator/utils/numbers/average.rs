@@ -38,7 +38,7 @@ impl AverageNumber {
 		if self.is_dirty {
 			// Calculates the median value
 			if self.length == 0 {
-				return Err("No values added yet");
+				return Err("Trying to get average number from empty list");
 			} else {
 				let mut total: f64 = 0.0;
 				for i in 0..self.length {
