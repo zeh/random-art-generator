@@ -17,19 +17,18 @@ pub fn blend(bottom: &[u8], top: &[u8], alpha: f64) -> [u8; 3] {
 
 #[inline(always)]
 pub fn color_matrix(pixel: &[u8], matrix: [f64; 12]) -> [u8; 3] {
-	let r = pixel[0] as f64;
-	let g = pixel[1] as f64;
-	let b = pixel[2] as f64;
-	let nr = ((r * matrix[0] + g * matrix[1] + b * matrix[2] + matrix[3]).round())
-		.max(0.0)
-		.min(255.0) as u8;
-	let ng = ((r * matrix[4] + g * matrix[5] + b * matrix[6] + matrix[7]).round())
-		.max(0.0)
-		.min(255.0) as u8;
-	let nb = ((r * matrix[8] + g * matrix[9] + b * matrix[10] + matrix[11]).round())
-		.max(0.0)
-		.min(255.0) as u8;
-	[nr, ng, nb]
+	let rgb = [pixel[0] as f64, pixel[1] as f64, pixel[2] as f64];
+	[
+		color_matrix_channel(rgb, [matrix[0], matrix[1], matrix[2]], matrix[3]),
+		color_matrix_channel(rgb, [matrix[4], matrix[5], matrix[6]], matrix[7]),
+		color_matrix_channel(rgb, [matrix[8], matrix[9], matrix[10]], matrix[11]),
+	]
+}
+
+#[inline(always)]
+fn color_matrix_channel(rgb: [f64; 3], rgb_mul: [f64; 3], offset: f64) -> u8 {
+	let result = rgb[0] * rgb_mul[0] + rgb[1] * rgb_mul[1] + rgb[2] * rgb_mul[2] + offset;
+	result.round().max(0.0).min(255.0) as u8
 }
 
 #[cfg(test)]
@@ -191,5 +190,51 @@ mod tests {
 		assert_eq!(color_matrix(&red, luma_gray_mtx), [54u8, 54u8, 54u8]);
 		assert_eq!(color_matrix(&green, luma_gray_mtx), [182u8, 182u8, 182u8]);
 		assert_eq!(color_matrix(&blue, luma_gray_mtx), [18u8, 18u8, 18u8]);
+	}
+
+	#[test]
+	fn test_color_matrix_channel() {
+		let white = [255.0, 255.0, 255.0];
+		let black = [0.0, 0.0, 0.0];
+		let red = [255.0, 0.0, 0.0];
+		let green = [0.0, 255.0, 0.0];
+		let blue = [0.0, 0.0, 255.0];
+
+		assert_eq!(color_matrix_channel(white, [1.0, 0.0, 0.0], 0.0), 255);
+		assert_eq!(color_matrix_channel(white, [0.0, 1.0, 0.0], 0.0), 255);
+		assert_eq!(color_matrix_channel(white, [0.0, 0.0, 1.0], 0.0), 255);
+		assert_eq!(color_matrix_channel(white, [0.0, 0.0, 0.0], 0.0), 0);
+		assert_eq!(color_matrix_channel(white, [0.2, 0.3, 0.4], -1.0), 229);
+		assert_eq!(color_matrix_channel(white, [0.2, 0.3, 0.4], 0.0), 230);
+		assert_eq!(color_matrix_channel(white, [0.2, 0.3, 0.4], 1.0), 231);
+		assert_eq!(color_matrix_channel(white, [0.2, 0.3, 0.4], -255.0), 0);
+		assert_eq!(color_matrix_channel(white, [0.2, 0.3, 0.4], 255.0), 255);
+
+		assert_eq!(color_matrix_channel(white, [1.0, 1.0, 1.0], 128.0), 255);
+		assert_eq!(color_matrix_channel(white, [0.0, 0.0, 0.0], 128.0), 128);
+		assert_eq!(color_matrix_channel(white, [1.0, 0.0, 0.0], -128.0), 127);
+		assert_eq!(color_matrix_channel(white, [0.0, 0.0, 0.0], 128.0), 128);
+
+		assert_eq!(color_matrix_channel(black, [1.0, 0.0, 0.0], 0.0), 0);
+		assert_eq!(color_matrix_channel(black, [0.0, 1.0, 0.0], 0.0), 0);
+		assert_eq!(color_matrix_channel(black, [0.0, 0.0, 1.0], 0.0), 0);
+		assert_eq!(color_matrix_channel(black, [0.0, 0.0, 0.0], 0.0), 0);
+		assert_eq!(color_matrix_channel(black, [0.0, 0.0, 0.0], -255.0), 0);
+		assert_eq!(color_matrix_channel(black, [0.0, 0.0, 0.0], -128.0), 0);
+		assert_eq!(color_matrix_channel(black, [0.0, 0.0, 0.0], 128.0), 128);
+		assert_eq!(color_matrix_channel(black, [0.0, 0.0, 0.0], 255.0), 255);
+		assert_eq!(color_matrix_channel(black, [0.0, 0.0, 0.0], 256.0), 255);
+
+		assert_eq!(color_matrix_channel(red, [1.0, 0.0, 0.0], 0.0), 255);
+		assert_eq!(color_matrix_channel(red, [0.0, 1.0, 0.0], 0.0), 0);
+		assert_eq!(color_matrix_channel(red, [0.0, 0.0, 1.0], 0.0), 0);
+
+		assert_eq!(color_matrix_channel(green, [1.0, 0.0, 0.0], 0.0), 0);
+		assert_eq!(color_matrix_channel(green, [0.0, 1.0, 0.0], 0.0), 255);
+		assert_eq!(color_matrix_channel(green, [0.0, 0.0, 1.0], 0.0), 0);
+
+		assert_eq!(color_matrix_channel(blue, [1.0, 0.0, 0.0], 0.0), 0);
+		assert_eq!(color_matrix_channel(blue, [0.0, 1.0, 0.0], 0.0), 0);
+		assert_eq!(color_matrix_channel(blue, [0.0, 0.0, 1.0], 0.0), 255);
 	}
 }
