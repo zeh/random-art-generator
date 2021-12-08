@@ -1,6 +1,6 @@
 use std::convert::TryInto;
 
-use image::{imageops, GenericImageView, GrayImage, ImageBuffer, Pixel, RgbImage};
+use image::{imageops, GenericImageView, ImageBuffer, Pixel, RgbImage};
 
 use crate::generator::utils::pixel;
 
@@ -70,10 +70,6 @@ where
 	<I::Pixel as Pixel>::Subpixel: 'static,
 {
 	imageops::resize(image, width, height, imageops::FilterType::CatmullRom)
-}
-
-pub fn color_grayscale(image: &RgbImage) -> GrayImage {
-	imageops::grayscale(image)
 }
 
 pub fn get_pixel_interpolated(image: &RgbImage, x: f64, y: f64) -> [u8; 3] {
