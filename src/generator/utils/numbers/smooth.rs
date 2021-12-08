@@ -5,8 +5,8 @@ pub struct SmoothNumber {
 	has_value: bool,
 }
 
+#[allow(dead_code)]
 impl SmoothNumber {
-    #[allow(dead_code)]
 	pub fn new(divider: f64) -> SmoothNumber {
 		SmoothNumber {
 			divider,
@@ -15,7 +15,6 @@ impl SmoothNumber {
 		}
 	}
 
-    #[allow(dead_code)]
 	pub fn put(&mut self, new_value: f64) {
 		if self.has_value {
 			self.value -= (self.value - new_value) / self.divider;
@@ -25,7 +24,6 @@ impl SmoothNumber {
 		}
 	}
 
-	#[allow(dead_code)]
 	pub fn get(&mut self) -> Result<f64, &str> {
 		if self.has_value {
 			Ok(self.value)

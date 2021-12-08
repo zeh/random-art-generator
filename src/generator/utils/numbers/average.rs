@@ -8,8 +8,8 @@ pub struct AverageNumber {
 	values: Vec<f64>,
 }
 
+#[allow(dead_code)]
 impl AverageNumber {
-    #[allow(dead_code)]
 	pub fn new(max_length: usize) -> AverageNumber {
 		AverageNumber {
 			max_length,
@@ -21,7 +21,6 @@ impl AverageNumber {
 		}
 	}
 
-    #[allow(dead_code)]
 	pub fn put(&mut self, value: f64) {
 		if self.position < self.length {
 			self.values[self.position] = value;
@@ -33,7 +32,6 @@ impl AverageNumber {
 		self.is_dirty = true;
 	}
 
-	#[allow(dead_code)]
 	pub fn get(&mut self) -> Result<f64, &str> {
 		if self.is_dirty {
 			// Calculates the median value
