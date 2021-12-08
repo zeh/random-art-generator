@@ -80,7 +80,7 @@ impl Painter for CirclePainter {
 			(image_area.0.min(target_area.width as u32), image_area.1.min(target_area.height as u32));
 
 		// Find random radius for the circle to be painted
-		let max_dimension = target_visible_area.0.max(target_visible_area.1);
+		let max_dimension = target_visible_area.0.min(target_visible_area.1);
 		let radius = get_random_size_ranges_bias_weighted(
 			&mut rng,
 			&self.options.radius,
