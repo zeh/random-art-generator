@@ -1,3 +1,4 @@
+pub mod benchmark;
 pub mod color;
 pub mod files;
 pub mod formatting;
