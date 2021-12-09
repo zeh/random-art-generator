@@ -17,7 +17,7 @@ This application is written in [Rust](https://www.rust-lang.org/), and downloada
 
 Check the [releases](https://github.com/zeh/random-art-generator/releases) page to download the latest stable executables. Each package contains a single command-line executable ("rag") that can be used.
 
-Alternatively, check the [beta build actions](https://github.com/zeh/random-art-generator/actions?query=workflow%3A%22Beta+release%22+is%3Asuccess), click any of the builds, and download the executable file built for your system. New beta builds are made on every merge to the `dev` branch.
+Alternatively, check the [beta build actions](https://github.com/zeh/random-art-generator/actions?query=workflow%3A%22Beta+release%22+is%3Asuccess), click any of the builds, and download the executable file built for your system. New beta builds are made on every merge to the `main` branch.
 
 ## Running Random Art Generator
 
@@ -45,7 +45,7 @@ More in-depth explanations will be available soon.
 
 ## Running the latest code
 
-Check out the `dev` branch. Once Rust is installed, the code can be compiled and ran by [Cargo](https://doc.rust-lang.org/cargo/getting-started/installation.html) with `cargo run -- (other parameters)`. For example:
+Check out the `main` branch. Once Rust is installed, the code can be compiled and ran by [Cargo](https://doc.rust-lang.org/cargo/getting-started/installation.html) with `cargo run -- (other parameters)`. For example:
 
 ```shell
 cargo run -- target.jpg [--input input.jpg] [--output output.png] [--max-tries 50] --generations 10 [--background-color ff0022] [--scale 2.0] [--painter rects|circles|strokes] [--painter-alpha 0.1-0.2 1.0]
