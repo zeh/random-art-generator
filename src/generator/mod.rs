@@ -6,6 +6,7 @@ use std::time::Instant;
 use image::{DynamicImage, Rgb, RgbImage};
 
 use painter::Painter;
+use utils::benchmark::TimerBenchmark;
 use utils::formatting::format_time;
 use utils::image::{color_transform as image_color_transform, diff as image_diff, scale as image_scale};
 use utils::numbers::AverageNumber;
@@ -31,6 +32,15 @@ pub struct ProcessCallbackResult {
 	pub diff: f64,
 	pub time_elapsed: f32,
 	pub metadata: HashMap<String, String>,
+}
+
+pub struct GeneratorBenchmarks {
+	paint: TimerBenchmark,
+	diff: TimerBenchmark,
+	generation: TimerBenchmark,
+	result_callback: TimerBenchmark,
+	whole_try: TimerBenchmark,
+	total: TimerBenchmark,
 }
 
 type ProcessCallback = fn(generator: &Generator, result: ProcessCallbackResult);
@@ -90,11 +100,14 @@ impl Generator {
 
 		let mut used;
 
-		let time_started = Instant::now();
-		let mut time_elapsed_paint = 0;
-		let mut time_elapsed_diff = 0;
-		let mut time_started_try;
-		let mut time_elapsed_try = 0;
+		let mut benchmarks = GeneratorBenchmarks {
+			paint: TimerBenchmark::new(),
+			diff: TimerBenchmark::new(),
+			generation: TimerBenchmark::new(),
+			result_callback: TimerBenchmark::new(),
+			whole_try: TimerBenchmark::new(),
+			total: TimerBenchmark::new(),
+		};
 
 		let mut curr_tries: u32 = 0;
 		let mut curr_generations: u32 = 0;
@@ -110,26 +123,26 @@ impl Generator {
 
 		println!("First try...");
 
-		let mut time_started_generation = Instant::now();
-		let mut time_started_diff = Instant::now();
-		let mut diff_last_generation = curr_diff;
+		benchmarks.total.start();
+		benchmarks.generation.start();
 
+		let mut diff_last_generation = curr_diff;
 		let mut time_last_print = Instant::now();
 
 		loop {
-			time_started_try = Instant::now();
+			benchmarks.whole_try.start();
 			used = false;
 
 			if candidates == 1 {
 				// Simple path with no concurrency
-				let time_started_paint = Instant::now();
+				benchmarks.paint.start();
 				let new_candidate =
 					arc_painter.paint(&self.current, total_processes, &self.target).expect("painting");
-				time_elapsed_paint += time_started_paint.elapsed().as_micros();
+				benchmarks.paint.stop();
 
-				let time_started_diff = Instant::now();
+				benchmarks.diff.start();
 				let new_diff = image_diff(&new_candidate, &self.target);
-				time_elapsed_diff += time_started_diff.elapsed().as_micros();
+				benchmarks.diff.stop();
 
 				if new_diff < curr_diff {
 					self.current = new_candidate;
@@ -200,16 +213,15 @@ impl Generator {
 				curr_generations += 1;
 
 				// Update time stats for generation
-				time_elapsed_generation_avg.put(time_started_generation.elapsed().as_micros() as f64);
-				time_started_generation = Instant::now();
+				benchmarks.generation.stop();
+				time_elapsed_generation_avg.put(benchmarks.generation.last_ms());
 
 				// Update time stats for diff
 				let diff_change = diff_last_generation - curr_diff;
-				let diff_time = time_started_diff.elapsed().as_micros() as f64;
+				let diff_time = benchmarks.generation.last_ms();
 				let diff_time_per_pct = diff_time / diff_change;
 				time_elapsed_diff_pct_avg.put(diff_time_per_pct);
 				diff_last_generation = curr_diff;
-				time_started_diff = Instant::now();
 			}
 
 			curr_tries += 1;
@@ -218,7 +230,12 @@ impl Generator {
 				|| (target_generations > 0 && curr_generations == target_generations)
 				|| (target_diff > 0.0 && curr_diff <= target_diff);
 
+			if !finished && !benchmarks.generation.is_started() {
+				benchmarks.generation.start();
+			}
+
 			if let Some(process_callback) = cb {
+				benchmarks.result_callback.start();
 				process_callback(
 					&self,
 					ProcessCallbackResult {
@@ -227,15 +244,16 @@ impl Generator {
 						num_tries: curr_tries,
 						num_generations: curr_generations,
 						diff: curr_diff,
-						time_elapsed: time_started.elapsed().as_secs_f32(),
+						time_elapsed: benchmarks.total.current_ms() as f32 / 1000.0,
 						metadata: arc_painter.get_metadata(),
 					},
 				);
+				benchmarks.result_callback.stop();
 			}
 
 			// Update time stats for tries
-			time_elapsed_try += time_started_try.elapsed().as_micros();
-			time_elapsed_try_avg.put(time_started_try.elapsed().as_micros() as f64);
+			benchmarks.whole_try.stop();
+			time_elapsed_try_avg.put(benchmarks.whole_try.last_ms() as f64);
 
 			// Only output log if the generation succeeded, or if enough time has passed
 			if used || time_last_print.elapsed().as_secs() >= 1 {
@@ -246,7 +264,7 @@ impl Generator {
 				if target_tries > 0 {
 					let remaining = target_tries - curr_tries;
 					let time_left = if curr_tries > 0 {
-						format_time(remaining as f64 * time_elapsed_try_avg.get().unwrap() / 1000.0)
+						format_time((remaining as f64 * time_elapsed_try_avg.get().unwrap()).max(0.0))
 					} else {
 						"∞".to_string()
 					};
@@ -259,7 +277,7 @@ impl Generator {
 				if target_generations > 0 {
 					let remaining = target_generations - curr_generations;
 					let time_left = if curr_generations > 0 {
-						format_time(remaining as f64 * time_elapsed_generation_avg.get().unwrap() / 1000.0)
+						format_time((remaining as f64 * time_elapsed_generation_avg.get().unwrap()).max(0.0))
 					} else {
 						"∞".to_string()
 					};
@@ -275,7 +293,7 @@ impl Generator {
 				if target_diff > 0.0 {
 					let remaining = curr_diff - target_diff;
 					let time_left =
-						format_time(remaining as f64 * time_elapsed_diff_pct_avg.get().unwrap() / 1000.0);
+						format_time((remaining as f64 * time_elapsed_diff_pct_avg.get().unwrap()).max(0.0));
 					println!(
 						"new difference is {:.2}%/{:.2}% ({} left)",
 						curr_diff * 100.0,
@@ -295,22 +313,21 @@ impl Generator {
 			}
 		}
 
-		let time_elapsed = time_started.elapsed().as_secs_f32();
-		let atts = curr_tries as f64 * 1000.0;
+		benchmarks.total.stop();
 
 		let final_diff = image_diff(&self.current, &self.target);
 		println!(
 			"Finished {} tries in {:.3}s ({:.3}ms avg per try), using {} candidate threads.",
 			curr_tries,
-			time_elapsed,
-			time_elapsed_try as f64 / atts,
+			benchmarks.total.last_ms() / 1000.0,
+			benchmarks.whole_try.average_ms(),
 			candidates
 		);
 		if candidates == 1 {
 			println!(
 				"Tries took an average of {:.3}ms for painting, and {:.3}ms for diffing, using a single thread.",
-				time_elapsed_paint as f64 / atts,
-				time_elapsed_diff as f64 / atts
+				benchmarks.paint.average_ms(),
+				benchmarks.diff.average_ms()
 			);
 		}
 		println!(
