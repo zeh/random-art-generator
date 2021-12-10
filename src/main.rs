@@ -71,6 +71,14 @@ struct Opt {
 	#[structopt(long, default_value = "0", parse(try_from_str = parse_scale))]
 	color_seed: f64,
 
+	/// Outputs benchmark results.
+	///
+	/// With this flag, the application will gather some benchmark metrics and output them after it runs. This is useful to measure efficiency of the algorithm as it evolves.
+	///
+	/// Note that using this implies `--candidates 1`. It's also recommended to use the same `--rng-seed` value across different runs, for consistent results.
+	#[structopt(long)]
+	benchmark: bool,
+
 	/// Disables writing image metadata.
 	///
 	/// By default, the output image file includes metadata with the software name and version, all generation statistics, and original command line arguments used, including original file names passed. With this flag set, nothing is written.
@@ -366,7 +374,9 @@ fn main() {
 	println!("Using output image of {:?}.", output_file);
 
 	// Other options
-	let candidates = if options.candidates > 0 {
+	let candidates = if options.benchmark {
+		1
+	} else if options.candidates > 0 {
 		options.candidates
 	} else {
 		println!("Using auto {} candidates.", num_cpus::get());
@@ -399,6 +409,7 @@ fn main() {
 				options.max_tries,
 				options.generations,
 				options.diff,
+				options.benchmark,
 				candidates,
 				painter,
 				Some(on_processed),
@@ -420,6 +431,7 @@ fn main() {
 				options.max_tries,
 				options.generations,
 				options.diff,
+				options.benchmark,
 				candidates,
 				painter,
 				Some(on_processed),
@@ -446,6 +458,7 @@ fn main() {
 				options.max_tries,
 				options.generations,
 				options.diff,
+				options.benchmark,
 				candidates,
 				painter,
 				Some(on_processed),

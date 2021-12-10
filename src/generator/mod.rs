@@ -51,6 +51,17 @@ pub struct Generator {
 	current: RgbImage,
 }
 
+fn print_benchmark(bench: &TimerBenchmark, label: &str) {
+	println!(
+		"[BENCH] {:}: min {:.3}ms, avg {:.3}ms, median {:.3}, max {:.3}ms",
+		label,
+		bench.min_ms(),
+		bench.average_ms(),
+		bench.median_ms(),
+		bench.max_ms()
+	);
+}
+
 impl Generator {
 	pub fn from_image(target_image: DynamicImage, scale: f64) -> Generator {
 		let mut target = target_image.to_rgb8();
@@ -90,6 +101,7 @@ impl Generator {
 		target_tries: u32,
 		target_generations: u32,
 		target_diff: f64,
+		should_benchmark: bool,
 		candidates: usize,
 		painter: impl Painter + Send + Sync + 'static,
 		cb: Option<ProcessCallback>,
@@ -133,7 +145,7 @@ impl Generator {
 			benchmarks.whole_try.start();
 			used = false;
 
-			if candidates == 1 {
+			if should_benchmark || candidates == 1 {
 				// Simple path with no concurrency
 				benchmarks.paint.start();
 				let new_candidate =
@@ -329,6 +341,13 @@ impl Generator {
 				benchmarks.paint.average_ms(),
 				benchmarks.diff.average_ms()
 			);
+
+			if should_benchmark {
+				print_benchmark(&benchmarks.paint, "paint");
+				print_benchmark(&benchmarks.diff, "diff");
+				print_benchmark(&benchmarks.result_callback, "result_callback");
+				print_benchmark(&benchmarks.whole_try, "whole_try");
+			}
 		}
 		println!(
 			"Produced {} generations, a {:.2}% success rate.",
