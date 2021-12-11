@@ -168,9 +168,7 @@ pub fn parse_weighted_blending_mode(src: &str) -> Result<WeightedValue<BlendingM
 				value,
 				weight,
 			}),
-			Err(_) => {
-				Err("Cannot parse value variant for blending mode")
-			}
+			Err(_) => Err("Cannot parse value variant for blending mode"),
 		},
 		Err(err) => Err(err),
 	}
