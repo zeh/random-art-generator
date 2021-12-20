@@ -42,6 +42,7 @@ For the purpose of examples, this documentation uses the [Mandrill](https://www.
 
 - Flags/options
     - [`--background-color <color>`](#background-color)
+    - [`--benchmark`](#benchmark)
     - [`--blending-mode <blending-mode>...`](#blending-mode)
     - [`-c`, `--candidates <integer>`](#candidates)
     - [`--color-seed <scale>`](#color-seed)
@@ -95,6 +96,14 @@ The color to be used as the default background for the new image.
 | Default (black) | N/A | `rag mandrill.png --generations 10 --rng-seed 1 --painter-alpha 0.5` | <img src="out_bg_000000.png" width="256"> |
 | Hex color | `--background-color ff00ff` | `rag mandrill.png --generations 10 --rng-seed 1 --painter-alpha 0.5 --background-color ff00ff` | <img src="out_bg_ff00ff.png" width="256"> |
 | Color name | `--background-color yellow` | `rag mandrill.png --generations 10 --rng-seed 1 --painter-alpha 0.5 --background-color yellow` | <img src="out_bg_yellow.png" width="256"> |
+
+#### <a id="benchmark"></a> `--benchmark`
+
+Outputs benchmark results.
+
+With this flag, the application will gather some benchmark metrics and output them after it runs. This is useful to measure efficiency of the algorithm as it evolves.
+
+Note that using this implies [`--candidates 1`](#candidates). It's also recommended to use the same [`--rng-seed`](#rng-seed) value across different runs, for consistent results.
 
 #### <a id="blending-mode"></a>`--blending-mode <blending-mode>...`
 
