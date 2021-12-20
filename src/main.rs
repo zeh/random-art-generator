@@ -130,7 +130,7 @@ struct Opt {
 
 	/// Color matrix to be applied to the target image before using it.
 	///
-	/// This allows ones to change how colors in the target image are perceived by the system when determining whether a newly painted candidate is close to the target or not. While editing the target image on an image editor (by changing its colors) prior to running Random Art Generator has the same effect, running a color matrix transformation as part of the application can help automate the generation process.
+	/// This allows one to change how colors in the target image are perceived by the system when determining whether a newly painted candidate is close to the target or not. While editing the target image on an image editor (by changing its colors) prior to running Random Art Generator has the same effect, running a color matrix transformation as part of the application can help automate the generation process.
 	///
 	/// This is a (somewhat) typical 3x4 matrix for color transformations between RGB channels, in the format:
 	///
