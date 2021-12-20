@@ -38,11 +38,11 @@ impl TimerBenchmark {
 		self.start_time = None;
 	}
 
-	pub fn len(&mut self) -> usize {
+	pub fn len(&self) -> usize {
 		self.values_ns.len()
 	}
 
-	pub fn average_ms(&mut self) -> f64 {
+	pub fn average_ms(&self) -> f64 {
 		let len = self.len();
 		return if len == 0 {
 			0.0
@@ -52,7 +52,7 @@ impl TimerBenchmark {
 		};
 	}
 
-	pub fn median_ms(&mut self) -> f64 {
+	pub fn median_ms(&self) -> f64 {
 		let len = self.len();
 		return if len == 0 {
 			0.0
@@ -73,21 +73,21 @@ impl TimerBenchmark {
 		Self::ns_to_ms(self.values_ns.iter().min().copied().unwrap_or(0))
 	}
 
-	pub fn max_ms(&mut self) -> f64 {
+	pub fn max_ms(&self) -> f64 {
 		Self::ns_to_ms(self.values_ns.iter().max().copied().unwrap_or(0))
 	}
 
-	pub fn last_ms(&mut self) -> f64 {
+	pub fn last_ms(&self) -> f64 {
 		assert!(self.values_ns.len() > 0, "cannot read last time of empty benchmark");
 		Self::ns_to_ms(self.values_ns.last().copied().unwrap())
 	}
 
-	pub fn current_ms(&mut self) -> f64 {
+	pub fn current_ms(&self) -> f64 {
 		assert!(self.is_started(), "cannot read current time of stopped benchmark");
 		Self::ns_to_ms(self.start_time.unwrap().elapsed().as_nanos())
 	}
 
-	pub fn is_started(&mut self) -> bool {
+	pub fn is_started(&self) -> bool {
 		self.start_time.is_some()
 	}
 
@@ -108,7 +108,7 @@ mod tests {
 
 	#[test]
 	fn test_timer_benchmark_empty() {
-		let mut bench = TimerBenchmark::new();
+		let bench = TimerBenchmark::new();
 		assert_eq!(bench.len(), 0);
 		assert_eq!(bench.average_ms(), 0.0);
 		assert_eq!(bench.median_ms(), 0.0);
