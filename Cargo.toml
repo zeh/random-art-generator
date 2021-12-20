@@ -6,7 +6,7 @@ homepage = "https://github.com/zeh/random-art-generator"
 repository = "https://github.com/zeh/random-art-generator"
 readme = "README.md"
 license = "MIT"
-edition = "2018"
+edition = "2021"
 
 [dependencies]
 bytes = "0.6.0"
