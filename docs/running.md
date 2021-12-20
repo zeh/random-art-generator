@@ -542,7 +542,7 @@ Bias for distribution in [`--painter-width`](#painter-width) ranges.
 | Using seed 1 | `--rng-seed 1` | `rag mandrill.png --generations 100 --painter-alpha 0.7 --margins -10% --rng-seed 1` | <img src="out_rng_1.png" width="256"> |
 | Using seed 2 | `--rng-seed 2` | `rag mandrill.png --generations 100 --painter-alpha 0.7 --margins -10% --rng-seed 2` | <img src="out_rng_2.png" width="256"> |
 
-#### <a id="scale"></a>`--scale <float>`
+#### <a id="scale"></a>`-s`, `--scale <float>`
 
 Default: `0`
 
