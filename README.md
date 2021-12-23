@@ -5,7 +5,7 @@
 ![GitHub](https://img.shields.io/github/license/zeh/random-art-generator)
 </div>
 
-<p align="center"><a href="docs/download.md">Download</a> | <a href="docs/running.md">Reference</a> | <a href="https://github.com/zeh/random-art-generator/releases">Changelog</a> | <a href="LICENSE">License (MIT)</a></p>
+<p align="center"><a href="docs/download.md">Download</a> | <a href="docs/running.md">Reference</a> | <a href="https://github.com/zeh/random-art-generator/releases">Changelog</a> | <a href="docs/development.md">Development</a> | <a href="LICENSE">License (MIT)</a></p>
 
 Random Art Generator is a command-line application to produce generative art.
 
