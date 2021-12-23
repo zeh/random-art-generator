@@ -15,12 +15,10 @@ use crate::generator::{
 	utils::{image::get_pixel_interpolated, random::get_random_color},
 };
 
-#[derive(Clone)]
 pub struct StrokePainter {
 	pub options: Options,
 }
 
-#[derive(Clone)]
 pub struct Options {
 	pub blending_mode: Vec<WeightedValue<BlendingMode>>,
 	pub alpha: Vec<WeightedValue<(f64, f64)>>,
@@ -40,7 +38,7 @@ pub struct Options {
 }
 
 impl StrokePainter {
-	pub fn new() -> StrokePainter {
+	pub fn new() -> Self {
 		let options = Options {
 			blending_mode: vec![WeightedValue {
 				value: BlendingMode::default(),

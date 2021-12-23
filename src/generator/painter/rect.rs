@@ -15,12 +15,10 @@ use crate::generator::{
 	utils::{image::get_pixel_interpolated, random::get_random_color},
 };
 
-#[derive(Clone)]
 pub struct RectPainter {
 	pub options: Options,
 }
 
-#[derive(Clone)]
 pub struct Options {
 	pub blending_mode: Vec<WeightedValue<BlendingMode>>,
 	pub alpha: Vec<WeightedValue<(f64, f64)>>,
@@ -35,7 +33,7 @@ pub struct Options {
 }
 
 impl RectPainter {
-	pub fn new() -> RectPainter {
+	pub fn new() -> Self {
 		let options = Options {
 			blending_mode: vec![WeightedValue {
 				value: BlendingMode::default(),
