@@ -2,6 +2,7 @@ use std::collections::HashMap;
 
 use image::{Pixel, Rgb, RgbImage};
 
+use crate::generator::painter::Painter;
 use crate::generator::utils::color::BlendingMode;
 use crate::generator::utils::geom::{distance, find_target_draw_rect};
 use crate::generator::utils::pixel::{blend, blend_linear};
@@ -10,10 +11,7 @@ use crate::generator::utils::random::{
 	get_random_size_ranges_bias_weighted, get_rng,
 };
 use crate::generator::utils::units::{Margins, SizeUnit, WeightedValue};
-use crate::generator::{
-	painter::Painter,
-	utils::{image::get_pixel_interpolated, random::get_random_color},
-};
+use crate::generator::utils::{image::get_pixel_interpolated, random::get_random_color};
 
 pub struct CirclePainter {
 	pub options: Options,
