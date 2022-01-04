@@ -129,8 +129,8 @@ Use this option with caution. Some monotonic blending modes (`screen`, `multiply
 | Soft Light | `--blending-mode soft-light` | `rag mandrill.png --generations 100 --rng-seed 1 --painter-alpha 0.7 --background-color 906050 --blending-mode soft-light` | <img src="out_blend_soft_light.png" width="256"> |
 | Difference | `--blending-mode difference` | `rag mandrill.png --generations 100 --rng-seed 1 --painter-alpha 0.7 --background-color 906050 --blending-mode difference` | <img src="out_blend_difference.png" width="256"> |
 | Exclusion | `--blending-mode exclusion` | `rag mandrill.png --generations 100 --rng-seed 1 --painter-alpha 0.7 --background-color 906050 --blending-mode exclusion` | <img src="out_blend_exclusion.png" width="256"> |
-| Mixed (equal chance of "normal", "multiply", "color burn", and "darken") | `--blending-mode normal normal multiply color-dodge darken` | `rag mandrill.png --generations 200 --rng-seed 1 --painter-alpha 0.9 --blending-mode normal normal multiply color-dodge darken` | <img src="out_blend_mixed_dark.png" width="256"> |
-| Mixed (~5% chance of "normal", ~47% of "screen", ~47% chance of "color dodge") | `--blending-mode normal screen@10 color-dodge@10` | `rag mandrill.png --generations 200 --rng-seed 1 --painter-alpha 0.9 --background-color white --blending-mode normal screen@10 color-dodge@10` | <img src="out_blend_mixed.png" width="256"> |
+| Mixed (equal chance of "normal", "multiply", "color burn", and "darken") | `--blending-mode normal multiply color-burn darken` | `rag mandrill.png --generations 200 --rng-seed 1 --painter-alpha 0.9 --background-color white --blending-mode normal multiply color-burn darken` | <img src="out_blend_mixed_dark.png" width="256"> |
+| Mixed (~5% chance of "normal", ~47% of "screen", ~47% chance of "color dodge") | `--blending-mode normal screen@10 color-dodge@10` | `rag mandrill.png --generations 200 --rng-seed 1 --painter-alpha 0.9 --blending-mode normal screen@10 color-dodge@10` | <img src="out_blend_mixed.png" width="256"> |
 
 #### <a id="candidates"></a>`-c`, `--candidates <integer>`
 
@@ -498,7 +498,7 @@ The argument is a list, so it can also feature more than one value (or ranges, o
 |-|-|-|-|
 | Default (0%-100%) | N/A | `rag mandrill.png --generations 20 --background-color whitesmoke --rng-seed 1 --painter-height 5% --margins 4%` | <img src="out_width_id.png" width="256"> |
 | Always 50% width | `--painter-width 50%` | `rag mandrill.png --generations 20 --background-color whitesmoke --rng-seed 1 --painter-height 5% --margins 4% --painter-width 50%` | <img src="out_width_50.png" width="256"> |
-| Always 80px width | `--painter-width 80` | `rag mandrill.png --generations 20 --background-color whitesmoke --rng-seed 1 --painter-height 5% --margins 4% --painter-width 80%` | <img src="out_width_80.png" width="256"> |
+| Always 80px width | `--painter-width 80` | `rag mandrill.png --generations 20 --background-color whitesmoke --rng-seed 1 --painter-height 5% --margins 4% --painter-width 80` | <img src="out_width_80.png" width="256"> |
 | Either 25%, 50%, 75%, or 100% width | `--painter-width 25% 50% 75% 100%` | `rag mandrill.png --generations 20 --background-color whitesmoke --rng-seed 1 --painter-height 5% --margins 4% --painter-width 25% 50% 75% 100%` | <img src="out_width_m.png" width="256"> |
 
 #### <a id="painter-width-bias"></a>`--painter-width-bias <bias>`
