@@ -1,6 +1,6 @@
 use std::convert::TryInto;
 
-use image::{imageops, GenericImageView, ImageBuffer, Pixel, RgbImage};
+use image::{imageops, GenericImageView, ImageBuffer, Pixel, RgbImage, RgbaImage};
 
 use crate::generator::utils::pixel;
 
@@ -101,6 +101,35 @@ pub fn get_pixel_interpolated(image: &RgbImage, x: f64, y: f64) -> [u8; 3] {
 	let color_t = pixel::blend_linear(color_tl, color_tr, xf);
 	let color_b = pixel::blend_linear(color_bl, color_br, xf);
 	return pixel::blend_linear(&color_t, &color_b, yf);
+}
+
+pub fn convert_rgba8_image_to_rgb8(input: &RgbaImage) -> RgbImage {
+	let (width, height) = input.dimensions();
+	let input: &Vec<u8> = input.as_raw();
+	let mut output_data = vec![0u8; (width * height * 3) as usize];
+
+	let mut i = 0;
+	for chunk in input.chunks_exact(4) {
+		output_data[i..i + 3].copy_from_slice(&chunk[0..3]);
+		i += 3;
+	}
+
+	ImageBuffer::from_raw(width as u32, height as u32, output_data).unwrap()
+}
+
+pub fn convert_rgb8_image_to_rgba8(input: &RgbImage) -> RgbaImage {
+	let (width, height) = input.dimensions();
+	let input: &Vec<u8> = input.as_raw();
+	let mut output_data = vec![0u8; (width * height * 4) as usize];
+
+	let mut i = 0;
+	for chunk in input.chunks_exact(3) {
+		output_data[i..i + 3].copy_from_slice(&chunk[0..3]);
+		output_data[i + 3] = 255u8;
+		i += 4;
+	}
+
+	ImageBuffer::from_raw(width as u32, height as u32, output_data).unwrap()
 }
 
 #[cfg(test)]
@@ -208,5 +237,35 @@ mod tests {
 		assert_eq!(get_pixel_interpolated(img, 0.33f64, 1.78f64), [56u8, 84u8, 84u8]);
 
 		assert_eq!(get_pixel_interpolated(img, 9.1f64, 8.2f64), [255u8, 0u8, 128u8]);
+	}
+
+	#[test]
+	fn test_convert_rgb8_and_rgba8() {
+		let img_rgb8 = &RgbImage::from_raw(
+			3,
+			4,
+			vec![
+				0, 0, 0, 255, 255, 255, 255, 0, 0, 255, 0, 0, 255, 255, 255, 255, 0, 0, 0, 0, 0, 0, 255, 255,
+				255, 0, 128, 1, 2, 3, 100, 200, 201, 0, 0, 2,
+			],
+		)
+		.unwrap();
+
+		let img_rgba8 = &RgbaImage::from_raw(
+			3,
+			4,
+			vec![
+				0, 0, 0, 255, 255, 255, 255, 255, 255, 0, 0, 255, 255, 0, 0, 255, 255, 255, 255, 255, 255, 0,
+				0, 255, 0, 0, 0, 255, 0, 255, 255, 255, 255, 0, 128, 255, 1, 2, 3, 255, 100, 200, 201, 255,
+				0, 0, 2, 255,
+			],
+		)
+		.unwrap();
+
+		assert_eq!(convert_rgb8_image_to_rgba8(img_rgb8).as_raw(), img_rgba8.as_raw());
+		assert_eq!(convert_rgb8_image_to_rgba8(img_rgb8).dimensions(), img_rgba8.dimensions());
+
+		assert_eq!(convert_rgba8_image_to_rgb8(img_rgba8).as_raw(), img_rgb8.as_raw());
+		assert_eq!(convert_rgba8_image_to_rgb8(img_rgba8).dimensions(), img_rgb8.dimensions());
 	}
 }
