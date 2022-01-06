@@ -1,36 +1,27 @@
-use crate::generator::utils::color::BlendingMode;
-
 #[inline(always)]
-pub fn blend(bottom: &[u8], top: &[u8], opacity: f64, blending_mode: &BlendingMode) -> [u8; 3] {
+pub fn blend_linear(bottom: &[u8], top: &[u8], opacity: f64) -> [u8; 3] {
 	if opacity == 0.0 {
 		[bottom[0], bottom[1], bottom[2]]
+	} else if opacity == 1.0 {
+		[top[0], top[1], top[2]]
 	} else {
 		[
-			channel_f64_to_u8(blending_mode.blend_with_opacity(
+			channel_f64_to_u8(blend_channel(
 				channel_u8_to_f64(bottom[0]),
 				channel_u8_to_f64(top[0]),
 				opacity,
 			)),
-			channel_f64_to_u8(blending_mode.blend_with_opacity(
+			channel_f64_to_u8(blend_channel(
 				channel_u8_to_f64(bottom[1]),
 				channel_u8_to_f64(top[1]),
 				opacity,
 			)),
-			channel_f64_to_u8(blending_mode.blend_with_opacity(
+			channel_f64_to_u8(blend_channel(
 				channel_u8_to_f64(bottom[2]),
 				channel_u8_to_f64(top[2]),
 				opacity,
 			)),
 		]
-	}
-}
-
-#[inline(always)]
-pub fn blend_linear(bottom: &[u8], top: &[u8], opacity: f64) -> [u8; 3] {
-	if opacity == 1.0 {
-		[top[0], top[1], top[2]]
-	} else {
-		blend(bottom, top, opacity, &BlendingMode::Normal)
 	}
 }
 
@@ -42,6 +33,11 @@ pub fn color_matrix(pixel: &[u8], matrix: [f64; 12]) -> [u8; 3] {
 		color_matrix_channel(rgb, [matrix[4], matrix[5], matrix[6]], matrix[7]),
 		color_matrix_channel(rgb, [matrix[8], matrix[9], matrix[10]], matrix[11]),
 	]
+}
+
+#[inline(always)]
+fn blend_channel(bottom: f64, top: f64, opacity: f64) -> f64 {
+	bottom * (1.0 - opacity) + top * opacity
 }
 
 #[inline(always)]
@@ -63,19 +59,6 @@ fn channel_u8_to_f64(color: u8) -> f64 {
 #[cfg(test)]
 mod tests {
 	use super::*;
-
-	#[test]
-	fn test_blend() {
-		assert_eq!(blend(&[0, 10, 250], &[255, 128, 0], 0.0, &BlendingMode::Normal), [0, 10, 250]);
-		assert_eq!(blend(&[0, 10, 250], &[255, 128, 0], 0.5, &BlendingMode::Normal), [128, 69, 125]);
-		assert_eq!(blend(&[0, 10, 250], &[255, 128, 0], 1.0, &BlendingMode::Normal), [255, 128, 0]);
-
-		// Actual individual blending mode tests are part of the "color" module,
-		// this is just to verify that the parameters are respected
-		assert_eq!(blend(&[0, 10, 250], &[255, 128, 0], 0.0, &BlendingMode::Multiply), [0, 10, 250]);
-		assert_eq!(blend(&[0, 10, 250], &[255, 128, 0], 0.5, &BlendingMode::Multiply), [0, 8, 125]);
-		assert_eq!(blend(&[0, 10, 250], &[255, 128, 0], 1.0, &BlendingMode::Multiply), [0, 5, 0]);
-	}
 
 	#[test]
 	fn test_blend_linear() {

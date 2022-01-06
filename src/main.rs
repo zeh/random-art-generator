@@ -5,9 +5,10 @@ use std::string::ToString;
 use image::GenericImageView;
 use structopt::StructOpt;
 
-use generator::painter::{circle::CirclePainter, rect::RectPainter};
+use generator::painter::{circles::CirclePainter, rects::RectPainter};
 use generator::utils::color::BlendingMode;
 use generator::utils::files;
+use generator::utils::gpu::context::GPUContext;
 use generator::utils::parsing::{
 	parse_color, parse_color_matrix, parse_scale, parse_size_margins, parse_weighted_blending_mode,
 	parse_weighted_float_pair, parse_weighted_size_pair,
@@ -324,7 +325,13 @@ fn get_command_line(options: &Opt) -> String {
 	"[rag] ".to_string() + &args_str
 }
 
-fn on_processed(generator: &Generator, result: ProcessCallbackResult) {
+fn on_processed(
+	context: &GPUContext,
+	generator: &Generator,
+	texture: &wgpu::Texture,
+	texture_size: wgpu::Extent3d,
+	result: ProcessCallbackResult,
+) {
 	// Ignore unsuccessful generations
 	if !result.is_success {
 		return;
@@ -341,7 +348,7 @@ fn on_processed(generator: &Generator, result: ProcessCallbackResult) {
 
 	if options.no_metadata {
 		// No metadata wanted, write the file directly
-		files::write_image(generator.get_current(), output_path);
+		files::write_image(generator.get_image(&context, texture, texture_size), output_path);
 	} else {
 		// Write the file with metadata
 
@@ -361,7 +368,11 @@ fn on_processed(generator: &Generator, result: ProcessCallbackResult) {
 			comments.push(format!("{}: {}", key, value));
 		}
 
-		files::write_image_with_metadata(generator.get_current(), output_path, comments);
+		files::write_image_with_metadata(
+			generator.get_image(&context, texture, texture_size),
+			output_path,
+			comments,
+		);
 	}
 }
 
@@ -376,6 +387,7 @@ fn main() {
 	println!("Using target image of {:?} with dimensions of {:?}.", target_file, target_image.dimensions());
 
 	// Create Generator
+	let context = GPUContext::new(options.verbose);
 	let mut gen = match options.target_color_matrix {
 		Some(color_matrix) => {
 			// Target has a color matrix, parse it first
@@ -430,44 +442,47 @@ fn main() {
 	// TODO: use actual enums here and use a single object from trait (can't seen to make it work)
 	// TODO: error out on passed painter options that are unused?
 	match &options.painter[..] {
-		"circles" => {
-			let mut painter = CirclePainter::new();
-			painter.options.blending_mode = options.blending_mode;
-			painter.options.alpha = options.painter_alpha;
-			painter.options.alpha_bias = options.painter_alpha_bias;
-			painter.options.radius = options.painter_radius;
-			painter.options.radius_bias = options.painter_radius_bias;
+		"rects" => {
+			let mut painter = RectPainter::new(&context);
+			painter.options.width = options.painter_width;
+			painter.options.width_bias = options.painter_width_bias;
+			painter.options.height = options.painter_height;
+			painter.options.height_bias = options.painter_height_bias;
 			painter.options.anti_alias = !options.painter_disable_anti_alias;
 			painter.options.color_seed = options.color_seed;
-			painter.options.rng_seed = rng_seed;
 			painter.options.margins = options.margins;
 			gen.process(
+				context,
+				rng_seed,
 				options.max_tries,
 				options.generations,
 				options.diff,
 				options.benchmark,
+				options.blending_mode,
+				options.painter_alpha,
+				options.painter_alpha_bias,
 				candidates,
 				painter,
 				Some(on_processed),
 			);
 		}
-		"rects" => {
-			let mut painter = RectPainter::new();
-			painter.options.blending_mode = options.blending_mode;
-			painter.options.alpha = options.painter_alpha;
-			painter.options.alpha_bias = options.painter_alpha_bias;
-			painter.options.width = options.painter_width;
-			painter.options.width_bias = options.painter_width_bias;
-			painter.options.height = options.painter_height;
-			painter.options.height_bias = options.painter_height_bias;
+		"circles" => {
+			let mut painter = CirclePainter::new(&context);
+			painter.options.radius = options.painter_radius;
+			painter.options.radius_bias = options.painter_radius_bias;
+			painter.options.anti_alias = !options.painter_disable_anti_alias;
 			painter.options.color_seed = options.color_seed;
-			painter.options.rng_seed = rng_seed;
 			painter.options.margins = options.margins;
 			gen.process(
+				context,
+				rng_seed,
 				options.max_tries,
 				options.generations,
 				options.diff,
 				options.benchmark,
+				options.blending_mode,
+				options.painter_alpha,
+				options.painter_alpha_bias,
 				candidates,
 				painter,
 				Some(on_processed),

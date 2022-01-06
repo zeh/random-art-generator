@@ -3,6 +3,7 @@ pub mod color;
 pub mod files;
 pub mod formatting;
 pub mod geom;
+pub mod gpu;
 pub mod image;
 pub mod numbers;
 pub mod parsing;

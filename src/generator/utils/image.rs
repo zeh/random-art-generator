@@ -7,38 +7,6 @@ use crate::generator::utils::pixel;
 #[cfg(test)]
 use image::Rgb;
 
-const LUMA_R: f64 = 0.2126;
-const LUMA_G: f64 = 0.7152;
-const LUMA_B: f64 = 0.0722;
-
-pub fn diff(a: &RgbImage, b: &RgbImage) -> f64 {
-	let w = a.dimensions().0;
-	let h = a.dimensions().1;
-	let num_pixels = w * h;
-
-	let mut diff_sum_r: i32 = 0;
-	let mut diff_sum_g: i32 = 0;
-	let mut diff_sum_b: i32 = 0;
-
-	let samples_a = a.as_flat_samples().samples;
-	let samples_b = b.as_flat_samples().samples;
-
-	let skip_step = 1;
-
-	for (p_a, p_b) in samples_a.chunks_exact(3).zip(samples_b.chunks_exact(3)).step_by(skip_step) {
-		diff_sum_r += (p_a[0] as i32 - p_b[0] as i32).abs();
-		diff_sum_g += (p_a[1] as i32 - p_b[1] as i32).abs();
-		diff_sum_b += (p_a[2] as i32 - p_b[2] as i32).abs();
-	}
-
-	let lr = LUMA_R / 255.0;
-	let lg = LUMA_G / 255.0;
-	let lb = LUMA_B / 255.0;
-	let diff_sum = diff_sum_r as f64 * lr + diff_sum_g as f64 * lg + diff_sum_b as f64 * lb;
-
-	diff_sum / (num_pixels as f64 / skip_step as f64)
-}
-
 pub fn color_transform(image: &RgbImage, matrix: [f64; 12]) -> RgbImage {
 	let mut transformed_image = image.clone();
 	for (_x, _y, pixel) in transformed_image.enumerate_pixels_mut() {
@@ -135,36 +103,6 @@ pub fn convert_rgb8_image_to_rgba8(input: &RgbImage) -> RgbaImage {
 #[cfg(test)]
 mod tests {
 	use super::*;
-
-	#[test]
-	fn test_diff() {
-		let white_img = &RgbImage::from_fn(8, 8, |_x, _y| Rgb([255u8, 255u8, 255u8]));
-		let black_img = &RgbImage::from_fn(8, 8, |_x, _y| Rgb([0u8, 0u8, 0u8]));
-		let half_black_img = &RgbImage::from_fn(8, 8, |x, _y| {
-			if x % 2 == 0 {
-				Rgb([0u8, 0u8, 0u8])
-			} else {
-				Rgb([255u8, 255u8, 255u8])
-			}
-		});
-		let red_img = &RgbImage::from_fn(8, 8, |_x, _y| Rgb([255u8, 0u8, 0u8]));
-		let green_img = &RgbImage::from_fn(8, 8, |_x, _y| Rgb([0u8, 255u8, 0u8]));
-		let blue_img = &RgbImage::from_fn(8, 8, |_x, _y| Rgb([0u8, 0u8, 255u8]));
-
-		assert_eq!(diff(&white_img, &white_img), 0.0);
-		assert_eq!(diff(&white_img, &black_img), 1.0);
-		assert_eq!(diff(&white_img, &half_black_img), 0.5);
-		assert_eq!(diff(&black_img, &half_black_img), 0.5);
-
-		// Luma-based differences
-		// TODO: this might change later once luma is a parameter
-		assert_eq!(diff(&white_img, &red_img), LUMA_G + LUMA_B);
-		assert_eq!(diff(&black_img, &red_img), LUMA_R);
-		assert_eq!(diff(&white_img, &green_img), LUMA_R + LUMA_B);
-		assert_eq!(diff(&black_img, &green_img), LUMA_G);
-		assert_eq!(diff(&white_img, &blue_img), LUMA_R + LUMA_G);
-		assert_eq!(diff(&black_img, &blue_img), LUMA_B);
-	}
 
 	#[test]
 	fn test_color_transform() {
