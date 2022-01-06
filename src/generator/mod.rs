@@ -70,8 +70,8 @@ impl Generator {
 		}
 		let current = RgbImage::new(target.dimensions().0, target.dimensions().1);
 		Generator {
-			target: target,
-			current: current,
+			target,
+			current,
 		}
 	}
 
@@ -83,7 +83,7 @@ impl Generator {
 		let current = RgbImage::new(target.dimensions().0, target.dimensions().1);
 		Generator {
 			target: image_color_transform(&target, matrix),
-			current: current,
+			current,
 		}
 	}
 
@@ -358,6 +358,6 @@ impl Generator {
 	}
 
 	pub fn get_current(&self) -> RgbImage {
-		return self.current.clone();
+		self.current.clone()
 	}
 }
