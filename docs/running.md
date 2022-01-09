@@ -445,8 +445,8 @@ Bias for distribution in [`--painter-wave-height`](#painter-wave-height) ranges.
 | Example | Argument | Command line example | Result |
 |-|-|-|-|
 | Wave height 0%-10%, no bias (default) | N/A | `rag mandrill.png --generations 20 --rng-seed 1 --background-color darkred --painter strokes --painter-wave-height 0%-10%` | <img src="out_wave_height_bias_id.png" width="256"> |
-| Wave height 0%-10%, -16 bias towards 0% | `--painter-wave-height-bias -16` | `rag mandrill.png --generations 20 --rng-seed 1 --background-color darkred --painter strokes --painter-wave-height 0%-10% --painter-wave-height-bias -16` | <img src="out_wave_height_bias_16.png" width="256"> |
-| Wave height 0%-10%, 16 bias towards 10% | `--painter-wave-height-bias 16` | `rag mandrill.png --generations 20 --rng-seed 1 --background-color darkred --painter strokes --painter-wave-height-bias 16` | <img src="out_wave_height_bias_m16.png" width="256"> |
+| Wave height 0%-10%, -16 bias towards 0% | `--painter-wave-height-bias -16` | `rag mandrill.png --generations 20 --rng-seed 1 --background-color darkred --painter strokes --painter-wave-height 0%-10% --painter-wave-height-bias -16` | <img src="out_wave_height_bias_m16.png" width="256"> |
+| Wave height 0%-10%, 16 bias towards 10% | `--painter-wave-height-bias 16` | `rag mandrill.png --generations 20 --rng-seed 1 --background-color darkred --painter strokes --painter-wave-height 0%-10% --painter-wave-height-bias 16` | <img src="out_wave_height_bias_16.png" width="256"> |
 
 #### <a id="painter-wave-length"></a>`--painter-wave-length <size>...`
 
@@ -479,8 +479,8 @@ Bias for distribution in [`--painter-wave-length`](#painter-wave-length) ranges.
 | Example | Argument | Command line example | Result |
 |-|-|-|-|
 | Wave length 1%-4000%, no bias (default) | N/A | `rag mandrill.png --generations 40 --rng-seed 1 --background-color snow --painter strokes --painter-height 4% --painter-width 90%-100% --painter-alpha 0.5-1 --painter-wave-length 1%-4000%` | <img src="out_wave_length_bias_id.png" width="256"> |
-| Wave height 1%-4000%, -16 bias towards 1% | `--painter-wave-length-bias -16` | `rag mandrill.png --generations 40 --rng-seed 1 --background-color snow --painter strokes --painter-height 4% --painter-width 90%-100% --painter-alpha 0.5-1 --painter-wave-length 1%-4000% --painter-wave-length-bias -16` | <img src="out_wave_length_bias_16.png" width="256"> |
-| Wave height 1%-4000%, 16 bias towards 4000% | `--painter-wave-length-bias 16` | `rag mandrill.png --generations 40 --rng-seed 1 --background-color snow --painter strokes --painter-height 4% --painter-width 90%-100% --painter-alpha 0.5-1 --painter-wave-length 1%-4000% --painter-wave-length-bias 16` | <img src="out_wave_length_bias_m16.png" width="256"> |
+| Wave height 1%-4000%, -16 bias towards 1% | `--painter-wave-length-bias -16` | `rag mandrill.png --generations 40 --rng-seed 1 --background-color snow --painter strokes --painter-height 4% --painter-width 90%-100% --painter-alpha 0.5-1 --painter-wave-length 1%-4000% --painter-wave-length-bias -16` | <img src="out_wave_length_bias_m16.png" width="256"> |
+| Wave height 1%-4000%, 16 bias towards 4000% | `--painter-wave-length-bias 16` | `rag mandrill.png --generations 40 --rng-seed 1 --background-color snow --painter strokes --painter-height 4% --painter-width 90%-100% --painter-alpha 0.5-1 --painter-wave-length 1%-4000% --painter-wave-length-bias 16` | <img src="out_wave_length_bias_16.png" width="256"> |
 
 #### <a id="painter-width"></a>`--painter-width <size>...`
 
