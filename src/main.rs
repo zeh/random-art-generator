@@ -158,6 +158,14 @@ struct Opt {
 	#[structopt(long, parse(try_from_str = parse_color_matrix))]
 	target_color_matrix: Option<[f64; 12]>,
 
+	/// Save the output file more frequently.
+	///
+	/// The default behavior for the application is to only write the final output file when the target generations, tries, or diff are achieved. With this flag, the output file will be saved frequently, on every successful generation.
+	///
+	/// This is useful if one expects to be interrupting the writing process in the middle.
+	#[structopt(long)]
+	save_often: bool,
+
 	/// The new size of the output image, as a scale of the target image.
 	///
 	/// This is useful if one wants the result image to be either smaller or larger than the target image.
@@ -294,37 +302,45 @@ fn get_options() -> Opt {
 }
 
 fn on_processed(generator: &Generator, result: ProcessCallbackResult) {
-	if result.is_success {
-		// Create basic image file data
-		let options = get_options();
-		let output_path = options.output.as_path();
+	// Ignore unsuccessful generations
+	if !result.is_success {
+		return;
+	}
 
-		if options.no_metadata {
-			// No metadata wanted, write the file directly
-			files::write_image(generator.get_current(), output_path);
-		} else {
-			// Write the file with metadata
+	let options = get_options();
 
-			// Define new metadata
-			let mut comments = vec![
-				format!(
-					"Produced {} generations after {} tries in {:.3}s ({:.3}ms avg per try); the final difference from target is {:.2}%.",
-					result.num_generations,
-					result.num_tries,
-					result.time_elapsed,
-					result.time_elapsed / (result.num_tries as f32) * 1000.0,
-					result.diff * 100.0
-				),
-				format!("Command line: {}", env::args().collect::<Vec<String>>().join(" ")),
-			];
+	// Only write the file if it's the final generation, or it's meant to save often
+	if !result.is_final && !options.save_often {
+		return;
+	}
 
-			// Add painter-specific metadata
-			for (key, value) in result.metadata {
-				comments.push(format!("{}: {}", key, value));
-			}
+	let output_path = options.output.as_path();
 
-			files::write_image_with_metadata(generator.get_current(), output_path, comments);
+	if options.no_metadata {
+		// No metadata wanted, write the file directly
+		files::write_image(generator.get_current(), output_path);
+	} else {
+		// Write the file with metadata
+
+		// Define new metadata
+		let mut comments = vec![
+			format!(
+				"Produced {} generations after {} tries in {:.3}s ({:.3}ms avg per try); the final difference from target is {:.2}%.",
+				result.num_generations,
+				result.num_tries,
+				result.time_elapsed,
+				result.time_elapsed / (result.num_tries as f32) * 1000.0,
+				result.diff * 100.0
+			),
+			format!("Command line: {}", env::args().collect::<Vec<String>>().join(" ")),
+		];
+
+		// Add painter-specific metadata
+		for (key, value) in result.metadata {
+			comments.push(format!("{}: {}", key, value));
 		}
+
+		files::write_image_with_metadata(generator.get_current(), output_path, comments);
 	}
 }
 
