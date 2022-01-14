@@ -124,11 +124,17 @@ mod tests {
 		assert_eq!(bench.len(), 1);
 
 		// Approximations for time
-		assert_eq!(bench.average_ms() < 2.0, true);
-		assert_eq!(bench.median_ms() < 2.0, true);
-		assert_eq!(bench.min_ms() < 2.0, true);
-		assert_eq!(bench.max_ms() < 2.0, true);
-		assert_eq!(bench.last_ms() < 2.0, true);
+		assert_eq!(bench.average_ms() >= 0.0, true);
+		assert_eq!(bench.median_ms() >= 0.0, true);
+		assert_eq!(bench.min_ms() >= 0.0, true);
+		assert_eq!(bench.max_ms() >= 0.0, true);
+		assert_eq!(bench.last_ms() >= 0.0, true);
+
+		assert_eq!(bench.average_ms() < 1000.0, true);
+		assert_eq!(bench.median_ms() < 1000.0, true);
+		assert_eq!(bench.min_ms() < 1000.0, true);
+		assert_eq!(bench.max_ms() < 1000.0, true);
+		assert_eq!(bench.last_ms() < 1000.0, true);
 
 		bench.clear();
 		assert_eq!(bench.len(), 0);
@@ -143,6 +149,7 @@ mod tests {
 		thread::sleep(Duration::from_millis(30));
 		assert_eq!(bench.is_started(), true);
 		assert_eq!(bench.current_ms() >= 30.0, true);
+		assert_eq!(bench.current_ms() < 1000.0, true);
 		bench.stop();
 
 		assert_eq!(bench.len(), 2);
@@ -154,11 +161,11 @@ mod tests {
 		assert_eq!(bench.max_ms() >= 30.0, true);
 		assert_eq!(bench.last_ms() >= 30.0, true);
 
-		assert_eq!(bench.average_ms() < 50.0, true);
-		assert_eq!(bench.median_ms() < 50.0, true);
-		assert_eq!(bench.min_ms() < 40.0, true);
-		assert_eq!(bench.max_ms() < 60.0, true);
-		assert_eq!(bench.last_ms() < 60.0, true);
+		assert_eq!(bench.average_ms() < 1000.0, true);
+		assert_eq!(bench.median_ms() < 1000.0, true);
+		assert_eq!(bench.min_ms() < 1000.0, true);
+		assert_eq!(bench.max_ms() < 1000.0, true);
+		assert_eq!(bench.last_ms() < 1000.0, true);
 	}
 
 	#[test]
