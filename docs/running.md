@@ -70,6 +70,7 @@ For the purpose of examples, this documentation uses the [Mandrill](https://www.
     - [`--painter-width-bias <bias>`](#painter-width-bias)
     - [`--rng-seed <integer>`](#rng-seed)
     - [`-s`, `--scale <float>`](#scale)
+    - [`--save-often`](#save-often)
     - [`--target-color-matrix <color-matrix>`](#target-color-matrix)
 - Data types
     - [Bias](#type-bias)
@@ -559,6 +560,14 @@ Larger images tend to take more time to generate. It's useful to try and generat
 | Same size as target (default) | N/A | `rag mandrill.png --generations 100 --rng-seed 1 --painter strokes --painter-alpha 0.7 --painter-width 5% --margins 8%` | <img src="out_scale_id.png" width="256"> |
 | Scaled to 4x the target size | `--scale 4` | `rag mandrill.png --generations 100 --rng-seed 1 --painter strokes --painter-alpha 0.7 --painter-width 5% --margins 8% --scale 4` | <img src="out_scale_4.png" width="256"> |
 | Scaled to 10% of the target size | `--scale 0.1` | `rag mandrill.png --generations 100 --rng-seed 1 --painter strokes --painter-alpha 0.7 --painter-width 5% --margins 8% --scale 0.1` | <img src="out_scale_01.png" width="256"> |
+
+#### <a id="save-often"></a> `--save-often`
+
+Save the output file more frequently.
+
+The default behavior for the application is to only write the final output file when the target generations, tries, or diff are achieved. With this flag, the output file will be saved frequently, on every successful generation.
+
+This is useful if one expects to be interrupting the writing process in the middle.
 
 #### <a id="target-color-matrix"></a>`--target-color-matrix <color-matrix>`
 
