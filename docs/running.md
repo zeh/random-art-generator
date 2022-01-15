@@ -50,6 +50,7 @@ For the purpose of examples, this documentation uses the [Mandrill](https://www.
     - [`-g`, `--generations <integer>`](#generations)
     - [`-h`, `--help`](#help)
     - [`-i`, `--input <filename>`](#input)
+    - [`--low-power`](#low-power)
     - [`--margins <sizes>`](#margins)
     - [`--no-metadata`](#no-metadata)
     - [`-t`, `--max-tries <integer>`](#max-tries)
@@ -218,6 +219,14 @@ Type: File path or name string
 The filename for an input image, if any.
 
 When present, the input image that serves as the starting image before anything is painted atop it. The [`--background-color`](#background-color) parameter is also ignored.
+
+#### <a id="low-power"></a>`--low-power`
+
+Instructs the application to use low power mode where appropriate.
+
+When this flag is set, the application decides to use low power more rather than the default of high performance mode whenever possible. This is likely to make generation slower.
+
+In practice, this has an effect when selecting which GPU card will be used to paint images in multi-GPU systems. In the default configuration, the most high-performance card (likely a "discrete" card) will be used; in low power mode, the best low-power card (likely an "integrated" card) is used instead.
 
 #### <a id="margins"></a>`-c`, `--margins <sizes>`
 
