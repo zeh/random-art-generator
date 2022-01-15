@@ -5,11 +5,11 @@ pub struct GPUContext {
 }
 
 impl GPUContext {
-	pub fn new(is_verbose: bool) -> Self {
-		pollster::block_on(Self::create_context_async(is_verbose))
+	pub fn new(is_verbose: bool, use_low_power: bool) -> Self {
+		pollster::block_on(Self::create_context_async(is_verbose, use_low_power))
 	}
 
-	async fn create_context_async(is_verbose: bool) -> GPUContext {
+	async fn create_context_async(is_verbose: bool, use_low_power: bool) -> GPUContext {
 		// Much of this is based on:
 		// https://github.com/gfx-rs/wgpu/blob/master/wgpu/examples/hello-compute/main.rs
 
@@ -19,7 +19,11 @@ impl GPUContext {
 		// Instantiates the general connection to the GPU
 		let adapter = instance
 			.request_adapter(&wgpu::RequestAdapterOptions {
-				power_preference: wgpu::PowerPreference::default(),
+				power_preference: if use_low_power {
+					wgpu::PowerPreference::LowPower
+				} else {
+					wgpu::PowerPreference::HighPerformance
+				},
 				compatible_surface: None,
 				..wgpu::RequestAdapterOptions::default()
 			})

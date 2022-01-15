@@ -157,6 +157,14 @@ struct Opt {
 	#[structopt(long, parse(try_from_str = parse_color_matrix))]
 	target_color_matrix: Option<[f64; 12]>,
 
+	/// Instructs the application to use low power mode where appropriate.
+	///
+	/// When this flag is set, the application decides to use low power more rather than the default of high performance mode whenever possible. This is likely to make generation slower.
+	///
+	/// In practice, this has an effect when selecting which GPU card will be used to paint images in multi-GPU systems. In the default configuration, the most high-performance card (likely a "discrete" card) will be used; in low power mode, the best low-power card (likely an "integrated" card) is used instead.
+	#[structopt(long)]
+	low_power: bool,
+
 	/// Save the output file more frequently.
 	///
 	/// The default behavior for the application is to only write the final output file when the target generations, tries, or diff are achieved. With this flag, the output file will be saved frequently, on every successful generation.
@@ -387,7 +395,7 @@ fn main() {
 	println!("Using target image of {:?} with dimensions of {:?}.", target_file, target_image.dimensions());
 
 	// Create Generator
-	let context = GPUContext::new(options.verbose);
+	let context = GPUContext::new(options.verbose, options.low_power);
 	let mut gen = match options.target_color_matrix {
 		Some(color_matrix) => {
 			// Target has a color matrix, parse it first
