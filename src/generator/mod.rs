@@ -52,14 +52,19 @@ pub struct Generator {
 }
 
 fn print_benchmark(bench: &TimerBenchmark, label: &str) {
-	println!(
-		"[BENCH] {:}: min {:.3}ms, avg {:.3}ms, median {:.3}, max {:.3}ms",
-		label,
-		bench.min_ms(),
-		bench.average_ms(),
-		bench.median_ms(),
-		bench.max_ms()
-	);
+	match bench.len() {
+		0 => println!("[BENCH] {:>20}: N/A", label),
+		1 => println!("[BENCH] {:>20}: {:.3}ms", label, bench.last_ms()),
+		_ => println!(
+			"[BENCH] {:>20} ({}x): min {:.3}ms, avg {:.3}ms, median {:.3}, max {:.3}ms",
+			label,
+			bench.len(),
+			bench.min_ms(),
+			bench.average_ms(),
+			bench.median_ms(),
+			bench.max_ms()
+		),
+	}
 }
 
 impl Generator {
