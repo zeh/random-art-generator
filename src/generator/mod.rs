@@ -145,7 +145,7 @@ impl Generator {
 			benchmarks.whole_try.start();
 			used = false;
 
-			if should_benchmark || candidates == 1 {
+			if candidates == 1 {
 				// Simple path with no concurrency
 				benchmarks.paint.start();
 				let new_candidate =
@@ -335,20 +335,22 @@ impl Generator {
 			benchmarks.whole_try.average_ms(),
 			candidates
 		);
+
 		if candidates == 1 {
 			println!(
 				"Tries took an average of {:.3}ms for painting, and {:.3}ms for diffing, using a single thread.",
 				benchmarks.paint.average_ms(),
 				benchmarks.diff.average_ms()
 			);
-
-			if should_benchmark {
-				print_benchmark(&benchmarks.paint, "paint");
-				print_benchmark(&benchmarks.diff, "diff");
-				print_benchmark(&benchmarks.result_callback, "result_callback");
-				print_benchmark(&benchmarks.whole_try, "whole_try");
-			}
 		}
+
+		if should_benchmark {
+			print_benchmark(&benchmarks.paint, "paint");
+			print_benchmark(&benchmarks.diff, "diff");
+			print_benchmark(&benchmarks.result_callback, "result_callback");
+			print_benchmark(&benchmarks.whole_try, "whole_try");
+		}
+
 		println!(
 			"Produced {} generations, a {:.2}% success rate.",
 			curr_generations,

@@ -75,7 +75,7 @@ struct Opt {
 	///
 	/// With this flag, the application will gather some benchmark metrics and output them after it runs. This is useful to measure efficiency of the algorithm as it evolves.
 	///
-	/// Note that using this implies `--candidates 1`. It's also recommended to use the same `--rng-seed` value across different runs, for consistent results.
+	/// It's recommended to use the same `--candidates` and `--rng-seed` value across different runs, for consistent results.
 	#[structopt(long)]
 	benchmark: bool,
 
@@ -404,9 +404,7 @@ fn main() {
 	println!("Using output image of {:?}.", output_file);
 
 	// Other options
-	let candidates = if options.benchmark {
-		1
-	} else if options.candidates > 0 {
+	let candidates = if options.candidates > 0 {
 		options.candidates
 	} else {
 		println!("Using auto {} candidates.", num_cpus::get());

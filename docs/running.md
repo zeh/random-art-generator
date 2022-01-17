@@ -104,7 +104,7 @@ Outputs benchmark results.
 
 With this flag, the application will gather some benchmark metrics and output them after it runs. This is useful to measure efficiency of the algorithm as it evolves.
 
-Note that using this implies [`--candidates 1`](#candidates). It's also recommended to use the same [`--rng-seed`](#rng-seed) value across different runs, for consistent results.
+It's recommended to use the same [`--candidates 1`](#candidates) and [`--rng-seed`](#rng-seed) value across different runs, for consistent results.
 
 #### <a id="blending-mode"></a>`--blending-mode <blending-mode>...`
 
