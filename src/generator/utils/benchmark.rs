@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::time::Instant;
 
 #[cfg(test)]
@@ -98,6 +99,73 @@ impl TimerBenchmark {
 	#[inline(always)]
 	fn ns_to_ms(ns: u128) -> f64 {
 		ns as f64 / 1_000_000.0
+	}
+}
+
+#[derive(Clone)]
+pub struct SequenceBenchmark {
+	values: HashMap<String, TimerBenchmark>,
+	names: Vec<String>,
+	start_time: Option<Instant>,
+}
+
+#[allow(dead_code)]
+impl SequenceBenchmark {
+	pub fn new() -> Self {
+		Self {
+			values: HashMap::<String, TimerBenchmark>::new(),
+			names: Vec::<String>::new(),
+			start_time: None,
+		}
+	}
+
+	pub fn start(&mut self) {
+		assert!(self.start_time.is_none(), "cannot start a measurement twice");
+		self.start_time = Some(Instant::now());
+	}
+
+	pub fn mark(&mut self, name: &str) {
+		assert!(self.start_time.is_some(), "cannot stop a measurement that never started");
+		if !self.values.contains_key(name) {
+			let value = TimerBenchmark::new();
+			self.values.insert(name.to_owned(), value);
+			self.names.push(name.to_owned());
+		}
+		let value = self.values.get_mut(&name.to_owned()).unwrap();
+		let duration = self.start_time.unwrap().elapsed().as_nanos();
+		value.insert(duration);
+		self.start_time = Some(Instant::now());
+	}
+
+	pub fn mark_and_stop(&mut self, name: &str) {
+		self.mark(name);
+		self.stop();
+	}
+
+	pub fn stop(&mut self) {
+		assert!(self.start_time.is_some(), "cannot stop a measurement that never started");
+		self.start_time = None;
+	}
+
+	pub fn clear(&mut self) {
+		self.values.clear();
+		self.start_time = None;
+	}
+
+	pub fn is_started(&self) -> bool {
+		self.start_time.is_some()
+	}
+
+	pub fn len(&self) -> usize {
+		self.names.len()
+	}
+
+	pub fn get_benchmark(&self, name: &str) -> Option<&TimerBenchmark> {
+		self.values.get(&name.to_owned())
+	}
+
+	pub fn get_names(&self) -> &Vec<String> {
+		&self.names
 	}
 }
 
@@ -205,5 +273,59 @@ mod tests {
 		assert_eq!(bench.min_ms(), 0.1);
 		assert_eq!(bench.max_ms(), 3.912332);
 		assert_eq!(bench.last_ms(), 1.0121);
+	}
+
+	#[test]
+	fn test_sequence_benchmark_empty() {
+		let bench = SequenceBenchmark::new();
+		assert_eq!(bench.is_started(), false);
+		assert_eq!(bench.len(), 0);
+		assert_eq!(bench.get_benchmark("a").is_none(), true);
+		assert_eq!(bench.get_names().to_owned(), vec![] as Vec<String>);
+	}
+
+	#[test]
+	fn test_sequence_benchmark_single() {
+		let mut bench = SequenceBenchmark::new();
+		bench.start();
+		bench.mark_and_stop("first");
+		assert_eq!(bench.is_started(), false);
+		assert_eq!(bench.len(), 1);
+		assert_eq!(bench.get_names().to_owned(), vec!["first"]);
+
+		assert_eq!(bench.get_benchmark("a").is_none(), true);
+		assert_eq!(bench.get_benchmark("first").is_some(), true);
+
+		let first = bench.get_benchmark("first").unwrap();
+		assert_eq!(first.len(), 1);
+	}
+
+	#[test]
+	fn test_sequence_benchmark_multiple() {
+		let mut bench = SequenceBenchmark::new();
+		bench.start();
+		bench.mark("first");
+		bench.mark("second");
+		bench.stop();
+		bench.start();
+		bench.mark("first");
+		bench.mark("second");
+		bench.stop();
+		bench.start();
+		bench.mark("first");
+		bench.stop();
+		assert_eq!(bench.is_started(), false);
+		assert_eq!(bench.len(), 2);
+		assert_eq!(bench.get_names().to_owned(), vec!["first", "second"]);
+
+		assert_eq!(bench.get_benchmark("a").is_none(), true);
+		assert_eq!(bench.get_benchmark("first").is_some(), true);
+		assert_eq!(bench.get_benchmark("second").is_some(), true);
+
+		let first = bench.get_benchmark("first").unwrap();
+		assert_eq!(first.len(), 3);
+
+		let second = bench.get_benchmark("second").unwrap();
+		assert_eq!(second.len(), 2);
 	}
 }
