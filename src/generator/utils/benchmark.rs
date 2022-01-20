@@ -14,8 +14,8 @@ pub struct TimerBenchmark {
 
 #[allow(dead_code)]
 impl TimerBenchmark {
-	pub fn new() -> TimerBenchmark {
-		TimerBenchmark {
+	pub fn new() -> Self {
+		Self {
 			values_ns: Vec::<u128>::new(),
 			start_time: None,
 		}
@@ -29,8 +29,12 @@ impl TimerBenchmark {
 	pub fn stop(&mut self) {
 		assert!(self.start_time.is_some(), "cannot stop a measurement that never started");
 		let duration = self.start_time.unwrap().elapsed().as_nanos();
-		self.values_ns.push(duration);
+		self.insert(duration);
 		self.start_time = None;
+	}
+
+	pub fn insert(&mut self, duration_ns: u128) {
+		self.values_ns.push(duration_ns);
 	}
 
 	pub fn clear(&mut self) {
@@ -94,11 +98,6 @@ impl TimerBenchmark {
 	#[inline(always)]
 	fn ns_to_ms(ns: u128) -> f64 {
 		ns as f64 / 1_000_000.0
-	}
-
-	#[cfg(test)]
-	pub fn mock_insert(&mut self, duration_ns: u128) {
-		self.values_ns.push(duration_ns);
 	}
 }
 
@@ -171,7 +170,7 @@ mod tests {
 	#[test]
 	fn test_timer_benchmark_inserted_single() {
 		let mut bench = TimerBenchmark::new();
-		bench.mock_insert(2_120_000);
+		bench.insert(2_120_000);
 		assert_eq!(bench.len(), 1);
 		assert_eq!(bench.average_ms(), 2.12);
 		assert_eq!(bench.median_ms(), 2.12);
@@ -183,11 +182,11 @@ mod tests {
 	#[test]
 	fn test_timer_benchmark_inserted_multiple() {
 		let mut bench = TimerBenchmark::new();
-		bench.mock_insert(2_120_000);
-		bench.mock_insert(0_100_000);
-		bench.mock_insert(3_500_000);
-		bench.mock_insert(3_912_332);
-		bench.mock_insert(1_012_100);
+		bench.insert(2_120_000);
+		bench.insert(0_100_000);
+		bench.insert(3_500_000);
+		bench.insert(3_912_332);
+		bench.insert(1_012_100);
 		assert_eq!(bench.len(), 5);
 		assert_eq!(bench.average_ms(), 2.128886);
 		assert_eq!(bench.median_ms(), 2.12);
@@ -196,10 +195,10 @@ mod tests {
 		assert_eq!(bench.last_ms(), 1.0121);
 
 		let mut bench = TimerBenchmark::new();
-		bench.mock_insert(0_100_000);
-		bench.mock_insert(3_500_000);
-		bench.mock_insert(3_912_332);
-		bench.mock_insert(1_012_100);
+		bench.insert(0_100_000);
+		bench.insert(3_500_000);
+		bench.insert(3_912_332);
+		bench.insert(1_012_100);
 		assert_eq!(bench.len(), 4);
 		assert_eq!(bench.average_ms(), 2.131108);
 		assert_eq!(bench.median_ms(), 2.25605);
