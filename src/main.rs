@@ -325,11 +325,9 @@ fn on_processed(generator: &Generator, result: ProcessCallbackResult) {
 		// Define new metadata
 		let mut comments = vec![
 			format!(
-				"Produced {} generations after {} tries in {:.3}s ({:.3}ms avg per try); the final difference from target is {:.2}%.",
+				"Produced {} generations after {} tries; the final difference from target is {:.2}%.",
 				result.num_generations,
 				result.num_tries,
-				result.time_elapsed,
-				result.time_elapsed / (result.num_tries as f32) * 1000.0,
 				result.diff * 100.0
 			),
 			format!("Command line: {}", env::args().collect::<Vec<String>>().join(" ")),
