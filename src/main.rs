@@ -301,6 +301,22 @@ fn get_options() -> Opt {
 	return Opt::from_args();
 }
 
+fn get_command_line(options: &Opt) -> String {
+	// Creates string with arguments only
+	let args = &env::args().collect::<Vec<String>>()[1..];
+	let mut args_str = args.join(" ");
+
+	// Replaces filenames
+	args_str = args_str.replace(options.target.to_str().as_ref().unwrap(), "target.img");
+	args_str = args_str.replace(options.output.to_str().as_ref().unwrap(), "output.img");
+	if let Some(input) = options.input.as_ref() {
+		args_str = args_str.replace(input.to_str().as_ref().unwrap(), "input.img");
+	}
+
+	// Output with fake executable name
+	"[rag] ".to_string() + &args_str
+}
+
 fn on_processed(generator: &Generator, result: ProcessCallbackResult) {
 	// Ignore unsuccessful generations
 	if !result.is_success {
@@ -330,7 +346,7 @@ fn on_processed(generator: &Generator, result: ProcessCallbackResult) {
 				result.num_tries,
 				result.diff * 100.0
 			),
-			format!("Command line: {}", env::args().collect::<Vec<String>>().join(" ")),
+			format!("Command line: {}", get_command_line(&options)),
 		];
 
 		// Add painter-specific metadata
