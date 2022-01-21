@@ -363,7 +363,8 @@ fn main() {
 
 	// Target
 	let target_file = options.target.as_path();
-	let target_image = image::open(target_file).expect("Cannot open target file {:?}, exiting");
+	let target_image = image::open(target_file)
+		.expect(format!("Cannot open target file {:?}, exiting", options.target).as_str());
 
 	println!("Using target image of {:?} with dimensions of {:?}.", target_file, target_image.dimensions());
 
