@@ -430,10 +430,10 @@ In the `strokes` painter, *waves* are the deformations that occur on the edges o
 
 | Example | Argument | Command line example | Result |
 |-|-|-|-|
-| Default (0.5%) | N/A | `rag mandrill.png  --generations 20 --rng-seed 1 --background-color darkgreen --painter strokes` | <img src="out_wave_height_id.png" width="256"> |
-| Always 2% wave height | `--painter-wave-height 2%` | `rag mandrill.png  --generations 20 --rng-seed 1 --background-color darkgreen --painter strokes --painter-wave-height 2%` | <img src="out_wave_height_2.png" width="256"> |
-| Wave height 10px-20px | `--painter-wave-height 10-20` | `rag mandrill.png  --generations 20 --rng-seed 1 --background-color darkgreen --painter strokes --painter-wave-height 10-20` | <img src="out_wave_height_10.png" width="256"> |
-| Either 50px, 90px, or 1px-4% wave height | `--painter-wave-height 50 90 1-4%` | `rag mandrill.png  --generations 20 --rng-seed 1 --background-color darkgreen --painter strokes --painter-wave-height 50 90 1-4%` | <img src="out_wave_height_m.png" width="256"> |
+| Default (0.5%) | N/A | `rag mandrill.png --generations 20 --rng-seed 1 --background-color darkgreen --painter strokes` | <img src="out_wave_height_id.png" width="256"> |
+| Always 2% wave height | `--painter-wave-height 2%` | `rag mandrill.png --generations 20 --rng-seed 1 --background-color darkgreen --painter strokes --painter-wave-height 2%` | <img src="out_wave_height_2.png" width="256"> |
+| Wave height 10px-20px | `--painter-wave-height 10-20` | `rag mandrill.png --generations 20 --rng-seed 1 --background-color darkgreen --painter strokes --painter-wave-height 10-20` | <img src="out_wave_height_10.png" width="256"> |
+| Either 50px, 90px, or 1px-4% wave height | `--painter-wave-height 50 90 1-4%` | `rag mandrill.png --generations 20 --rng-seed 1 --background-color darkgreen --painter strokes --painter-wave-height 50 90 1-4%` | <img src="out_wave_height_m.png" width="256"> |
 
 #### <a id="painter-wave-height-bias"></a>`--painter-wave-height-bias <bias>`
 
@@ -463,11 +463,11 @@ In the `strokes` painter, *waves* are the deformations that occur on the edges o
 
 | Example | Argument | Command line example | Result |
 |-|-|-|-|
-| Default (400%) | N/A | `rag mandrill.png  --generations 20 --rng-seed 1 --background-color darkgreen --painter strokes` | <img src="out_wave_length_id.png" width="256"> |
-| Wave length of 200% | `--painter-wave-length 200%` | `rag mandrill.png  --generations 20 --rng-seed 1 --background-color wheat --painter strokes --painter-wave-length 200%` | <img src="out_wave_length_200.png" width="256"> |
-| Wave length of 4000% | `--painter-wave-length 4000%` | `rag mandrill.png  --generations 20 --rng-seed 1 --background-color wheat --painter strokes --painter-wave-length 4000%` | <img src="out_wave_length_4000.png" width="256"> |
-| Wave length of 100px | `--painter-wave-length 100` | `rag mandrill.png  --generations 20 --rng-seed 1 --background-color wheat --painter strokes --painter-wave-length 100` | <img src="out_wave_length_100.png" width="256"> |
-| Either 10% (25% chance), 400% (25% chance), or 8000% (50% chance) wave length, with 2% wave height | `--painter-wave-height 2% --painter-wave-length 10% 400% 8000%@2` | `rag mandrill.png  --generations 20 --rng-seed 1 --background-color wheat --painter strokes --painter-wave-height 2% --painter-wave-length 10% 400% 8000%@2` | <img src="out_wave_length_m.png" width="256"> |
+| Default (400%) | N/A | `rag mandrill.png --generations 20 --rng-seed 1 --background-color darkgreen --painter strokes` | <img src="out_wave_length_id.png" width="256"> |
+| Wave length of 200% | `--painter-wave-length 200%` | `rag mandrill.png --generations 20 --rng-seed 1 --background-color wheat --painter strokes --painter-wave-length 200%` | <img src="out_wave_length_200.png" width="256"> |
+| Wave length of 4000% | `--painter-wave-length 4000%` | `rag mandrill.png --generations 20 --rng-seed 1 --background-color wheat --painter strokes --painter-wave-length 4000%` | <img src="out_wave_length_4000.png" width="256"> |
+| Wave length of 100px | `--painter-wave-length 100` | `rag mandrill.png --generations 20 --rng-seed 1 --background-color wheat --painter strokes --painter-wave-length 100` | <img src="out_wave_length_100.png" width="256"> |
+| Either 10% (25% chance), 400% (25% chance), or 8000% (50% chance) wave length, with 2% wave height | `--painter-wave-height 2% --painter-wave-length 10% 400% 8000%@2` | `rag mandrill.png --generations 20 --rng-seed 1 --background-color wheat --painter strokes --painter-wave-height 2% --painter-wave-length 10% 400% 8000%@2` | <img src="out_wave_length_m.png" width="256"> |
 
 #### <a id="painter-wave-length-bias"></a>`--painter-wave-length-bias <bias>`
 
