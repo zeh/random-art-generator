@@ -63,6 +63,7 @@ For the purpose of examples, this documentation uses the [Mandrill](https://www.
     - [`--painter-height-bias <bias>`](#painter-height-bias)
     - [`--painter-radius <size>...`](#painter-radius)
     - [`--painter-radius-bias <bias>`](#painter-radius-bias)
+    - [`--painter-rotation <float>...`](#painter-rotation)
     - [`--painter-wave-height <size>...`](#painter-wave-height)
     - [`--painter-wave-height-bias <bias>`](#painter-wave-height-bias)
     - [`--painter-wave-length <size>...`](#painter-wave-length)
@@ -424,6 +425,30 @@ Bias for distribution in [`--painter-radius`](#painter-radius) ranges.
 | Radius 0%-50% (default), 16 bias towards 50% | `--painter-radius-bias 16` | `rag mandrill.png --generations 200 --rng-seed 1 --painter circles --painter-radius-bias 16` | <img src="out_radius_bias_16.png" width="256"> |
 | Radius 0%-50% (default), -16 bias towards 0% | `--painter-radius-bias -16` | `rag mandrill.png --generations 200 --rng-seed 1 --painter circles --painter-radius-bias -16` | <img src="out_radius_bias_m16.png" width="256"> |
 | Radius 2px-10% (default), -2 bias towards 2px | `--painter-radius-bias -2` | `rag mandrill.png --generations 200 --rng-seed 1 --painter circles --painter-radius 2-10% --painter-radius-bias -2` | <img src="out_radius_bias_m2.png" width="256"> |
+
+#### <a id="painter-rotation"></a>`--painter-rotation <float>...`
+
+Default: `0`
+
+Type: Single entry or [list](#type-list), of [ranges](#type-range) or unique values, of rotation [floats](#type-float)
+
+Rotation in degrees for painted elements, when applicable.
+
+This applies when [`--painter`](#painter) is set to `rects`.
+
+When used, this applies a clockwise rotation to the elements. Values expressed here need to be positive. To apply a counter-clockwise rotation, apply a full rotation value to it first; for example, a rotation of `355` is equivalent to `-5` (or `5` counter-clockwise).
+
+The argument is a list, so it can also feature more than one value (or ranges, or a mix of values or ranges), in which case one new entry is randomly picked for each new paint.
+
+| Example | Argument | Command line example | Result |
+|-|-|-|-|
+| Default (0) | N/A | `rag mandrill.png --generations 400 --rng-seed 1 --background-color beige --painter-alpha 0.5-0.9 --painter rects --painter-height 4%` | <img src="out_rotation_id.png" width="256"> |
+| Always 45" rotation | `--painter-rotation 45` | `rag mandrill.png --generations 400 --rng-seed 1 --background-color beige --painter-alpha 0.5-0.9 --painter rects --painter-height 4% --painter-rotation 45` | <img src="out_rotation_45.png" width="256"> |
+| Between -10" and 10" rotation | `--painter-rotation 350-370` | `rag mandrill.png --generations 400 --rng-seed 1 --background-color beige --painter-alpha 0.5-0.9 --painter rects --painter-height 4% --painter-rotation 350-370` | <img src="out_rotation_mp10.png" width="256"> |
+| Either 0" or 90" rotation | `--painter-rotation 0 90` | `rag mandrill.png --generations 400 --rng-seed 1 --background-color beige --painter-alpha 0.5-0.9 --painter rects --painter-height 4% --painter-rotation 0 90` | <img src="out_rotation_090.png" width="256"> |
+| Any rotation | `--painter-rotation 0-360` | `rag mandrill.png --generations 400 --rng-seed 1 --background-color beige --painter-alpha 0.5-0.9 --painter rects --painter-height 4% --painter-rotation 0-360` | <img src="out_rotation_all.png" width="256"> |
+| Any rotation, thin lines | `--painter-rotation 0-360` | `rag mandrill.png --generations 2000 --rng-seed 1 --background-color beige --painter-alpha 0.9 --painter rects --painter-height 3 --painter-rotation 0-360` | <img src="out_rotation_all_thin.png" width="256"> |
+
 
 #### <a id="painter-wave-height"></a>`--painter-wave-height <size>...`
 
