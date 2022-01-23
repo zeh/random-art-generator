@@ -6,7 +6,7 @@ use color_processing::Color;
 use crate::generator::utils::color::BlendingMode;
 use crate::generator::utils::units::{Margins, SizeUnit, WeightedValue};
 
-pub fn parse_color(src: &str) -> Result<(u8, u8, u8), &str> {
+pub fn parse_color<'a, 'b>(src: &'a str) -> Result<(u8, u8, u8), &'b str> {
 	match Color::new_string(src) {
 		Some(color) => {
 			let rgb = color.get_rgba();
@@ -19,16 +19,16 @@ pub fn parse_color(src: &str) -> Result<(u8, u8, u8), &str> {
 	}
 }
 
-pub fn parse_float(src: &str) -> Result<f64, &str> {
+pub fn parse_float<'a, 'b>(src: &'a str) -> Result<f64, &'b str> {
 	src.parse::<f64>().or(Err("Could not parse float value"))
 }
 
-pub fn parse_float_list(src: &str, divider: char) -> Result<Vec<f64>, &str> {
+pub fn parse_float_list<'a, 'b>(src: &'a str, divider: char) -> Result<Vec<f64>, &'b str> {
 	src.split(divider).collect::<Vec<&str>>().iter().map(|&e| parse_float(e)).collect()
 }
 
 /// Parses "1.0", "0.9-1.0" into (1.0, 1.0), (0.9, 1.0)
-pub fn parse_float_pair(src: &str) -> Result<(f64, f64), &str> {
+pub fn parse_float_pair<'a, 'b>(src: &'a str) -> Result<(f64, f64), &'b str> {
 	let values = parse_float_list(&src, '-')?;
 	match values.len() {
 		1 => Ok((values[0], values[0])),
@@ -38,7 +38,7 @@ pub fn parse_float_pair(src: &str) -> Result<(f64, f64), &str> {
 }
 
 /// Parses "10%", "20.3" into 0.1, 20.3
-pub fn parse_scale(src: &str) -> Result<f64, &str> {
+pub fn parse_scale<'a, 'b>(src: &'a str) -> Result<f64, &'b str> {
 	if src.ends_with("%") {
 		match src[..src.len() - 1].parse::<f64>() {
 			Ok(value) => Ok(value / 100.0),
@@ -52,7 +52,7 @@ pub fn parse_scale(src: &str) -> Result<f64, &str> {
 	}
 }
 
-pub fn parse_color_matrix(src: &str) -> Result<[f64; 12], &str> {
+pub fn parse_color_matrix<'a, 'b>(src: &'a str) -> Result<[f64; 12], &'b str> {
 	let values = parse_float_list(&src, ',')?;
 	match values.len() {
 		12 => values.try_into().or(Err("Could not convert float list")) as Result<[f64; 12], &str>,
@@ -60,7 +60,7 @@ pub fn parse_color_matrix(src: &str) -> Result<[f64; 12], &str> {
 	}
 }
 
-pub fn parse_size(src: &str) -> Result<SizeUnit, &str> {
+pub fn parse_size<'a, 'b>(src: &'a str) -> Result<SizeUnit, &'b str> {
 	if src.ends_with("%") {
 		match src[..src.len() - 1].parse::<f64>() {
 			Ok(value) => Ok(SizeUnit::Fraction(value / 100.0f64)),
@@ -74,12 +74,12 @@ pub fn parse_size(src: &str) -> Result<SizeUnit, &str> {
 	}
 }
 
-pub fn parse_size_list(src: &str, divider: char) -> Result<Vec<SizeUnit>, &str> {
+pub fn parse_size_list<'a, 'b>(src: &'a str, divider: char) -> Result<Vec<SizeUnit>, &'b str> {
 	src.split(divider).collect::<Vec<&str>>().iter().map(|&e| parse_size(e)).collect()
 }
 
 // Parses "100%", "90%-100%", "10-20", "2" into pairs of SizeUnits
-pub fn parse_size_pair(src: &str) -> Result<(SizeUnit, SizeUnit), &str> {
+pub fn parse_size_pair<'a, 'b>(src: &'a str) -> Result<(SizeUnit, SizeUnit), &'b str> {
 	let values = parse_size_list(&src, '-')?;
 	match values.len() {
 		1 => Ok((values[0].clone(), values[0].clone())),
@@ -88,7 +88,7 @@ pub fn parse_size_pair(src: &str) -> Result<(SizeUnit, SizeUnit), &str> {
 	}
 }
 
-pub fn parse_size_margins(src: &str) -> Result<Margins<SizeUnit>, &str> {
+pub fn parse_size_margins<'a, 'b>(src: &'a str) -> Result<Margins<SizeUnit>, &'b str> {
 	let values = parse_size_list(src, ',')?;
 	match values.len() {
 		1 => Ok(Margins::<SizeUnit> {
@@ -120,7 +120,7 @@ pub fn parse_size_margins(src: &str) -> Result<Margins<SizeUnit>, &str> {
 }
 
 /// Parses "*@n" into a string "*" with n weight. This is used so we can have pairs with weights.
-pub fn parse_weight(src: &str) -> Result<(&str, f64), &str> {
+pub fn parse_weight<'a, 'b>(src: &'a str) -> Result<(&str, f64), &'b str> {
 	let values = src.split('@').collect::<Vec<&str>>();
 	match values.len() {
 		1 => Ok((src, 1.0)),
@@ -133,7 +133,9 @@ pub fn parse_weight(src: &str) -> Result<(&str, f64), &str> {
 }
 
 /// Parses a size pair with a weight (e.f. "1-2@1", "10%", "5-10%@2") into a WeightedValue<>
-pub fn parse_weighted_size_pair(src: &str) -> Result<WeightedValue<(SizeUnit, SizeUnit)>, &str> {
+pub fn parse_weighted_size_pair<'a, 'b>(
+	src: &'a str,
+) -> Result<WeightedValue<(SizeUnit, SizeUnit)>, &'b str> {
 	match parse_weight(src) {
 		Ok((src_value, weight)) => match parse_size_pair(src_value) {
 			Ok(value) => Ok(WeightedValue {
@@ -147,7 +149,7 @@ pub fn parse_weighted_size_pair(src: &str) -> Result<WeightedValue<(SizeUnit, Si
 }
 
 /// Parses a float pair with a weight (e.f. "1-2@1", "10.2", "5.2-10@2") into a WeightedValue<>
-pub fn parse_weighted_float_pair(src: &str) -> Result<WeightedValue<(f64, f64)>, &str> {
+pub fn parse_weighted_float_pair<'a, 'b>(src: &'a str) -> Result<WeightedValue<(f64, f64)>, &'b str> {
 	match parse_weight(src) {
 		Ok((src_value, weight)) => match parse_float_pair(src_value) {
 			Ok(value) => Ok(WeightedValue {
@@ -161,7 +163,7 @@ pub fn parse_weighted_float_pair(src: &str) -> Result<WeightedValue<(f64, f64)>,
 }
 
 /// Parses a blending mode with a weight (e.f. "normal", "screen@2") into a WeightedValue<>
-pub fn parse_weighted_blending_mode(src: &str) -> Result<WeightedValue<BlendingMode>, &str> {
+pub fn parse_weighted_blending_mode<'a, 'b>(src: &'a str) -> Result<WeightedValue<BlendingMode>, &'b str> {
 	match parse_weight(src) {
 		Ok((src_value, weight)) => match BlendingMode::from_str(src_value) {
 			Ok(value) => Ok(WeightedValue {
