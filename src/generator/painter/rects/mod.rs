@@ -5,7 +5,9 @@ use crate::generator::utils::geom::find_target_draw_rect;
 use crate::generator::utils::gpu::context::GPUContext;
 use crate::generator::utils::pixel::blend_linear;
 use crate::generator::utils::random::rng::Rng;
-use crate::generator::utils::random::{get_random_range, get_random_size_ranges_bias_weighted};
+use crate::generator::utils::random::{
+	get_random_range, get_random_ranges_bias_weighted, get_random_size_ranges_bias_weighted,
+};
 use crate::generator::utils::units::{Margins, SizeUnit, WeightedValue};
 use crate::generator::utils::{image::get_pixel_interpolated, random::get_random_color};
 
@@ -25,6 +27,7 @@ pub struct Options {
 	pub height: Vec<WeightedValue<(SizeUnit, SizeUnit)>>,
 	pub width_bias: f64, // 0 = normal; -1 = quad bias towards small, 1 = quad bias towards big, etc
 	pub height_bias: f64, // 0 = normal; -1 = quad bias towards small, 1 = quad bias towards big, etc
+	pub rotation: Vec<WeightedValue<(f64, f64)>>,
 	pub anti_alias: bool,
 	pub color_seed: f64,
 	pub margins: Margins<SizeUnit>,
@@ -43,6 +46,10 @@ impl RectPainter {
 				weight: 1.0,
 			}],
 			height_bias: 0.0,
+			rotation: vec![WeightedValue {
+				value: (0.0, 0.0),
+				weight: 1.0,
+			}],
 			anti_alias: true,
 			color_seed: 0.0,
 			margins: Margins::<SizeUnit> {
@@ -91,16 +98,36 @@ impl Painter for RectPainter {
 			target_visible_area.1,
 		);
 
+		// Rotate
+		let rotation = get_random_ranges_bias_weighted(rng, &self.options.rotation, 0.0);
+		let rotation_rad = rotation.to_radians();
+
+		// Find correct needed distance from borders
+		let rotation_right = (0.0f64).to_radians();
+		let rotation_down = (90.0f64).to_radians();
+		let space_down = (
+			(rotation_down + rotation_rad).cos() * rect_h * 0.5,
+			(rotation_down + rotation_rad).sin() * rect_h * 0.5,
+		);
+		let space_right = (
+			(rotation_right + rotation_rad).cos() * rect_w * 0.5,
+			(rotation_right + rotation_rad).sin() * rect_w * 0.5,
+		);
+		let space_bottom_left = (space_down.0 - space_right.0, space_down.1 - space_right.1);
+		let space_bottom_right = (space_down.0 + space_right.0, space_down.1 + space_right.1);
+		let space_x = space_bottom_left.0.abs().max(space_bottom_right.0.abs());
+		let space_y = space_bottom_left.1.abs().max(space_bottom_right.1.abs());
+
 		// Distribute along the axis too
 		let rect_x = get_random_range(
 			rng,
-			target_area.x as f64 + rect_w * 0.5,
-			(target_area.x + target_area.width) as f64 - rect_w * 0.5,
+			target_area.x as f64 + space_x,
+			(target_area.x + target_area.width) as f64 - space_x,
 		);
 		let rect_y = get_random_range(
 			rng,
-			target_area.y as f64 + rect_h * 0.5,
-			(target_area.y + target_area.height) as f64 - rect_h * 0.5,
+			target_area.y as f64 + space_y,
+			(target_area.y + target_area.height) as f64 - space_y,
 		);
 
 		// Determine color
@@ -117,6 +144,7 @@ impl Painter for RectPainter {
 				rect_y,
 				rect_w,
 				rect_h,
+				rotation,
 				color,
 				self.options.anti_alias,
 				&painted_texture_view,

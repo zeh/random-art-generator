@@ -9,6 +9,7 @@ pub struct Uniform {
 	pub y: f32,
 	pub width: f32,
 	pub height: f32,
+	pub rotation: f32,
 	pub color_r: f32,
 	pub color_g: f32,
 	pub color_b: f32,
@@ -22,6 +23,7 @@ impl Uniform {
 			y: 0.0,
 			width: 0.0,
 			height: 0.0,
+			rotation: 0.0,
 			color_r: 0.0,
 			color_g: 0.0,
 			color_b: 0.0,
@@ -92,11 +94,13 @@ impl Shader {
 		y: f64,
 		width: f64,
 		height: f64,
+		rotation: f64,
 		color: [u8; 3],
 		anti_alias: bool,
 		texture_output: &wgpu::TextureView,
 	) -> [wgpu::BindGroup; 2] {
-		let bind_group_0 = self.create_bind_group_0(context, x, y, width, height, color, anti_alias);
+		let bind_group_0 =
+			self.create_bind_group_0(context, x, y, width, height, rotation, color, anti_alias);
 		let bind_group_1 = self.create_bind_group_1(context, texture_output);
 		[bind_group_0, bind_group_1]
 	}
@@ -108,6 +112,7 @@ impl Shader {
 		y: f64,
 		width: f64,
 		height: f64,
+		rotation: f64,
 		color: [u8; 3],
 		anti_alias: bool,
 	) -> wgpu::BindGroup {
@@ -116,6 +121,7 @@ impl Shader {
 		uniform.y = y as f32;
 		uniform.width = width as f32;
 		uniform.height = height as f32;
+		uniform.rotation = rotation as f32;
 		uniform.color_r = color[0] as f32 / 255.0;
 		uniform.color_g = color[1] as f32 / 255.0;
 		uniform.color_b = color[2] as f32 / 255.0;

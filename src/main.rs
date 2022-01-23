@@ -227,6 +227,16 @@ struct Opt {
 	#[structopt(long, default_value = "0.0", allow_hyphen_values = true)]
 	painter_radius_bias: f64,
 
+	/// Rotation in degrees for painted elements, when applicable.
+	///
+	/// This applies when `--painter` is set to `rects`.
+	///
+	/// When used, this applies a clockwise rotation to the elements. Values expressed here need to be positive. To apply a counter-clockwise rotation, apply a full rotation value to it first; for example, a rotation of `355` is equivalent to `-5` (or `5` counter-clockwise).
+	///
+	/// The argument is a list, so it can also feature more than one value (or ranges, or a mix of values or ranges), in which case one new entry is randomly picked for each new paint.
+	#[structopt(long, default_value = "0", parse(try_from_str = parse_weighted_float_pair))]
+	painter_rotation: Vec<WeightedValue<(f64, f64)>>,
+
 	/// Width to use when painting elements.
 	///
 	/// This applies when `--painter` is set to `rects`. In case a percentage value is passed, it is relative to the width of the result image.
@@ -456,6 +466,7 @@ fn main() {
 			painter.options.width_bias = options.painter_width_bias;
 			painter.options.height = options.painter_height;
 			painter.options.height_bias = options.painter_height_bias;
+			painter.options.rotation = options.painter_rotation;
 			painter.options.anti_alias = !options.painter_disable_anti_alias;
 			painter.options.color_seed = options.color_seed;
 			painter.options.margins = options.margins;
