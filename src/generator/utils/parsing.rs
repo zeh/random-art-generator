@@ -63,7 +63,7 @@ pub fn parse_color_matrix<'a, 'b>(src: &'a str) -> Result<[f64; 12], &'b str> {
 pub fn parse_size<'a, 'b>(src: &'a str) -> Result<SizeUnit, &'b str> {
 	if src.ends_with("%") {
 		match src[..src.len() - 1].parse::<f64>() {
-			Ok(value) => Ok(SizeUnit::Fraction(value / 100.0f64)),
+			Ok(value) => Ok(SizeUnit::Fraction(value / 100.0)),
 			_ => Err("Could not parse fraction value"),
 		}
 	} else {
@@ -195,11 +195,11 @@ mod tests {
 
 	#[test]
 	fn test_parse_float() {
-		assert_eq!(parse_float("0"), Ok(0.0f64));
-		assert_eq!(parse_float("0.0"), Ok(0.0f64));
-		assert_eq!(parse_float("0.5"), Ok(0.5f64));
-		assert_eq!(parse_float("1"), Ok(1.0f64));
-		assert_eq!(parse_float("13.244"), Ok(13.244f64));
+		assert_eq!(parse_float("0"), Ok(0.0));
+		assert_eq!(parse_float("0.0"), Ok(0.0));
+		assert_eq!(parse_float("0.5"), Ok(0.5));
+		assert_eq!(parse_float("1"), Ok(1.0));
+		assert_eq!(parse_float("13.244"), Ok(13.244));
 
 		// Errors
 		assert!(parse_float("").is_err());
@@ -208,10 +208,10 @@ mod tests {
 
 	#[test]
 	fn test_parse_float_list() {
-		assert_eq!(parse_float_list("0", ','), Ok(vec![0.0f64]));
-		assert_eq!(parse_float_list("0,-2", ','), Ok(vec![0.0f64, -2.0f64]));
-		assert_eq!(parse_float_list("0.0,-647,245.2,1", ','), Ok(vec![0.0f64, -647.0f64, 245.2f64, 1.0f64]));
-		assert_eq!(parse_float_list("1-2-7.55", '-'), Ok(vec![1.0f64, 2.0f64, 7.55f64]));
+		assert_eq!(parse_float_list("0", ','), Ok(vec![0.0]));
+		assert_eq!(parse_float_list("0,-2", ','), Ok(vec![0.0, -2.0]));
+		assert_eq!(parse_float_list("0.0,-647,245.2,1", ','), Ok(vec![0.0, -647.0, 245.2, 1.0]));
+		assert_eq!(parse_float_list("1-2-7.55", '-'), Ok(vec![1.0, 2.0, 7.55]));
 
 		// Errors
 		assert!(parse_float_list("", ',').is_err());
@@ -222,20 +222,20 @@ mod tests {
 	#[test]
 	fn test_parse_float_pair() {
 		// Singles
-		assert_eq!(parse_float_pair("0"), Ok((0.0f64, 0.0f64)));
-		assert_eq!(parse_float_pair("0.0"), Ok((0.0f64, 0.0f64)));
-		assert_eq!(parse_float_pair("0.5"), Ok((0.5f64, 0.5f64)));
-		assert_eq!(parse_float_pair("1"), Ok((1.0f64, 1.0f64)));
-		assert_eq!(parse_float_pair("1.0"), Ok((1.0f64, 1.0f64)));
+		assert_eq!(parse_float_pair("0"), Ok((0.0, 0.0)));
+		assert_eq!(parse_float_pair("0.0"), Ok((0.0, 0.0)));
+		assert_eq!(parse_float_pair("0.5"), Ok((0.5, 0.5)));
+		assert_eq!(parse_float_pair("1"), Ok((1.0, 1.0)));
+		assert_eq!(parse_float_pair("1.0"), Ok((1.0, 1.0)));
 
 		// Pairs
-		assert_eq!(parse_float_pair("0-1"), Ok((0.0f64, 1.0f64)));
-		assert_eq!(parse_float_pair("0.0-1"), Ok((0.0f64, 1.0f64)));
-		assert_eq!(parse_float_pair("0-1.0"), Ok((0.0f64, 1.0f64)));
-		assert_eq!(parse_float_pair("0.5-0.6"), Ok((0.5f64, 0.6f64)));
-		assert_eq!(parse_float_pair("1-1"), Ok((1.0f64, 1.0f64)));
-		assert_eq!(parse_float_pair("1.0-2.0"), Ok((1.0f64, 2.0f64)));
-		assert_eq!(parse_float_pair("1-1.2"), Ok((1.0f64, 1.2f64)));
+		assert_eq!(parse_float_pair("0-1"), Ok((0.0, 1.0)));
+		assert_eq!(parse_float_pair("0.0-1"), Ok((0.0, 1.0)));
+		assert_eq!(parse_float_pair("0-1.0"), Ok((0.0, 1.0)));
+		assert_eq!(parse_float_pair("0.5-0.6"), Ok((0.5, 0.6)));
+		assert_eq!(parse_float_pair("1-1"), Ok((1.0, 1.0)));
+		assert_eq!(parse_float_pair("1.0-2.0"), Ok((1.0, 2.0)));
+		assert_eq!(parse_float_pair("1-1.2"), Ok((1.0, 1.2)));
 
 		// Errors
 		assert!(parse_float_pair("").is_err());
