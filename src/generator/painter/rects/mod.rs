@@ -28,6 +28,7 @@ pub struct Options {
 	pub width_bias: f64, // 0 = normal; -1 = quad bias towards small, 1 = quad bias towards big, etc
 	pub height_bias: f64, // 0 = normal; -1 = quad bias towards small, 1 = quad bias towards big, etc
 	pub rotation: Vec<WeightedValue<(f64, f64)>>,
+	pub corner_radius: Vec<WeightedValue<(SizeUnit, SizeUnit)>>,
 	pub anti_alias: bool,
 	pub color_seed: f64,
 	pub margins: Margins<SizeUnit>,
@@ -48,6 +49,10 @@ impl RectPainter {
 			height_bias: 0.0,
 			rotation: vec![WeightedValue {
 				value: (0.0, 0.0),
+				weight: 1.0,
+			}],
+			corner_radius: vec![WeightedValue {
+				value: (SizeUnit::Fraction(0.0), SizeUnit::Fraction(0.0)),
 				weight: 1.0,
 			}],
 			anti_alias: true,
@@ -83,6 +88,7 @@ impl Painter for RectPainter {
 		};
 		let target_visible_area =
 			(image_area.0.min(target_area.width as u32), image_area.1.min(target_area.height as u32));
+		let max_dimension = target_visible_area.0.min(target_visible_area.1);
 
 		// Find random dimensions for rect to be painted
 		let rect_w = get_random_size_ranges_bias_weighted(
@@ -130,6 +136,12 @@ impl Painter for RectPainter {
 			(target_area.y + target_area.height) as f64 - space_y,
 		);
 
+		// Determine corner radius
+		let max_corner_radius = (rect_w * 0.5).min(rect_h * 0.5);
+		let corner_radius =
+			get_random_size_ranges_bias_weighted(rng, &self.options.corner_radius, 0.0, max_dimension)
+				.min(max_corner_radius);
+
 		// Determine color
 		let random_color = get_random_color(rng);
 		let seed_color = get_pixel_interpolated(seed_map, rect_x, rect_y);
@@ -145,6 +157,7 @@ impl Painter for RectPainter {
 				rect_w,
 				rect_h,
 				rotation,
+				corner_radius,
 				color,
 				self.options.anti_alias,
 				&painted_texture_view,

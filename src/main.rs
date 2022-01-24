@@ -213,6 +213,16 @@ struct Opt {
 	#[structopt(long, default_value = "0.0", allow_hyphen_values = true)]
 	painter_alpha_bias: f64,
 
+	/// Corner radius to use when painting elements.
+	///
+	/// This applies when `--painter` is set to `rects`. In case a percentage value is passed, it is relative to either the width or height of the result image (whichever is smaller).
+	///
+	/// Regardless of the values or ranges passed in this argument, the value used is never higher than half the width or height of the painted element.
+	///
+	/// The argument is a list, so it can also feature more than one value (or ranges, or a mix of values or ranges), in which case one new entry is randomly picked for each new paint.
+	#[structopt(long, default_value = "0", parse(try_from_str = parse_weighted_size_pair))]
+	painter_corner_radius: Vec<WeightedValue<(SizeUnit, SizeUnit)>>,
+
 	/// Radius to use when painting elements, when applicable.
 	///
 	/// This applies when `--painter` is set to `circles`. In case a percentage value is passed, it is relative to either the width or height of the result image (whichever is smaller).
@@ -466,6 +476,7 @@ fn main() {
 			painter.options.width_bias = options.painter_width_bias;
 			painter.options.height = options.painter_height;
 			painter.options.height_bias = options.painter_height_bias;
+			painter.options.corner_radius = options.painter_corner_radius;
 			painter.options.rotation = options.painter_rotation;
 			painter.options.anti_alias = !options.painter_disable_anti_alias;
 			painter.options.color_seed = options.color_seed;
