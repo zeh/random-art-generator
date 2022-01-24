@@ -58,6 +58,7 @@ For the purpose of examples, this documentation uses the [Mandrill](https://www.
     - [`-p`, `--painter <painter>`](#painter)
     - [`--painter-alpha <alpha>...`](#painter-alpha)
     - [`--painter-alpha-bias <bias>`](#painter-alpha-bias)
+    - [`--painter-corner-radius <size>...`](#painter-corner-radius)
     - [`--painter-disable-anti-alias`](#painter-disable-anti-alias)
     - [`--painter-height <size>...`](#painter-height)
     - [`--painter-height-bias <bias>`](#painter-height-bias)
@@ -342,6 +343,27 @@ Bias for distribution in [`--painter-alpha`](#painter-alpha) ranges.
 | Alpha 0-1, 2 bias towards 1 | `--painter-alpha-bias 2` | `rag mandrill.png --generations 10 --rng-seed 1 --painter strokes --painter-width 5% --margins 5% --painter-alpha 0-1 --painter-alpha-bias 2` | <img src="out_alpha_bias_p2.png" width="256"> |
 | Alpha 0-1, -2 bias towards 0 | `--painter-alpha-bias -2` | `rag mandrill.png --generations 10 --rng-seed 1 --painter strokes --painter-width 5% --margins 5% --painter-alpha 0-1 --painter-alpha-bias -2` | <img src="out_alpha_bias_m2.png" width="256"> |
 | Alpha 0-1, -16 bias towards 0 | `--painter-alpha-bias -16` | `rag mandrill.png --generations 10 --rng-seed 1 --painter strokes --painter-width 5% --margins 5% --painter-alpha 0-1 --painter-alpha-bias -16` | <img src="out_alpha_bias_m16.png" width="256"> |
+
+#### <a id="painter-corner-radius"></a>`--painter-corner-radius <size>...`
+
+Default: `0`
+
+Type: Single entry or [list](#type-list) of [sizes](#type-size)
+
+Corner radius to use when painting elements.
+
+This applies when [`--painter`](#painter) is set to `rects`. In case a percentage value is passed, it is relative to either the width or height of the result image (whichever is smaller).
+
+Regardless of the values or ranges passed in this argument, the value used is never higher than half the width or height of the painted element.
+
+The argument is a list, so it can also feature more than one value (or ranges, or a mix of values or ranges), in which case one new entry is randomly picked for each new paint.
+
+| Example | Argument | Command line example | Result |
+|-|-|-|-|
+| Default (0) | N/A | `rag mandrill.png --generations 10 --rng-seed 1 --margins 4% --background-color beige --painter-alpha 0.01-0.3 --painter rects --painter-rotation 355-365 --painter-height 1-10%` | <img src="out_corner_id.png" width="256"> |
+| Always 4px radius | `--painter-corner-radius 4` | `rag mandrill.png --generations 10 --rng-seed 1 --margins 4% --background-color beige --painter-alpha 0.01-0.3 --painter rects --painter-rotation 355-365 --painter-height 1-10% --painter-corner-radius 4` | <img src="out_corner_4.png" width="256"> |
+| Always 10px radius | `--painter-corner-radius 20` | `rag mandrill.png --generations 10 --rng-seed 1 --margins 4% --background-color beige --painter-alpha 0.01-0.3 --painter rects --painter-rotation 355-365 --painter-height 1-10% --painter-corner-radius 20` | <img src="out_corner_20.png" width="256"> |
+| Either 0, 2%, or 20px radius | `--painter-corner-radius 0 2% 20` | `rag mandrill.png --generations 10 --rng-seed 1 --margins 4% --background-color beige --painter-alpha 0.01-0.3 --painter rects --painter-rotation 355-365 --painter-height 1-10% --painter-corner-radius 0 2% 20` | <img src="out_corner_m.png" width="256"> |
 
 #### <a id="painter-disable-anti-alias"></a>`--painter-disable-anti-alias`
 
