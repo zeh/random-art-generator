@@ -5,7 +5,7 @@ use std::string::ToString;
 use image::GenericImageView;
 use structopt::StructOpt;
 
-use generator::painter::{circle::CirclePainter, rect::RectPainter, stroke::StrokePainter};
+use generator::painter::{circle::CirclePainter, rect::RectPainter};
 use generator::utils::color::BlendingMode;
 use generator::utils::files;
 use generator::utils::parsing::{
@@ -186,8 +186,8 @@ struct Opt {
 	///
 	/// Painters can be further configured with other `--painter-*` arguments.
 	///
-	/// Possible values: `rects`, `circles`, `strokes`
-	#[structopt(short, long, possible_values = &["circles", "strokes", "rects"], default_value = "rects")]
+	/// Possible values: `rects`, `circles`
+	#[structopt(short, long, possible_values = &["rects", "circles"], default_value = "rects")]
 	painter: String,
 
 	/// Opacity to use when painting new images.
@@ -220,7 +220,7 @@ struct Opt {
 
 	/// Width to use when painting elements.
 	///
-	/// This applies when `--painter` is set to `rects` or `strokes`. In case a percentage value is passed, it is relative to the width of the result image.
+	/// This applies when `--painter` is set to `rects`. In case a percentage value is passed, it is relative to the width of the result image.
 	///
 	/// The argument is a list, so it can also feature more than one value (or ranges, or a mix of values or ranges), in which case one new entry is randomly picked for each new paint.
 	#[structopt(long, default_value = "0%-100%", parse(try_from_str = parse_weighted_size_pair))]
@@ -234,7 +234,7 @@ struct Opt {
 
 	/// Height to use when painting elements.
 	///
-	/// This applies when `--painter` is set to `rects` or `strokes`. In case a percentage value is passed, it is relative to the height of the result image.
+	/// This applies when `--painter` is set to `rects`. In case a percentage value is passed, it is relative to the height of the result image.
 	///
 	/// The argument is a list, so it can also feature more than one value (or ranges, or a mix of values or ranges), in which case one new entry is randomly picked for each new paint.
 	#[structopt(long, default_value = "0%-100%", parse(try_from_str = parse_weighted_size_pair))]
@@ -253,6 +253,9 @@ struct Opt {
 	/// The one exception is when creating artwork meant to be printed. In that case, antialiased edges can produce dithering artifacts during the printing process; it is better to create an aliased result at a higher resolution instead (using `--scale`) to match the printer's resolution.
 	#[structopt(long)]
 	painter_disable_anti_alias: bool,
+
+	/*
+	// Disabled until later
 
 	/// Height of paint waves, when applicable.
 	///
@@ -285,7 +288,7 @@ struct Opt {
 	/// A bias of 0.0 means a normal, linear distribution; -1.0 = quad bias towards range start; 1.0 = quad bias towards range end.
 	#[structopt(long, default_value = "0.0", allow_hyphen_values = true)]
 	painter_wave_length_bias: f64,
-
+	*/
 	/// Margins for the output image.
 	///
 	/// This can either be a single size for all margins, or a comma-separated list of 2..4 items denoting the margins for each specific side (similar to how margins are written in CSS).
@@ -457,33 +460,6 @@ fn main() {
 			painter.options.width_bias = options.painter_width_bias;
 			painter.options.height = options.painter_height;
 			painter.options.height_bias = options.painter_height_bias;
-			painter.options.color_seed = options.color_seed;
-			painter.options.rng_seed = rng_seed;
-			painter.options.margins = options.margins;
-			gen.process(
-				options.max_tries,
-				options.generations,
-				options.diff,
-				options.benchmark,
-				candidates,
-				painter,
-				Some(on_processed),
-			);
-		}
-		"strokes" => {
-			let mut painter = StrokePainter::new();
-			painter.options.blending_mode = options.blending_mode;
-			painter.options.alpha = options.painter_alpha;
-			painter.options.alpha_bias = options.painter_alpha_bias;
-			painter.options.width = options.painter_width;
-			painter.options.width_bias = options.painter_width_bias;
-			painter.options.height = options.painter_height;
-			painter.options.height_bias = options.painter_height_bias;
-			painter.options.wave_height = options.painter_wave_height;
-			painter.options.wave_height_bias = options.painter_wave_height_bias;
-			painter.options.wave_length = options.painter_wave_length;
-			painter.options.wave_length_bias = options.painter_wave_length_bias;
-			painter.options.anti_alias = !options.painter_disable_anti_alias;
 			painter.options.color_seed = options.color_seed;
 			painter.options.rng_seed = rng_seed;
 			painter.options.margins = options.margins;

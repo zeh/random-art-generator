@@ -1,5 +1,3 @@
-use std::f64::consts::PI;
-
 use crate::generator::utils::units::{SizeUnit, WeightedValue};
 use rng::Rng;
 
@@ -76,37 +74,6 @@ pub fn get_random_size_ranges_bias_weighted(
 ) -> f64 {
 	let range = get_random_entry_weighted(rng, ranges);
 	get_random_size_range_bias(rng, &range.0, &range.1, bias, pixel_size)
-}
-
-pub fn get_random_noise_sequence(rng: &mut Rng, min: f64, max: f64) -> [f64; 256] {
-	let mut sequence = [0f64; 256];
-	for i in 0..256 {
-		sequence[i] = get_random_range(rng, min, max);
-	}
-	return sequence;
-}
-
-#[inline(always)]
-pub fn get_noise_value(noise: [f64; 256], position: f64) -> f64 {
-	let pp = if position < 0.0 {
-		1.0 - position.abs()
-	} else {
-		position
-	};
-	let pp = pp.fract() * 256.0f64;
-	let p1 = pp.floor() as usize;
-	let p2 = (p1 + 1) % 256;
-
-	let v1 = noise[p1];
-	let v2 = noise[p2];
-
-	// Phase
-	let f = pp.fract();
-
-	// Remap phase for smoothstep
-	let f = (1.0 - (f * PI).cos()) * 0.5;
-
-	v1 + (v2 - v1) * f
 }
 
 pub fn get_random_color(rng: &mut Rng) -> [u8; 3] {
