@@ -142,9 +142,7 @@ Type: [Integer](#type-integer)
 
 Number of parallel image painting candidates per try.
 
-In general, the higher the number of candidates, the better the resulting images, at a cost of higher CPU usage.
-
-When set to `0`, this uses the number of available cores in the CPU.
+In general, the higher the number of candidates, the better the resulting images with the same number of tries, at a cost of higher GPU memory usage.
 
 | Example | Argument | Command line example | Result |
 |-|-|-|-|

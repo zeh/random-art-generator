@@ -433,7 +433,6 @@ dependencies = [
  "getrandom",
  "image",
  "img-parts",
- "num_cpus",
  "structopt",
  "strum",
  "strum_macros",

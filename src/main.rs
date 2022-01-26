@@ -49,10 +49,8 @@ struct Opt {
 
 	/// Number of parallel image painting candidates per try.
 	///
-	/// In general, the higher the number of candidates, the better the resulting images, at a cost of higher CPU usage.
-	///
-	/// When set to `0`, this uses the number of available cores in the CPU.
-	#[structopt(short, long, default_value = "0")]
+	/// In general, the higher the number of candidates, the better the resulting images, at a cost of higher GPU memory usage.
+	#[structopt(short, long, default_value = "16")]
 	candidates: usize,
 
 	/// Expected difference score to reach, indicating the desired difference from the new generated image to the target image. New candidates are generated continuously until the resulting difference is below this threshold.
@@ -408,8 +406,8 @@ fn main() {
 	let candidates = if options.candidates > 0 {
 		options.candidates
 	} else {
-		println!("Using auto {} candidates.", num_cpus::get());
-		num_cpus::get()
+		// Fallback for when candidates is set to "0"
+		16
 	};
 
 	let rng_seed = if options.rng_seed == 0 {
