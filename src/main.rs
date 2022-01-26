@@ -5,7 +5,7 @@ use std::string::ToString;
 use image::GenericImageView;
 use structopt::StructOpt;
 
-use generator::painter::{circles::CirclePainter, rects::RectPainter};
+use generator::painter::{circles::CirclePainter, rects::RectPainter, strokes::StrokePainter};
 use generator::utils::color::BlendingMode;
 use generator::utils::files;
 use generator::utils::gpu::context::GPUContext;
@@ -195,8 +195,8 @@ struct Opt {
 	///
 	/// Painters can be further configured with other `--painter-*` arguments.
 	///
-	/// Possible values: `rects`, `circles`
-	#[structopt(short, long, possible_values = &["rects", "circles"], default_value = "rects")]
+	/// Possible values: `rects`, `circles`, `strokes`.
+	#[structopt(short, long, possible_values = &["rects", "circles", "strokes"], default_value = "rects")]
 	painter: String,
 
 	/// Opacity to use when painting new images.
@@ -215,7 +215,7 @@ struct Opt {
 
 	/// Corner radius to use when painting elements.
 	///
-	/// This applies when `--painter` is set to `rects`. In case a percentage value is passed, it is relative to either the width or height of the result image (whichever is smaller).
+	/// This applies when `--painter` is set to `rects` or `strokes`. In case a percentage value is passed, it is relative to either the width or height of the result image (whichever is smaller).
 	///
 	/// Regardless of the values or ranges passed in this argument, the value used is never higher than half the width or height of the painted element.
 	///
@@ -239,7 +239,7 @@ struct Opt {
 
 	/// Rotation in degrees for painted elements, when applicable.
 	///
-	/// This applies when `--painter` is set to `rects`.
+	/// This applies when `--painter` is set to `rects` or `strokes`.
 	///
 	/// When used, this applies a clockwise rotation to the elements. Values expressed here need to be positive. To apply a counter-clockwise rotation, apply a full rotation value to it first; for example, a rotation of `355` is equivalent to `-5` (or `5` counter-clockwise).
 	///
@@ -249,7 +249,7 @@ struct Opt {
 
 	/// Width to use when painting elements.
 	///
-	/// This applies when `--painter` is set to `rects`. In case a percentage value is passed, it is relative to the width of the result image.
+	/// This applies when `--painter` is set to `rects` or `strokes`. In case a percentage value is passed, it is relative to the width of the result image.
 	///
 	/// The argument is a list, so it can also feature more than one value (or ranges, or a mix of values or ranges), in which case one new entry is randomly picked for each new paint.
 	#[structopt(long, default_value = "0%-100%", parse(try_from_str = parse_weighted_size_pair))]
@@ -275,6 +275,40 @@ struct Opt {
 	#[structopt(long, default_value = "0.0", allow_hyphen_values = true)]
 	painter_height_bias: f64,
 
+	/// Length to use when painting elements.
+	///
+	/// This applies when `--painter` is set to `strokes`. In case a percentage value is passed, it is relative to either the width or height of the result image (whichever is smaller).
+	///
+	/// The argument is a list, so it can also feature more than one value (or ranges, or a mix of values or ranges), in which case one new entry is randomly picked for each new paint.
+	#[structopt(long, default_value = "0%-100%", parse(try_from_str = parse_weighted_size_pair))]
+	painter_length: Vec<WeightedValue<(SizeUnit, SizeUnit)>>,
+
+	/// Bias for distribution in `--painter-length` ranges.
+	///
+	/// A bias of 0.0 means a normal, linear distribution; -1.0 = quad bias towards range start; 1.0 = quad bias towards range end.
+	#[structopt(long, default_value = "0.0", allow_hyphen_values = true)]
+	painter_length_bias: f64,
+
+	/// Amount of "smear" to apply in painted elements, when applicable.
+	///
+	/// Smearing uses a 1D noise function to add a paint-like texture to the element being painted.
+	///
+	/// This applies when `--painter` is set to `strokes`. This can be either a single value between `0.0` (no smear) and `1.0` (full strength smear), or a range in the same scale for randomized values (e.g. `0.1-0.9`).
+	///
+	/// The argument is a list, so it can also feature more than one value (or ranges, or a mix of values or ranges), in which case one new entry is randomly picked for each new paint.
+	#[structopt(long, default_value = "0.1", parse(try_from_str = parse_weighted_float_pair))]
+	painter_smear: Vec<WeightedValue<(f64, f64)>>,
+
+	/// Scale of the smear used in `--painter-smear`, when applicable.
+	///
+	/// This changes the scale of the noise texture used for smearing, as well as the size of the fray drawn.
+	///
+	/// This applies when `--painter` is set to `strokes`. The higher the value, the larger the size of the streaks of smear drawn (for example, a value of 2.0 would double the size of the smear pattern).
+	///
+	/// The argument is a list, so it can also feature more than one value (or ranges, or a mix of values or ranges), in which case one new entry is randomly picked for each new paint.
+	#[structopt(long, default_value = "1.0", parse(try_from_str = parse_weighted_float_pair))]
+	painter_smear_scale: Vec<WeightedValue<(f64, f64)>>,
+
 	/// Disables calculating antialias on edges when painting new elements.
 	///
 	/// This makes rendering faster in some cases, but can produce jagged edges, and is therefore not recommended.
@@ -283,12 +317,9 @@ struct Opt {
 	#[structopt(long)]
 	painter_disable_anti_alias: bool,
 
-	/*
-	// Disabled until later
-
 	/// Height of paint waves, when applicable.
 	///
-	/// This applies when `--painter` is set to `strokes`. In case a percentage value is passed, it is always relative to the width of the result image.
+	/// This applies when `--painter` is set to `strokes`. In case a percentage value is passed, it is relative to either the width or height of the result image (whichever is smaller).
 	///
 	/// In the `strokes` painter, *waves* are the deformations that occur on the edges of each painted element. The waves have a *height* (their strength, perpendicular to the edge itself) and a *length* (the size of an entire wave along the direction of the edge). This length encompasses a set of different waves (rather than just one wave), to create a noise-like pattern. The bigger the length, the gentler the wave looks, similarly to producing a sound wave of lower frequency.
 	///
@@ -304,7 +335,7 @@ struct Opt {
 
 	/// Length of paint waves, when applicable.
 	///
-	/// This applies when `--painter` is set to `strokes`. In case a percentage value is passed, it is always relative to the height of the result image.
+	/// This applies when `--painter` is set to `strokes`. In case a percentage value is passed, it is relative to either the width or height of the result image (whichever is smaller).
 	///
 	/// In the `strokes` painter, *waves* are the deformations that occur on the edges of each painted element. The waves have a *height* (their strength, perpendicular to the edge itself) and a *length* (the size of an entire wave along the direction of the edge). The higher the wave, the stronger they look.
 	///
@@ -317,7 +348,7 @@ struct Opt {
 	/// A bias of 0.0 means a normal, linear distribution; -1.0 = quad bias towards range start; 1.0 = quad bias towards range end.
 	#[structopt(long, default_value = "0.0", allow_hyphen_values = true)]
 	painter_wave_length_bias: f64,
-	*/
+
 	/// Margins for the output image.
 	///
 	/// This can either be a single size for all margins, or a comma-separated list of 2..4 items denoting the margins for each specific side (similar to how margins are written in CSS).
@@ -470,6 +501,38 @@ fn main() {
 	// TODO: use actual enums here and use a single object from trait (can't seen to make it work)
 	// TODO: error out on passed painter options that are unused?
 	match &options.painter[..] {
+		"strokes" => {
+			let mut painter = StrokePainter::new(&context);
+			painter.options.width = options.painter_width;
+			painter.options.width_bias = options.painter_width_bias;
+			painter.options.length = options.painter_length;
+			painter.options.length_bias = options.painter_length_bias;
+			painter.options.corner_radius = options.painter_corner_radius;
+			painter.options.wave_height = options.painter_wave_height;
+			painter.options.wave_height_bias = options.painter_wave_height_bias;
+			painter.options.wave_length = options.painter_wave_length;
+			painter.options.wave_length_bias = options.painter_wave_length_bias;
+			painter.options.smear_strength = options.painter_smear;
+			painter.options.smear_scale = options.painter_smear_scale;
+			painter.options.rotation = options.painter_rotation;
+			painter.options.anti_alias = !options.painter_disable_anti_alias;
+			painter.options.color_seed = options.color_seed;
+			painter.options.margins = options.margins;
+			gen.process(
+				context,
+				rng_seed,
+				options.max_tries,
+				options.generations,
+				options.diff,
+				options.benchmark,
+				options.blending_mode,
+				options.painter_alpha,
+				options.painter_alpha_bias,
+				candidates,
+				painter,
+				Some(on_processed),
+			);
+		}
 		"rects" => {
 			let mut painter = RectPainter::new(&context);
 			painter.options.width = options.painter_width;

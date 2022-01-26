@@ -5,6 +5,7 @@ use super::utils::random::rng::Rng;
 
 pub mod circles;
 pub mod rects;
+pub mod strokes;
 
 pub trait Painter {
 	fn get_paint_parameters(
