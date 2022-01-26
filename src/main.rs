@@ -293,6 +293,12 @@ struct Opt {
 	/// When a percentage unit is used, they refer to the maximum width or height of the image. Values higher than the image size (in pixels or in percentages higher than `100%`) are allowed, in which case they cause the paint algorithm to bleed out of the image space.
 	#[structopt(long, default_value = "0", allow_hyphen_values = true, parse(try_from_str = parse_size_margins))]
 	margins: Margins<SizeUnit>,
+
+	/// Makes the program write additional information to the output.
+	///
+	/// This includes information about the graphics adapter used, some limits, process results, etc.
+	#[structopt(short, long)]
+	verbose: bool,
 }
 
 fn get_options() -> Opt {
