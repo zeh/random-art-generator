@@ -354,7 +354,7 @@ Type: Single entry or [list](#type-list) of [sizes](#type-size)
 
 Height to use when painting elements.
 
-This applies when [`--painter`](#painter) is set to `rects` or `strokes`.
+This applies when [`--painter`](#painter) is set to `rects` or `strokes`. In case a percentage value is passed, it is relative to the height of the result image.
 
 The argument is a list, so it can also feature more than one value (or ranges, or a mix of values or ranges), in which case one new entry is randomly picked for each new paint.
 
@@ -489,9 +489,9 @@ Default: `0%-100%`
 
 Type: Single entry or [list](#type-list) of [sizes](#type-size)
 
-Height to use when painting elements.
+Width to use when painting elements.
 
-This applies when [`--painter`](#painter) is set to `rects` or `strokes`.
+This applies when [`--painter`](#painter) is set to `rects` or `strokes`. In case a percentage value is passed, it is relative to the width of the result image.
 
 The argument is a list, so it can also feature more than one value (or ranges, or a mix of values or ranges), in which case one new entry is randomly picked for each new paint.
 

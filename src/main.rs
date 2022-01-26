@@ -220,7 +220,7 @@ struct Opt {
 
 	/// Width to use when painting elements.
 	///
-	/// This applies when `--painter` is set to `rects` or `strokes`.
+	/// This applies when `--painter` is set to `rects` or `strokes`. In case a percentage value is passed, it is relative to the width of the result image.
 	///
 	/// The argument is a list, so it can also feature more than one value (or ranges, or a mix of values or ranges), in which case one new entry is randomly picked for each new paint.
 	#[structopt(long, default_value = "0%-100%", parse(try_from_str = parse_weighted_size_pair))]
@@ -234,7 +234,7 @@ struct Opt {
 
 	/// Height to use when painting elements.
 	///
-	/// This applies when `--painter` is set to `rects` or `strokes`.
+	/// This applies when `--painter` is set to `rects` or `strokes`. In case a percentage value is passed, it is relative to the height of the result image.
 	///
 	/// The argument is a list, so it can also feature more than one value (or ranges, or a mix of values or ranges), in which case one new entry is randomly picked for each new paint.
 	#[structopt(long, default_value = "0%-100%", parse(try_from_str = parse_weighted_size_pair))]
