@@ -107,7 +107,7 @@ impl Generator {
 		target_generations: u32,
 		target_diff: f64,
 		should_benchmark: bool,
-		candidates: usize,
+		num_candidates: usize,
 		painter: impl Painter + Send + Sync + 'static,
 		cb: Option<ProcessCallback>,
 	) {
@@ -150,7 +150,7 @@ impl Generator {
 			benchmarks.whole_try.start();
 			used = false;
 
-			if candidates == 1 {
+			if num_candidates == 1 {
 				// Simple path with no concurrency
 				benchmarks.paint.start();
 				let new_candidate =
@@ -175,7 +175,7 @@ impl Generator {
 				// generations in about 25% of the original time
 				let (tx, rx) = mpsc::channel();
 
-				for candidate in 0..candidates {
+				for candidate in 0..num_candidates {
 					let tx1 = mpsc::Sender::clone(&tx);
 					let thread_painter = Arc::clone(&arc_painter);
 					let thread_current = self.current.clone();
@@ -223,7 +223,7 @@ impl Generator {
 					}
 				}
 
-				total_processes = total_processes.wrapping_add(candidates as u32);
+				total_processes = total_processes.wrapping_add(num_candidates as u32);
 			}
 
 			if used {
@@ -338,10 +338,10 @@ impl Generator {
 			curr_tries,
 			benchmarks.total.last_ms() / 1000.0,
 			benchmarks.whole_try.average_ms(),
-			candidates
+			num_candidates
 		);
 
-		if candidates == 1 {
+		if num_candidates == 1 {
 			println!(
 				"Tries took an average of {:.3}ms for painting, and {:.3}ms for diffing, using a single thread.",
 				benchmarks.paint.average_ms(),
