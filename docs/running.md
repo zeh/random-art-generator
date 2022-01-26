@@ -72,6 +72,7 @@ For the purpose of examples, this documentation uses the [Mandrill](https://www.
     - [`-s`, `--scale <float>`](#scale)
     - [`--save-often`](#save-often)
     - [`--target-color-matrix <color-matrix>`](#target-color-matrix)
+    - [`-v`, `--verbose`](#verbose)
     - [`--version`](#version)
 - Data types
     - [Bias](#type-bias)
@@ -594,6 +595,12 @@ For example, the *identity* matrix (equivalent to no change) is `1,0,0,0,0,1,0,0
 | Luma-based grayscale | `--target-color-matrix 0.33,0.59,0.11,0,0.33,0.59,0.11,0,0.33,0.59,0.11,0` | `rag mandrill.png --generations 300 --rng-seed 1 --color-seed 1 --painter strokes --painter-alpha 0.1-0.7 --painter-height 2%-4% --margins 8% --background-color beige --target-color-matrix 0.33,0.59,0.11,0,0.33,0.59,0.11,0,0.33,0.59,0.11,0` | <img src="out_matrix_gray.png" width="256"> |
 | Sepia | `--target-color-matrix 0.393,0.769,0.686,0,0.349,0.686,0.168,0,0.272,0.534,0.131,0` | `rag mandrill.png --generations 300 --rng-seed 1 --color-seed 1 --painter strokes --painter-alpha 0.1-0.7 --painter-height 2%-4% --margins 8% --background-color beige --target-color-matrix 0.393,0.769,0.686,0,0.349,0.686,0.168,0,0.272,0.534,0.131,0` | <img src="out_matrix_sepia.png" width="256"> |
 | Polaroid | `--target-color-matrix 1.438,0.122,-0.016,-8,-0.062,1.378,-0.016,-13,-0.062,-0.122,1.483,-5` | `rag mandrill.png --generations 300 --rng-seed 1 --color-seed 1 --painter strokes --painter-alpha 0.1-0.7 --painter-height 2%-4% --margins 8% --background-color beige --target-color-matrix 1.438,0.122,-0.016,-8,-0.062,1.378,-0.016,-13,-0.062,-0.122,1.483,-5` | <img src="out_matrix_polaroid.png" width="256"> |
+
+#### <a id="verbose"></a>`-v`, `--verbose`
+
+Print additional information to the output.
+
+This includes information about the graphics adapter used, some limits, process results, etc.
 
 #### <a id="version"></a>`--version`
 
