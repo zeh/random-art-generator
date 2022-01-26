@@ -62,9 +62,13 @@ For the purpose of examples, this documentation uses the [Mandrill](https://www.
     - [`--painter-disable-anti-alias`](#painter-disable-anti-alias)
     - [`--painter-height <size>...`](#painter-height)
     - [`--painter-height-bias <bias>`](#painter-height-bias)
+    - [`--painter-length <size>...`](#painter-length)
+    - [`--painter-length-bias <bias>`](#painter-length-bias)
     - [`--painter-radius <size>...`](#painter-radius)
     - [`--painter-radius-bias <bias>`](#painter-radius-bias)
     - [`--painter-rotation <float>...`](#painter-rotation)
+    - [`--painter-smear <float>...`](#painter-smear)
+    - [`--painter-smear-scale <float>...`](#painter-smear-scale)
     - [`--painter-wave-height <size>...`](#painter-wave-height)
     - [`--painter-wave-height-bias <bias>`](#painter-wave-height-bias)
     - [`--painter-wave-length <size>...`](#painter-wave-length)
@@ -339,10 +343,10 @@ Bias for distribution in [`--painter-alpha`](#painter-alpha) ranges.
 
 | Example | Argument | Command line example | Result |
 |-|-|-|-|
-| Alpha 0-1, no bias | N/A | `rag mandrill.png --generations 10 --rng-seed 1 --painter strokes --painter-width 5% --margins 5% --painter-alpha 0-1` | <img src="out_alpha_bias_id.png" width="256"> |
-| Alpha 0-1, 2 bias towards 1 | `--painter-alpha-bias 2` | `rag mandrill.png --generations 10 --rng-seed 1 --painter strokes --painter-width 5% --margins 5% --painter-alpha 0-1 --painter-alpha-bias 2` | <img src="out_alpha_bias_p2.png" width="256"> |
-| Alpha 0-1, -2 bias towards 0 | `--painter-alpha-bias -2` | `rag mandrill.png --generations 10 --rng-seed 1 --painter strokes --painter-width 5% --margins 5% --painter-alpha 0-1 --painter-alpha-bias -2` | <img src="out_alpha_bias_m2.png" width="256"> |
-| Alpha 0-1, -16 bias towards 0 | `--painter-alpha-bias -16` | `rag mandrill.png --generations 10 --rng-seed 1 --painter strokes --painter-width 5% --margins 5% --painter-alpha 0-1 --painter-alpha-bias -16` | <img src="out_alpha_bias_m16.png" width="256"> |
+| Alpha 0-1, no bias | N/A | `rag mandrill.png --generations 10 --rng-seed 1 --painter strokes --painter-width 5% --painter-rotation 88-92 --background-color beige --margins 5% --painter-alpha 0-1` | <img src="out_alpha_bias_id.png" width="256"> |
+| Alpha 0-1, 2 bias towards 1 | `--painter-alpha-bias 2` | `rag mandrill.png --generations 10 --rng-seed 1 --painter strokes --painter-width 5% --painter-rotation 88-92 --background-color beige --margins 5% --painter-alpha 0-1 --painter-alpha-bias 2` | <img src="out_alpha_bias_p2.png" width="256"> |
+| Alpha 0-1, -2 bias towards 0 | `--painter-alpha-bias -2` | `rag mandrill.png --generations 10 --rng-seed 1 --painter strokes --painter-width 5% --painter-rotation 88-92 --background-color beige --margins 5% --painter-alpha 0-1 --painter-alpha-bias -2` | <img src="out_alpha_bias_m2.png" width="256"> |
+| Alpha 0-1, -16 bias towards 0 | `--painter-alpha-bias -16` | `rag mandrill.png --generations 10 --rng-seed 1 --painter strokes --painter-width 5% --painter-rotation 88-92 --background-color beige --margins 5% --painter-alpha 0-1 --painter-alpha-bias -16` | <img src="out_alpha_bias_m16.png" width="256"> |
 
 #### <a id="painter-corner-radius"></a>`--painter-corner-radius <size>...`
 
@@ -386,7 +390,7 @@ Type: Single entry or [list](#type-list) of [sizes](#type-size)
 
 Height to use when painting elements.
 
-This applies when [`--painter`](#painter) is set to `rects` or `strokes`. In case a percentage value is passed, it is relative to the height of the result image.
+This applies when [`--painter`](#painter) is set to `rects`. In case a percentage value is passed, it is relative to the height of the result image.
 
 The argument is a list, so it can also feature more than one value (or ranges, or a mix of values or ranges), in which case one new entry is randomly picked for each new paint.
 
@@ -413,6 +417,42 @@ Bias for distribution in [`--painter-height`](#painter-height) ranges.
 | Height 0%-100% (default), -16 bias towards 0% | `--painter-height-bias -16` | `rag mandrill.png --generations 20 --rng-seed 1 --painter-width 10 --painter-height-bias -16` | <img src="out_height_bias_m16.png" width="256"> |
 | Height 10%-50%, no bias (default) | `--painter-height 10%-50%` | `rag mandrill.png --generations 20 --rng-seed 1 --painter-width 10 --painter-height 10%-50%` | <img src="out_height_bias_hid.png" width="256"> |
 | Height 10%-50%, -4 bias towards 10% | `--painter-height 10%-50% --painter-height-bias -4` | `rag mandrill.png --generations 20 --rng-seed 1 --painter-width 10 --painter-height 10%-50% --painter-height-bias -4` | <img src="out_height_bias_hm4.png" width="256"> |
+
+#### <a id="painter-length"></a>`--painter-length <size>...`
+
+Default: `0%-100%`
+
+Type: Single entry or [list](#type-list) of [sizes](#type-size)
+
+Length to use when painting elements.
+
+This applies when [`--painter`](#painter) is set to `strokes`. In case a percentage value is passed, it is relative to either the width or height of the result image (whichever is smaller).
+
+The argument is a list, so it can also feature more than one value (or ranges, or a mix of values or ranges), in which case one new entry is randomly picked for each new paint.
+
+| Example | Argument | Command line example | Result |
+|-|-|-|-|
+| Default (0%-100%) | N/A | `rag mandrill.png --painter strokes --generations 20 --rng-seed 1 --painter-width 6%` | <img src="out_length_id.png" width="256"> |
+| Always 10% length | `--painter-length 10%` | `rag mandrill.png --painter strokes --generations 20 --rng-seed 1 --painter-width 6% --painter-length 10%` | <img src="out_length_10.png" width="256"> |
+| Always 100px length | `--painter-length 100` | `rag mandrill.png --painter strokes --generations 20 --rng-seed 1 --painter-width 6% --painter-length 100` | <img src="out_length_100.png" width="256"> |
+| Either 5%, 10%, or 20% length | `--painter-length 5% 10% 20%` | `rag mandrill.png --painter strokes --generations 20 --rng-seed 1 --painter-width 6% --painter-length 5% 10% 20%` | <img src="out_length_m1.png" width="256"> |
+| 25% chance of 5% length, 75% chance of random 100px-200px length | `--painter-length 5% 100-200@3` | `rag mandrill.png --painter strokes --generations 20 --rng-seed 1 --painter-width 6% --painter-length 5% 100-200@3` | <img src="out_length_m2.png" width="256"> |
+
+#### <a id="painter-length-bias"></a>`--painter-length-bias <bias>`
+
+Default: `0`
+
+Type: [Bias](#type-bias)
+
+Bias for distribution in [`--painter-length`](#painter-length) ranges.
+
+| Example | Argument | Command line example | Result |
+|-|-|-|-|
+| Length 0%-100% (default), no bias (default) | N/A | `rag mandrill.png --painter strokes --generations 20 --rng-seed 1 --painter-width 10` | <img src="out_length_bias_id.png" width="256"> |
+| Length 0%-100% (default), 16 bias towards 100% | `--painter-length-bias 16` | `rag mandrill.png --painter strokes --generations 20 --rng-seed 1 --painter-width 10 --painter-length-bias 16` | <img src="out_length_bias_16.png" width="256"> |
+| Length 0%-100% (default), -16 bias towards 0% | `--painter-length-bias -16` | `rag mandrill.png --painter strokes --generations 20 --rng-seed 1 --painter-width 10 --painter-length-bias -16` | <img src="out_length_bias_m16.png" width="256"> |
+| Length 10%-50%, no bias (default) | `--painter-length 10%-50%` | `rag mandrill.png --painter strokes --generations 20 --rng-seed 1 --painter-width 10 --painter-length 10%-50%` | <img src="out_length_bias_hid.png" width="256"> |
+| Length 10%-50%, -4 bias towards 10% | `--painter-length 10%-50% --painter-length-bias -4` | `rag mandrill.png --painter strokes --generations 20 --rng-seed 1 --painter-width 10 --painter-length 10%-50% --painter-length-bias -4` | <img src="out_length_bias_hm4.png" width="256"> |
 
 #### <a id="painter-radius"></a>`--painter-radius <size>...`
 
@@ -471,6 +511,49 @@ The argument is a list, so it can also feature more than one value (or ranges, o
 | Any rotation | `--painter-rotation 0-360` | `rag mandrill.png --generations 400 --rng-seed 1 --background-color beige --painter-alpha 0.5-0.9 --painter rects --painter-height 4% --painter-rotation 0-360` | <img src="out_rotation_all.png" width="256"> |
 | Any rotation, thin lines | `--painter-rotation 0-360` | `rag mandrill.png --generations 2000 --rng-seed 1 --background-color beige --painter-alpha 0.9 --painter rects --painter-height 3 --painter-rotation 0-360` | <img src="out_rotation_all_thin.png" width="256"> |
 
+#### <a id="painter-smear"></a>`--painter-smear <float>...`
+
+Default: `0.1`
+
+Type: Single entry or [list](#type-list), of [ranges](#type-range) or unique values, of [floats](#type-float)
+
+Amount of "smear" to apply in painted elements, when applicable.
+
+Smearing uses a 1D noise function to add a paint-like texture to the element being painted.
+
+This applies when [`--painter`](#painter) is set to `strokes`. This can be either a single value between `0.0` (no smear) and `1.0` (full strength smear), or a range in the same scale for randomized values (e.g. `0.1-0.9`).
+
+The argument is a list, so it can also feature more than one value (or ranges, or a mix of values or ranges), in which case one new entry is randomly picked for each new paint.
+
+| Example | Argument | Command line example | Result |
+|-|-|-|-|
+| Default (0.1) | N/A | `rag mandrill.png --generations 10 --rng-seed 1 --painter strokes --background-color snow --painter-alpha 0.9 --painter-width 8-16% --painter-rotation 89-91 --margins 8% --painter-smear-scale 2` | <img src="out_smear_id.png" width="256"> |
+| 100% smear | `--painter-smear 1` | `rag mandrill.png --generations 10 --rng-seed 1 --painter strokes --background-color snow --painter-alpha 0.9 --painter-width 8-16% --painter-rotation 89-91 --margins 8% --painter-smear-scale 2 --painter-smear 1` | <img src="out_smear_1.png" width="256"> |
+| Equal chances of 0%, 50%, or 100% smear | `--painter-smear 0 0.5 1` | `rag mandrill.png --generations 10 --rng-seed 1 --painter strokes --background-color snow --painter-alpha 0.9 --painter-width 8-16% --painter-rotation 89-91 --margins 8% --painter-smear-scale 2 --painter-smear 0 0.5 1` | <img src="out_smear_05_1.png" width="256"> |
+| Smear either 0% 75% of the time, or 50%-60% 25% of the time | `--painter-smear 0@3 0.5-0.6` | `rag mandrill.png --generations 10 --rng-seed 1 --painter strokes --background-color snow --painter-alpha 0.9 --painter-width 8-16% --painter-rotation 89-91 --margins 8% --painter-smear-scale 2 --painter-smear 0@3 0.5-0.6` | <img src="out_smear_m1.png" width="256"> |
+
+#### <a id="painter-smear-scale"></a>`--painter-smear-scale <float>...`
+
+Default: `1`
+
+Type: Single entry or [list](#type-list), of [ranges](#type-range) or unique values, of [floats](#type-float)
+
+Scale of the smear used in `--painter-smear`, when applicable.
+
+This changes the scale of the noise texture used for smearing, as well as the size of the fray drawn.
+
+This applies when [`--painter`](#painter) is set to `strokes`. The higher the value, the larger the size of the streaks of smear drawn (for example, a value of 2.0 would double the size of the smear pattern).
+
+The argument is a list, so it can also feature more than one value (or ranges, or a mix of values or ranges), in which case one new entry is randomly picked for each new paint.
+
+| Example | Argument | Command line example | Result |
+|-|-|-|-|
+| Default (1.0) | N/A | `rag mandrill.png --generations 6 --rng-seed 1 --painter strokes --background-color gainsboro --painter-width 8-16% --painter-rotation 42-48 312-318 --margins 8%` | <img src="out_smear_scale_id.png" width="256"> |
+| 50% smear scale | `--painter-smear-scale 0.5` | `rag mandrill.png --generations 6 --rng-seed 1 --painter strokes --background-color gainsboro --painter-width 8-16% --painter-rotation 42-48 312-318 --margins 8% --painter-smear-scale 0.5` | <img src="out_smear_scale_05.png" width="256"> |
+| 200% smear scale | `--painter-smear-scale 2` | `rag mandrill.png --generations 6 --rng-seed 1 --painter strokes --background-color gainsboro --painter-width 8-16% --painter-rotation 42-48 312-318 --margins 8% --painter-smear-scale 2` | <img src="out_smear_scale_2.png" width="256"> |
+| 800% smear scale | `--painter-smear-scale 8` | `rag mandrill.png --generations 6 --rng-seed 1 --painter strokes --background-color gainsboro --painter-width 8-16% --painter-rotation 42-48 312-318 --margins 8% --painter-smear-scale 8` | <img src="out_smear_scale_8.png" width="256"> |
+| Equal chances of 50%, or 200% smear scale | `--painter-smear-scale 0.5 2` | `rag mandrill.png --generations 6 --rng-seed 1 --painter strokes --background-color gainsboro --painter-width 8-16% --painter-rotation 42-48 312-318 --margins 8% --painter-smear-scale 0.5 2` | <img src="out_smear_scale_m1.png" width="256"> |
+| Smear between 100% and 400% | `--painter-smear-scale 1-4` | `rag mandrill.png --generations 6 --rng-seed 1 --painter strokes --background-color gainsboro --painter-width 8-16% --painter-rotation 42-48 312-318 --margins 8% --painter-smear-scale 1-4` | <img src="out_smear_scale_m2.png" width="256"> |
 
 #### <a id="painter-wave-height"></a>`--painter-wave-height <size>...`
 
@@ -480,7 +563,7 @@ Type: Single entry or [list](#type-list) of [sizes](#type-size)
 
 Height of paint waves, when applicable.
 
-This applies when [`--painter`](#painter) is set to `strokes`. In case a percentage value is passed, it is always relative to the width of the result image.
+This applies when [`--painter`](#painter) is set to `strokes`. In case a percentage value is passed, it is relative to either the width or height of the result image (whichever is smaller).
 
 In the `strokes` painter, *waves* are the deformations that occur on the edges of each painted element. The waves have a *height* (their strength, perpendicular to the edge itself) and a *length* (the size of an entire wave along the direction of the edge). The higher the wave, the stronger they look.
 
@@ -513,13 +596,13 @@ Type: Single entry or [list](#type-list) of [sizes](#type-size)
 
 Length of paint waves, when applicable.
 
-This applies when [`--painter`](#painter) is set to `strokes`. In case a percentage value is passed, it is always relative to the height of the result image.
+This applies when [`--painter`](#painter) is set to `strokes`. In case a percentage value is passed, it is relative to either the width or height of the result image (whichever is smaller).
 
 In the `strokes` painter, *waves* are the deformations that occur on the edges of each painted element. The waves have a *height* (their strength, perpendicular to the edge itself) and a *length* (the size of an entire wave along the direction of the edge). This length encompasses a set of different waves (rather than just one wave), to create a noise-like pattern. The bigger the length, the gentler the wave looks, similarly to producing a sound wave of lower frequency.
 
 | Example | Argument | Command line example | Result |
 |-|-|-|-|
-| Default (400%) | N/A | `rag mandrill.png --generations 20 --rng-seed 1 --background-color darkgreen --painter strokes` | <img src="out_wave_length_id.png" width="256"> |
+| Default (400%) | N/A | `rag mandrill.png --generations 20 --rng-seed 1 --background-color wheat --painter strokes` | <img src="out_wave_length_id.png" width="256"> |
 | Wave length of 200% | `--painter-wave-length 200%` | `rag mandrill.png --generations 20 --rng-seed 1 --background-color wheat --painter strokes --painter-wave-length 200%` | <img src="out_wave_length_200.png" width="256"> |
 | Wave length of 4000% | `--painter-wave-length 4000%` | `rag mandrill.png --generations 20 --rng-seed 1 --background-color wheat --painter strokes --painter-wave-length 4000%` | <img src="out_wave_length_4000.png" width="256"> |
 | Wave length of 100px | `--painter-wave-length 100` | `rag mandrill.png --generations 20 --rng-seed 1 --background-color wheat --painter strokes --painter-wave-length 100` | <img src="out_wave_length_100.png" width="256"> |
@@ -535,9 +618,9 @@ Bias for distribution in [`--painter-wave-length`](#painter-wave-length) ranges.
 
 | Example | Argument | Command line example | Result |
 |-|-|-|-|
-| Wave length 1%-4000%, no bias (default) | N/A | `rag mandrill.png --generations 40 --rng-seed 1 --background-color snow --painter strokes --painter-height 4% --painter-width 90%-100% --painter-alpha 0.5-1 --painter-wave-length 1%-4000%` | <img src="out_wave_length_bias_id.png" width="256"> |
-| Wave height 1%-4000%, -16 bias towards 1% | `--painter-wave-length-bias -16` | `rag mandrill.png --generations 40 --rng-seed 1 --background-color snow --painter strokes --painter-height 4% --painter-width 90%-100% --painter-alpha 0.5-1 --painter-wave-length 1%-4000% --painter-wave-length-bias -16` | <img src="out_wave_length_bias_m16.png" width="256"> |
-| Wave height 1%-4000%, 16 bias towards 4000% | `--painter-wave-length-bias 16` | `rag mandrill.png --generations 40 --rng-seed 1 --background-color snow --painter strokes --painter-height 4% --painter-width 90%-100% --painter-alpha 0.5-1 --painter-wave-length 1%-4000% --painter-wave-length-bias 16` | <img src="out_wave_length_bias_16.png" width="256"> |
+| Wave length 1%-4000%, no bias (default) | N/A | `rag mandrill.png --generations 40 --rng-seed 1 --background-color snow --painter strokes --painter-width 4% --painter-length 90%-100% --painter-alpha 0.5-1 --painter-wave-length 1%-4000%` | <img src="out_wave_length_bias_id.png" width="256"> |
+| Wave height 1%-4000%, -16 bias towards 1% | `--painter-wave-length-bias -16` | `rag mandrill.png --generations 40 --rng-seed 1 --background-color snow --painter strokes --painter-width 4% --painter-length 90%-100% --painter-alpha 0.5-1 --painter-wave-length 1%-4000% --painter-wave-length-bias -16` | <img src="out_wave_length_bias_m16.png" width="256"> |
+| Wave height 1%-4000%, 16 bias towards 4000% | `--painter-wave-length-bias 16` | `rag mandrill.png --generations 40 --rng-seed 1 --background-color snow --painter strokes --painter-width 4% --painter-length 90%-100% --painter-alpha 0.5-1 --painter-wave-length 1%-4000% --painter-wave-length-bias 16` | <img src="out_wave_length_bias_16.png" width="256"> |
 
 #### <a id="painter-width"></a>`--painter-width <size>...`
 
@@ -568,10 +651,10 @@ Bias for distribution in [`--painter-width`](#painter-width) ranges.
 
 | Example | Argument | Command line example | Result |
 |-|-|-|-|
-| Width 0%-100% (default), no bias (default) | N/A | `rag mandrill.png --generations 30 --painter strokes --background-color gainsboro --rng-seed 1 --painter-height 4% --margins 4%` | <img src="out_width_bias_id.png" width="256"> |
-| Width 0%-100% (default), 16 bias towards 100% | `--painter-width-bias 16` | `rag mandrill.png --generations 30 --painter strokes --background-color gainsboro --rng-seed 1 --painter-height 4% --margins 4% --painter-width-bias 16` | <img src="out_width_bias_16.png" width="256"> |
-| Width 0%-100% (default), -16 bias towards 0% | `--painter-width-bias -16` | `rag mandrill.png --generations 30 --painter strokes --background-color gainsboro --rng-seed 1 --painter-height 4% --margins 4% --painter-width-bias -16` | <img src="out_width_bias_m16.png" width="256"> |
-| Width 10px-40%, 4 bias towards 40% | `--painter-width 10-40% --painter-width-bias 4` | `rag mandrill.png --generations 30 --painter strokes --background-color gainsboro --rng-seed 1 --painter-height 4% --margins 4% --painter-width 10-40% --painter-width-bias 4` | <img src="out_width_bias_m.png" width="256"> |
+| Width 0%-100% (default), no bias (default) | N/A | `rag mandrill.png --generations 30 --background-color gainsboro --rng-seed 1 --painter-height 4% --margins 4%` | <img src="out_width_bias_id.png" width="256"> |
+| Width 0%-100% (default), 16 bias towards 100% | `--painter-width-bias 16` | `rag mandrill.png --generations 30 --background-color gainsboro --rng-seed 1 --painter-height 4% --margins 4% --painter-width-bias 16` | <img src="out_width_bias_16.png" width="256"> |
+| Width 0%-100% (default), -16 bias towards 0% | `--painter-width-bias -16` | `rag mandrill.png --generations 30  --background-color gainsboro --rng-seed 1 --painter-height 4% --margins 4% --painter-width-bias -16` | <img src="out_width_bias_m16.png" width="256"> |
+| Width 10px-40%, 4 bias towards 40% | `--painter-width 10-40% --painter-width-bias 4` | `rag mandrill.png --generations 30 --background-color gainsboro --rng-seed 1 --painter-height 4% --margins 4% --painter-width 10-40% --painter-width-bias 4` | <img src="out_width_bias_m.png" width="256"> |
 
 #### <a id="rng-seed"></a>`--rng-seed <integer>`
 
@@ -613,9 +696,9 @@ Larger images tend to take more time to generate. It's useful to try and generat
 
 | Example | Argument | Command line example | Result |
 |-|-|-|-|
-| Same size as target (default) | N/A | `rag mandrill.png --generations 100 --rng-seed 1 --painter strokes --painter-alpha 0.7 --painter-width 5% --margins 8%` | <img src="out_scale_id.png" width="256"> |
-| Scaled to 4x the target size | `--scale 4` | `rag mandrill.png --generations 100 --rng-seed 1 --painter strokes --painter-alpha 0.7 --painter-width 5% --margins 8% --scale 4` | <img src="out_scale_4.png" width="256"> |
-| Scaled to 10% of the target size | `--scale 0.1` | `rag mandrill.png --generations 100 --rng-seed 1 --painter strokes --painter-alpha 0.7 --painter-width 5% --margins 8% --scale 0.1` | <img src="out_scale_01.png" width="256"> |
+| Same size as target (default) | N/A | `rag mandrill.png --generations 100 --rng-seed 1 --painter strokes --painter-alpha 0.7 --painter-width 5% --painter-rotation 89-91 --margins 8%` | <img src="out_scale_id.png" width="256"> |
+| Scaled to 4x the target size | `--scale 4` | `rag mandrill.png --generations 100 --rng-seed 1 --painter strokes --painter-alpha 0.7 --painter-width 5% --painter-rotation 89-91 --margins 8% --scale 4` | <img src="out_scale_4.png" width="256"> |
+| Scaled to 10% of the target size | `--scale 0.1` | `rag mandrill.png --generations 100 --rng-seed 1 --painter strokes --painter-alpha 0.7 --painter-width 5% --painter-rotation 89-91 --margins 8% --scale 0.1` | <img src="out_scale_01.png" width="256"> |
 
 #### <a id="save-often"></a> `--save-often`
 
@@ -647,10 +730,10 @@ For example, the *identity* matrix (equivalent to no change) is `1,0,0,0,0,1,0,0
 
 | Example | Argument | Command line example | Result |
 |-|-|-|-|
-| No matrix (default) | N/A | `rag mandrill.png --generations 300 --rng-seed 1 --color-seed 1 --painter strokes --painter-alpha 0.1-0.7 --painter-height 2%-4% --margins 8% --background-color beige` | <img src="out_matrix_id.png" width="256"> |
-| Luma-based grayscale | `--target-color-matrix 0.33,0.59,0.11,0,0.33,0.59,0.11,0,0.33,0.59,0.11,0` | `rag mandrill.png --generations 300 --rng-seed 1 --color-seed 1 --painter strokes --painter-alpha 0.1-0.7 --painter-height 2%-4% --margins 8% --background-color beige --target-color-matrix 0.33,0.59,0.11,0,0.33,0.59,0.11,0,0.33,0.59,0.11,0` | <img src="out_matrix_gray.png" width="256"> |
-| Sepia | `--target-color-matrix 0.393,0.769,0.686,0,0.349,0.686,0.168,0,0.272,0.534,0.131,0` | `rag mandrill.png --generations 300 --rng-seed 1 --color-seed 1 --painter strokes --painter-alpha 0.1-0.7 --painter-height 2%-4% --margins 8% --background-color beige --target-color-matrix 0.393,0.769,0.686,0,0.349,0.686,0.168,0,0.272,0.534,0.131,0` | <img src="out_matrix_sepia.png" width="256"> |
-| Polaroid | `--target-color-matrix 1.438,0.122,-0.016,-8,-0.062,1.378,-0.016,-13,-0.062,-0.122,1.483,-5` | `rag mandrill.png --generations 300 --rng-seed 1 --color-seed 1 --painter strokes --painter-alpha 0.1-0.7 --painter-height 2%-4% --margins 8% --background-color beige --target-color-matrix 1.438,0.122,-0.016,-8,-0.062,1.378,-0.016,-13,-0.062,-0.122,1.483,-5` | <img src="out_matrix_polaroid.png" width="256"> |
+| No matrix (default) | N/A | `rag mandrill.png --generations 300 --rng-seed 1 --color-seed 1 --painter strokes --painter-alpha 0.1-0.7 --painter-width 2%-4% --margins 8% --background-color beige` | <img src="out_matrix_id.png" width="256"> |
+| Luma-based grayscale | `--target-color-matrix 0.33,0.59,0.11,0,0.33,0.59,0.11,0,0.33,0.59,0.11,0` | `rag mandrill.png --generations 300 --rng-seed 1 --color-seed 1 --painter strokes --painter-alpha 0.1-0.7 --painter-width 2%-4% --margins 8% --background-color beige --target-color-matrix 0.33,0.59,0.11,0,0.33,0.59,0.11,0,0.33,0.59,0.11,0` | <img src="out_matrix_gray.png" width="256"> |
+| Sepia | `--target-color-matrix 0.393,0.769,0.686,0,0.349,0.686,0.168,0,0.272,0.534,0.131,0` | `rag mandrill.png --generations 300 --rng-seed 1 --color-seed 1 --painter strokes --painter-alpha 0.1-0.7 --painter-width 2%-4% --margins 8% --background-color beige --target-color-matrix 0.393,0.769,0.686,0,0.349,0.686,0.168,0,0.272,0.534,0.131,0` | <img src="out_matrix_sepia.png" width="256"> |
+| Polaroid | `--target-color-matrix 1.438,0.122,-0.016,-8,-0.062,1.378,-0.016,-13,-0.062,-0.122,1.483,-5` | `rag mandrill.png --generations 300 --rng-seed 1 --color-seed 1 --painter strokes --painter-alpha 0.1-0.7 --painter-width 2%-4% --margins 8% --background-color beige --target-color-matrix 1.438,0.122,-0.016,-8,-0.062,1.378,-0.016,-13,-0.062,-0.122,1.483,-5` | <img src="out_matrix_polaroid.png" width="256"> |
 
 #### <a id="verbose"></a>`-v`, `--verbose`
 
