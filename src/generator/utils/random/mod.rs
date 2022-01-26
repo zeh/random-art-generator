@@ -57,6 +57,11 @@ pub fn get_random_entry_weighted<'a, T>(rng: &mut Rng, entries: &'a Vec<Weighted
 		.value
 }
 
+pub fn get_random_ranges_weighted(rng: &mut Rng, ranges: &Vec<WeightedValue<(f64, f64)>>) -> f64 {
+	let range = get_random_entry_weighted(rng, ranges);
+	get_random_range(rng, range.0, range.1)
+}
+
 pub fn get_random_ranges_bias_weighted(
 	rng: &mut Rng,
 	ranges: &Vec<WeightedValue<(f64, f64)>>,
