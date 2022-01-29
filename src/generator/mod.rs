@@ -160,6 +160,10 @@ impl Generator {
 			total: TimerBenchmark::new(),
 		};
 
+		if should_benchmark {
+			context.device.start_capture();
+		}
+
 		benchmarks.prepare.start();
 
 		let (target_width, target_height) = self.target.dimensions();
@@ -201,7 +205,15 @@ impl Generator {
 
 		benchmarks.prepare.stop();
 
+		if should_benchmark {
+			context.device.stop_capture();
+		}
+
 		loop {
+			if should_benchmark {
+				context.device.start_capture();
+			}
+
 			benchmarks.whole_try.start();
 			used = false;
 
@@ -396,6 +408,10 @@ impl Generator {
 				}
 
 				time_last_print = Instant::now();
+			}
+
+			if should_benchmark {
+				context.device.stop_capture();
 			}
 
 			if finished {
