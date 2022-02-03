@@ -8,14 +8,14 @@ use crate::generator::utils::units::{Margins, SizeUnit, WeightedValue};
 
 pub fn parse_color<'a, 'b>(src: &'a str) -> Result<(u8, u8, u8), &'b str> {
 	match Color::new_string(src) {
-		Some(color) => {
+		Ok(color) => {
 			let rgb = color.get_rgba();
 			let r = (rgb.0 * 255.0).round() as u8;
 			let g = (rgb.1 * 255.0).round() as u8;
 			let b = (rgb.2 * 255.0).round() as u8;
 			Ok((r, g, b))
 		}
-		None => Err("Cannot parse color string"),
+		_ => Err("Cannot parse color string"),
 	}
 }
 
