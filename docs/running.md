@@ -113,7 +113,9 @@ Outputs benchmark results.
 
 With this flag, the application will gather some benchmark metrics and output them after it runs. This is useful to measure efficiency of the algorithm as it evolves.
 
-It's recommended to use the same [`--candidates 1`](#candidates) and [`--rng-seed`](#rng-seed) value across different runs, for consistent results.
+This flag also enables debug capturing for RenderDoc, but only when the application is built in debug mode from source with `cargo run`.
+
+It's recommended to use the same [`--candidates`](#candidates) and [`--rng-seed`](#rng-seed) value across different runs, for consistent results.
 
 #### <a id="blending-mode"></a>`--blending-mode <blending-mode>...`
 
