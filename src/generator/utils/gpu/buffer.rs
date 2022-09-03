@@ -55,11 +55,16 @@ async fn get_gpu_texture_data_rgba_async(
 	unpadded_bytes_per_row: u32,
 ) -> Vec<u8> {
 	let buffer_slice = buffer.slice(..);
-	let buffer_map_request = buffer_slice.map_async(wgpu::MapMode::Read);
+
+	let (tx, rx) = futures_intrusive::channel::shared::oneshot_channel();
+	buffer_slice.map_async(wgpu::MapMode::Read, move |result| {
+		tx.send(result).unwrap();
+	});
 
 	// Wait for the GPU to finish
 	context.device.poll(wgpu::Maintain::Wait);
-	buffer_map_request.await.expect("mapping GPU buffer data into CPU memory");
+	rx.receive().await.unwrap().unwrap();
+
 	let padded_data = buffer_slice.get_mapped_range();
 	let data = padded_data
 		.chunks_exact(padded_bytes_per_row as _)
@@ -80,11 +85,16 @@ pub fn get_gpu_buffer_data(context: &GPUContext, buffer: &wgpu::Buffer) -> Vec<u
 
 async fn get_gpu_buffer_data_async(context: &GPUContext, buffer: &wgpu::Buffer) -> Vec<u8> {
 	let buffer_slice = buffer.slice(..);
-	let buffer_map_request = buffer_slice.map_async(wgpu::MapMode::Read);
+
+	let (tx, rx) = futures_intrusive::channel::shared::oneshot_channel();
+	buffer_slice.map_async(wgpu::MapMode::Read, move |result| {
+		tx.send(result).unwrap();
+	});
 
 	// Wait for the GPU to finish
 	context.device.poll(wgpu::Maintain::Wait);
-	buffer_map_request.await.expect("mapping GPU buffer data into CPU memory");
+	rx.receive().await.unwrap().unwrap();
+
 	let padded_data = buffer_slice.get_mapped_range();
 	let data = padded_data.into_iter().map(|x| *x).collect::<Vec<_>>();
 
@@ -118,14 +128,18 @@ async fn put_gpu_texture_data_rgba_async(
 	unpadded_bytes_per_row: u32,
 ) {
 	let to_buffer_slice = to_buffer.slice(..);
-	let to_buffer_map_request = to_buffer_slice.map_async(wgpu::MapMode::Write);
 
-	let row_padding = vec![0u8; padded_bytes_per_row as usize - unpadded_bytes_per_row as usize];
-	let row_padding_slice = &row_padding[..];
+	let (tx, rx) = futures_intrusive::channel::shared::oneshot_channel();
+	to_buffer_slice.map_async(wgpu::MapMode::Write, move |result| {
+		tx.send(result).unwrap();
+	});
 
 	// Wait for the GPU to finish
 	context.device.poll(wgpu::Maintain::Wait);
-	to_buffer_map_request.await.expect("mapping GPU buffer data from CPU memory");
+	rx.receive().await.unwrap().unwrap();
+
+	let row_padding = vec![0u8; padded_bytes_per_row as usize - unpadded_bytes_per_row as usize];
+	let row_padding_slice = &row_padding[..];
 
 	to_buffer_slice.get_mapped_range_mut().copy_from_slice(
 		&from_data

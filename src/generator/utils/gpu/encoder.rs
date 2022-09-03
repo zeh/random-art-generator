@@ -32,7 +32,7 @@ pub fn add_encoder_pass_compute(
 		compute_pass.pop_debug_group();
 
 		compute_pass.push_debug_group("Dispatch");
-		compute_pass.dispatch(
+		compute_pass.dispatch_workgroups(
 			get_workgroup_count_width(width),
 			get_workgroup_count_height(height),
 			get_workgroup_count_depth(1),

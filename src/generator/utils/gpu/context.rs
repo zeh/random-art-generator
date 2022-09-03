@@ -45,6 +45,7 @@ impl GPUContext {
 				max_compute_workgroup_size_y: max_limits.max_compute_workgroup_size_y,
 				max_compute_workgroup_size_z: max_limits.max_compute_workgroup_size_z,
 				max_compute_invocations_per_workgroup: max_limits.max_compute_invocations_per_workgroup,
+				max_buffer_size: max_limits.max_buffer_size,
 				..wgpu::Limits::default()
 			});
 			limits_to_try.push(wgpu::Limits::downlevel_defaults());

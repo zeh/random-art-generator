@@ -1,21 +1,21 @@
 struct Uniform {
-	blend_type: u32;
-	opacity: f32;
+	blend_type: u32,
+	opacity: f32,
 };
 
-[[group(0), binding(0)]]
+@group(0) @binding(0)
 var<uniform> uniforms: Uniform;
 
-[[group(1), binding(0)]]
+@group(1) @binding(0)
 var sampler_in: sampler;
 
-[[group(1), binding(1)]]
+@group(1) @binding(1)
 var texture_bottom_in: texture_2d<f32>;
 
-[[group(1), binding(2)]]
+@group(1) @binding(2)
 var texture_top_in: texture_2d<f32>;
 
-[[group(1), binding(3)]]
+@group(1) @binding(3)
 var texture_out: texture_storage_2d<rgba8unorm, write>;
 
 fn blend_normal(bottom: f32, top: f32) -> f32 {
@@ -99,18 +99,18 @@ fn blend_exclusion(bottom: f32, top: f32) -> f32 {
 fn blend_channel(bottom: f32, top: f32) -> f32 {
 	// Enum ids come from utils/colors.rs/BlendingMode
 	switch (uniforms.blend_type) {
-		case 0:  { return blend_normal(bottom, top); }
-		case 1:  { return blend_multiply(bottom, top); }
-		case 2:  { return blend_screen(bottom, top); }
-		case 3:  { return blend_overlay(bottom, top); }
-		case 4:  { return blend_darken(bottom, top); }
-		case 5:  { return blend_lighten(bottom, top); }
-		case 6:  { return blend_color_dodge(bottom, top); }
-		case 7:  { return blend_color_burn(bottom, top); }
-		case 8:  { return blend_hard_light(bottom, top); }
-		case 9:  { return blend_soft_light(bottom, top); }
-		case 10: { return blend_difference(bottom, top); }
-		case 11: { return blend_exclusion(bottom, top); }
+		case 0u:  { return blend_normal(bottom, top); }
+		case 1u:  { return blend_multiply(bottom, top); }
+		case 2u:  { return blend_screen(bottom, top); }
+		case 3u:  { return blend_overlay(bottom, top); }
+		case 4u:  { return blend_darken(bottom, top); }
+		case 5u:  { return blend_lighten(bottom, top); }
+		case 6u:  { return blend_color_dodge(bottom, top); }
+		case 7u:  { return blend_color_burn(bottom, top); }
+		case 8u:  { return blend_hard_light(bottom, top); }
+		case 9u:  { return blend_soft_light(bottom, top); }
+		case 10u: { return blend_difference(bottom, top); }
+		case 11u: { return blend_exclusion(bottom, top); }
 		default: { return blend_normal(bottom, top); }
 	}
 }
@@ -136,8 +136,8 @@ fn blend_pixel_with_opacity(bottom: vec3<f32>, top: vec3<f32>, opacity: f32) -> 
 	}
 }
 
-[[stage(compute), workgroup_size(16, 16, 1)]]
-fn cs_main([[builtin(global_invocation_id)]] global_id : vec3<u32>) {
+@compute @workgroup_size(16, 16, 1)
+fn cs_main(@builtin(global_invocation_id) global_id: vec3<u32>) {
 	let texel_center = vec2<f32>(0.5);
 	let position_f = vec2<f32>(global_id.xy) + texel_center;
 	let position_i = vec2<i32>(global_id.xy);

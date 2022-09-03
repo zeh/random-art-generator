@@ -8,7 +8,7 @@ pub fn create_compute_pipeline_with_layouts(
 ) -> wgpu::ComputePipeline {
 	let device = &context.device;
 
-	let shader_module = device.create_shader_module(&wgpu::ShaderModuleDescriptor {
+	let shader_module = device.create_shader_module(wgpu::ShaderModuleDescriptor {
 		label: Some(format!("Shader module for {}", label).as_str()),
 		source: wgpu::ShaderSource::Wgsl(shader_source.into()),
 	});
@@ -38,7 +38,7 @@ pub fn create_compute_pipeline(
 ) -> wgpu::ComputePipeline {
 	let device = &context.device;
 
-	let shader_module = device.create_shader_module(&wgpu::ShaderModuleDescriptor {
+	let shader_module = device.create_shader_module(wgpu::ShaderModuleDescriptor {
 		label: Some(format!("Compute shader module for {}", label).as_str()),
 		source: wgpu::ShaderSource::Wgsl(shader_source.into()),
 	});
