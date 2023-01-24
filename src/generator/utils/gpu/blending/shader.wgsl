@@ -132,6 +132,7 @@ fn blend_pixel_with_opacity(bottom: vec3<f32>, top: vec3<f32>, opacity: f32) -> 
 			return opaque_result;
 		} else {
 			return opaque_result * opacity + bottom * (1.0 - opacity);
+			// Alternatively: return bottom + (opaque_result - bottom) * opacity;
 		}
 	}
 }
