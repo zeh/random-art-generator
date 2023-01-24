@@ -57,7 +57,7 @@ impl GPUContext {
 					.request_device(
 						&wgpu::DeviceDescriptor {
 							label: Some("Descriptor request with varying limits"),
-							features: wgpu::Features::empty(),
+							features: wgpu::Features::MAPPABLE_PRIMARY_BUFFERS,
 							limits,
 						},
 						None,
