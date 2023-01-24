@@ -28,7 +28,7 @@ fn test_blend() {
 	let tp = create_texture_from_image_rgba(
 		&context,
 		&get_rgba_image_from_bytes(top_bytes),
-		"Test blend image - bottom",
+		"Test blend image - top",
 	);
 
 	// Test all modes
