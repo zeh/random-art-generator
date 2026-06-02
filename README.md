@@ -20,3 +20,5 @@ rag profile.jpg --generations 100
 Technically known as [hill climbing](https://en.wikipedia.org/wiki/Hill_climbing), this process allows the creation of new images that progressively converge into the target image, with a style all its own depending on the chosen painting algorithm and its arguments.
 
 This application is written in [Rust](https://www.rust-lang.org/), and downloadable binaries are currently available for macOS, Linux, and Windows. A webasm target - so it can be used as a JavaScript library - is planned for later.
+
+Notice: most of the development happens in the [dev branch](https://github.com/zeh/random-art-generator/tree/dev), as the move to GPU-accelerated filters (replacing the manual pixel buffer filtering) is finalized.
