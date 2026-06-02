@@ -3,6 +3,8 @@ struct Uniform {
 	opacity: f32,
 };
 
+// TODO: investigate issues with Metal leading to inconsistent results across platforms - different floating point precision?
+
 @group(0) @binding(0)
 var<uniform> uniforms: Uniform;
 
